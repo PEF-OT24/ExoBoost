@@ -12,34 +12,58 @@ WindowManager:
 
         MDTopAppBar:
             title: "ExoBoost"
-            md_bg_color: app.colors["Cyan"]
+            md_bg_color: app.colors["Black"]
 
         MDBottomNavigation:
-            panel_color: app.colors["Cyan"]
+            id: bottom_nav
+            # selected_color_background: app.colors["Light Orange"]
+            panel_color: app.colors["Black"]
+
+            # Set active/normal colors
+            text_color_normal: app.colors["Cyan"]
+            text_color_active: app.colors["Light Orange"]
+            icon_color_normal: app.colors["Cyan"]
+            icon_color_active: app.colors["Light Orange"]
 
             MDBottomNavigationItem:
                 # Bluetooth settings tab 
+                id: bluetooh_tab
                 name: "Bluetooth settings"
                 text: "Bluetooth settings"
                 icon: "bluetooth-settings"
+
+                on_tab_release:
+                    print("tab release")
 
                 MDLabel:
                     text: "Bluetooth"
                     halign: "center"
 
             MDBottomNavigationItem:
+                id: assistance_tab
                 name: "Assistance mode"
                 text: "Assistance mode"
                 icon: "walk"
+
+                on_tab_release:
+                    print("tab release")
 
                 MDLabel:
                     text: "Assistance Mode"
                     halign: "center"
 
             MDBottomNavigationItem:
+                id: tuninig_tab
                 name: "Tuning mode"
                 text: "Tuning mode"
                 icon: "equalizer"
+
+                # Actions
+                on_tab_release:
+                    print("tab release")
+
+                on_tab_press:
+                    print("on_tab_press")
 
                 MDLabel:
                     text: "Tuning Mode"

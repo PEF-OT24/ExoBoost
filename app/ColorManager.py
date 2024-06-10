@@ -1,7 +1,8 @@
 class ColorManager():
     '''Class that manages colors used on the ExoBoost App for Android.'''
     def __init__(self):
-        self.HexColors = {
+        # Transparency values go from 0 to 255 (hex to binary)
+        self.HexColors: dict = {
             "Cyan": {
                 "color": "4FBDBA",
                 "transparency": "255"
@@ -30,13 +31,13 @@ class ColorManager():
         }
 
         # Creates a list of available colors names
-        self.colors = list(self.HexColors.keys())
+        self.colors: list = list(self.HexColors.keys())
         
         # Normalizes all hex and transparency values to be usable by Kivy
         self.KivyColors = {}
         self.Convert_Colors()
 
-    def hex_to_rgb_normalized(self, hex_value):
+    def hex_to_rgb_normalized(self, hex_value: list[str]) -> float:
         # Gets HEX value of each channel and converts them to decimal
         r = int(hex_value[0:2], 16)
         g = int(hex_value[2:4], 16)
@@ -50,14 +51,14 @@ class ColorManager():
         # Returns the normalized values
         return r_normalized, g_normalized, b_normalized
 
-    def Convert_Colors(self):
+    def Convert_Colors(self) -> None:
         '''Converts all hex values to color tuples for kivy'''
         for col in self.colors:
             red, green, blue = self.hex_to_rgb_normalized(self.HexColors[col]["color"])
             transparency = int(self.HexColors[col]["transparency"])/255
             self.KivyColors[col] = (red, green, blue, transparency)
     
-    def _get_colors(self):
+    def _get_colors(self) -> dict:
         '''Return the kivy colors dic'''
         return self.KivyColors
     
