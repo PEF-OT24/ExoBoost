@@ -7,7 +7,7 @@ class ColorManager():
                 "color": "4FBDBA",
                 "transparency": "255"
             },
-            "Dark_Blue": {
+            "Dark Blue": {
                 "color": "1F3B4D",
                 "transparency": "255"
             },
@@ -25,6 +25,10 @@ class ColorManager():
             },
             "White": {
                 "color": "FFFFFF",
+                "transparency": "255"
+            },
+            "color kk":{
+                "color": "AAAAAA",
                 "transparency": "255"
             }
         

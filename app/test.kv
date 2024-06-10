@@ -35,9 +35,18 @@ WindowManager:
                 on_tab_release:
                     print("tab release")
 
-                MDLabel:
-                    text: "Bluetooth"
-                    halign: "center"
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+                    MDLabel:
+                        text: "Bluetooth"
+                        halign: "center"
 
             MDBottomNavigationItem:
                 id: assistance_tab

@@ -1,7 +1,7 @@
 # Set the screen size and mode
 from kivy.config import Config
 Config.set('graphics', 'width', '540')
-Config.set('graphics', 'height', '1026')
+Config.set('graphics', 'height', '926')
 Config.set('graphics', 'fullscreen', '0')
 
 # Import kivy and kivymd libraries 
