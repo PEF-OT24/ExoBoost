@@ -1,0 +1,50 @@
+#:kivy 2.2.1
+
+WindowManager:
+    MainWindow:
+    SecundaryWindow:
+
+<MainWindow>:
+    name: "Main Window"
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDTopAppBar:
+            title: "ExoBoost"
+            md_bg_color: app.colors["Cyan"]
+
+        MDBottomNavigation:
+            panel_color: app.colors["Cyan"]
+
+            MDBottomNavigationItem:
+                # Bluetooth settings tab 
+                name: "Bluetooth settings"
+                text: "Bluetooth settings"
+                icon: "bluetooth-settings"
+
+                MDLabel:
+                    text: "Bluetooth"
+                    halign: "center"
+
+            MDBottomNavigationItem:
+                name: "Assistance mode"
+                text: "Assistance mode"
+                icon: "walk"
+
+                MDLabel:
+                    text: "Assistance Mode"
+                    halign: "center"
+
+            MDBottomNavigationItem:
+                name: "Tuning mode"
+                text: "Tuning mode"
+                icon: "equalizer"
+
+                MDLabel:
+                    text: "Tuning Mode"
+                    halign: "center"
+
+<SecundaryWindow>:
+    # Empty
+    name: "Secundary Window"
