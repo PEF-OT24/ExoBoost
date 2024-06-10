@@ -57,9 +57,26 @@ WindowManager:
                 on_tab_release:
                     print("tab release")
 
-                MDLabel:
-                    text: "Assistance Mode"
-                    halign: "center"
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+                    MDLabel:
+                        text: "Assistance Mode"
+                        text_size: self.size
+                        halign: "center"
+                        valign: "top"
+
+                    MDLabel:
+                        text: "Height (m)"
+                        text_size: self.size
+                        halign: "center"
+                        valign: "top"
 
             MDBottomNavigationItem:
                 id: tuninig_tab
