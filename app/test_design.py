@@ -26,7 +26,7 @@ class TestDesignApp(MDApp):
 
         # Detects OS running
         self.os_name = self.detect_os()
-        self.pos_screen(1)
+        self.pos_screen(0)
 
         # Colors dictionary used on the design file
         self.colors: dict = ColorManager()._get_colors()

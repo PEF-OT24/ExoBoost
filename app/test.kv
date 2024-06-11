@@ -73,10 +73,20 @@ WindowManager:
 
                 on_tab_press:
                     print("on_tab_press")
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
-                MDLabel:
-                    text: "Tuning Mode"
-                    halign: "center"
+                    MDLabel:
+                        text: "Tuning Mode"
+                        text_size: self.size
+                        valign: "top"
+                        halign: "center"
 
 <SecundaryWindow>:
     # Empty
