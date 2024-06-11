@@ -32,11 +32,14 @@ WindowManager:
                 text: "Bluetooth settings"
                 icon: "bluetooth-settings"
 
+                # Actions for the button
                 on_tab_release:
                     print("tab release")
 
+                # Tab design
                 BoxLayout:
                     orientation: 'vertical'
+                    # Background color
                     canvas.before:
                         Color:
                             rgba: app.colors["Dark Blue"]
@@ -44,9 +47,13 @@ WindowManager:
                             pos: self.pos
                             size: self.size
 
+                    # Elements on app
                     MDLabel:
-                        text: "Bluetooth"
+                        id: bluetooth_title
+                        text: "Bluetooth Connection"
+                        text_size: "25"
                         halign: "center"
+                        valign: "top"
 
             MDBottomNavigationItem:
                 id: assistance_tab
