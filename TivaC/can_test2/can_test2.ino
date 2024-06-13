@@ -1,6 +1,7 @@
 #define PART_TM4C123GH6PM
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "inc/hw_ints.h"
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
@@ -22,8 +23,12 @@
 #define BLUE_LED GPIO_PIN_2
 #define GREEN_LED GPIO_PIN_3
 
+// Define CAN_INT_INTID_STATUS if not defined
+#ifndef CAN_INT_INTID_STATUS
+#define CAN_INT_INTID_STATUS 0x8000
+#endif
+
 uint32_t intensity = 0;
-uint8_t sendBuffer[2];
 uint8_t CANBUSSend[8u];
 uint8_t CANBUSReceive[8u];
 uint8_t inByte = 0;
@@ -31,11 +36,10 @@ bool doControlFlag = 0;
 
 tCANMsgObject sMsgObjectRx;
 tCANMsgObject sMsgObjectTx;
-uint8_t pui8BufferIn[8u];
-uint8_t pui8BufferOut[8u];
 
 void setup() {
     Serial.begin(9600);
+
     // Enable peripherals
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF)) {}
@@ -67,7 +71,7 @@ void setup() {
     GPIOPinConfigure(GPIO_PB4_CAN0RX);
     GPIOPinConfigure(GPIO_PB5_CAN0TX);
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
-    
+
     SysTickIntRegister(ISRSysTick);
     SysTickPeriodSet(11200);
     SysTickIntEnable();
@@ -83,12 +87,18 @@ void ISRSysTick(void) {
 void CAN0IntHandler(void) {
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
 
-    // Handle CAN0 interrupt
-    if (ui32Status == CAN_INT_STATUS) {
+    // Check if the interrupt is caused by a status change
+    if (ui32Status == CAN_INT_INTID_STATUS) {
+        // Read the full status of the CAN controller
         ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
-    } else if (ui32Status == 1) {
+    } 
+    // Check if the interrupt is caused by message object 1
+    else if (ui32Status == 1) {
+        // Clear the message object interrupt
         CANIntClear(CAN0_BASE, 1);
-        // Handle received message
+        // Handle the received message
+        sMsgObjectRx.pui8MsgData = CANBUSReceive;
+        CANMessageGet(CAN0_BASE, 2, &sMsgObjectRx, false);
     }
 }
 
@@ -98,52 +108,59 @@ void loop() {
         GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); // CPU usage measurement
 
         // Trigger ADC conversion
-        ADCProcessorTrigger(ADC0_BASE, ADC_TRIGGER_PROCESSOR);
+        ADCProcessorTrigger(ADC0_BASE, 0);
+        while (!ADCIntStatus(ADC0_BASE, 0, false)) {}
         ADCIntClear(ADC0_BASE, 0);
         ADCSequenceDataGet(ADC0_BASE, 0, &intensity);
 
-        sMsgObjectRx.ui32MsgID = 1u;
-        sMsgObjectRx.ui32MsgIDMask = 0x240u;
-        sMsgObjectRx.ui32Flags = MSG_OBJ_USE_ID_FILTER;
+        // Set up CAN receive message object
+        sMsgObjectRx.ui32MsgID = 0x241u;
+        sMsgObjectRx.ui32MsgIDMask = 0xFFFFFFFFu; // Reads all messages
+        sMsgObjectRx.ui32MsgLen = 8u;
         sMsgObjectRx.pui8MsgData = CANBUSReceive;
-        CANMessageSet(0x240u, 1u, &sMsgObjectRx, MSG_OBJ_TYPE_RX);
+        CANMessageSet(CAN0_BASE, 2, &sMsgObjectRx, MSG_OBJ_TYPE_RXTX_REMOTE);
 
+        // Prepare CAN message to send
         CANBUSSend[0] = 0x30;
-        CANBUSSend[1] = 0x0;        
-        CANBUSSend[2] = 0x0;
-        CANBUSSend[3] = 0x0;
-        CANBUSSend[4] = 0x0;
-        CANBUSSend[5] = 0x0;
-        CANBUSSend[6] = 0x0;
-        CANBUSSend[7] = 0x0;
+        CANBUSSend[1] = 0x00;
+        CANBUSSend[2] = 0x00;
+        CANBUSSend[3] = 0x00;
+        CANBUSSend[4] = 0x00;
+        CANBUSSend[5] = 0x00;
+        CANBUSSend[6] = 0x00;
+        CANBUSSend[7] = 0x00;
 
-        sMsgObjectTx.ui32MsgID = 1u;
-        sMsgObjectTx.ui32MsgIDMask = 0x140u;
-        sMsgObjectTx.ui32Flags = 0u;
+        sMsgObjectTx.ui32MsgID = 0x141;
+        sMsgObjectTx.ui32MsgIDMask = 0xFFFFFFFF;
         sMsgObjectTx.ui32MsgLen = 8u;
         sMsgObjectTx.pui8MsgData = CANBUSSend;
-        CANMessageSet(0x140u, 1u, &sMsgObjectTx, MSG_OBJ_TYPE_TX);
-        //while((CANStatusGet(CAN0_BASE, CAN_STS_NEWDAT) & 0x08u) == 0u){}
-        
-        CANMessageGet(0x240u, 1u, &sMsgObjectRx, true);
-        
-        Serial.print(CANBUSReceive[0]);
-        Serial.print(CANBUSReceive[1]);
-        Serial.print(CANBUSReceive[2]);
-        Serial.print(CANBUSReceive[3]);
-        Serial.print(CANBUSReceive[4]);
-        Serial.print(CANBUSReceive[5]);
-        Serial.print(CANBUSReceive[6]);
-        Serial.println(CANBUSReceive[7]);
+        CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx, MSG_OBJ_TYPE_TX);
+
+        // Wait for the message to be transmitted
+        while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {
+          Serial.println("waiting");
+          }
+
+        // Get the received CAN message
+        CANMessageGet(CAN0_BASE, 2, &sMsgObjectRx, false);
+
+        // Print received CAN data to the serial monitor
+        char buffer[50];
+        sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X", 
+                CANBUSReceive[0], CANBUSReceive[1], CANBUSReceive[2], CANBUSReceive[3], 
+                CANBUSReceive[4], CANBUSReceive[5], CANBUSReceive[6], CANBUSReceive[7]);
+        Serial.println(buffer);
 
         while (UARTCharsAvail(UART0_BASE)) {
             inByte = UARTCharGet(UART0_BASE);
             if (inByte == '$') {
-                memcpy(&sendBuffer, &intensity, sizeof intensity);
+                uint8_t sendBuffer[2];
+                memcpy(sendBuffer, &intensity, sizeof(intensity));
                 UARTCharPut(UART0_BASE, sendBuffer[1]);
                 UARTCharPut(UART0_BASE, sendBuffer[0]);
             }
         }
+
         GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
     }
 }
