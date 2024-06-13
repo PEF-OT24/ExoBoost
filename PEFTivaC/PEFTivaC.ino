@@ -31,8 +31,6 @@ bool doControlFlag = 0;
 
 tCANMsgObject sMsgObjectRx;
 tCANMsgObject sMsgObjectTx;
-uint8_t pui8BufferIn[8u];
-uint8_t pui8BufferOut[8u];
 
 void setup() {
     Serial.begin(9600);
@@ -74,6 +72,7 @@ void setup() {
     SysTickEnable();
 
     IntMasterEnable();
+
 }
 
 void ISRSysTick(void) {
@@ -102,11 +101,11 @@ void loop() {
         ADCIntClear(ADC0_BASE, 0);
         ADCSequenceDataGet(ADC0_BASE, 0, &intensity);
 
-        sMsgObjectRx.ui32MsgID = 1u;
-        sMsgObjectRx.ui32MsgIDMask = 0x240u;
+        sMsgObjectRx.ui32MsgID = 0x240u;
+        sMsgObjectRx.ui32MsgIDMask = 0x01u;
         sMsgObjectRx.ui32Flags = MSG_OBJ_USE_ID_FILTER;
         sMsgObjectRx.pui8MsgData = CANBUSReceive;
-        CANMessageSet(0x240u, 1u, &sMsgObjectRx, MSG_OBJ_TYPE_RX);
+        CANMessageSet(0x240u, 0x01u, &sMsgObjectRx, MSG_OBJ_TYPE_RX);
 
         CANBUSSend[0] = 0x30;
         CANBUSSend[1] = 0x0;        
@@ -117,15 +116,15 @@ void loop() {
         CANBUSSend[6] = 0x0;
         CANBUSSend[7] = 0x0;
 
-        sMsgObjectTx.ui32MsgID = 1u;
-        sMsgObjectTx.ui32MsgIDMask = 0x140u;
+        sMsgObjectTx.ui32MsgID = 0x140u;
+        sMsgObjectTx.ui32MsgIDMask = 0x01u;
         sMsgObjectTx.ui32Flags = 0u;
         sMsgObjectTx.ui32MsgLen = 8u;
         sMsgObjectTx.pui8MsgData = CANBUSSend;
-        CANMessageSet(0x140u, 1u, &sMsgObjectTx, MSG_OBJ_TYPE_TX);
+        CANMessageSet(0x140u, 0x01u, &sMsgObjectTx, MSG_OBJ_TYPE_TX);
         //while((CANStatusGet(CAN0_BASE, CAN_STS_NEWDAT) & 0x08u) == 0u){}
         
-        CANMessageGet(0x240u, 1u, &sMsgObjectRx, true);
+        CANMessageGet(0x240u, 0x01u, &sMsgObjectRx, false);
         
         Serial.print(CANBUSReceive[0]);
         Serial.print(CANBUSReceive[1]);

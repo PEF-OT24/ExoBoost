@@ -4,6 +4,19 @@ WindowManager:
     MainWindow:
     SecundaryWindow:
 
+<CustomLabel>: # Pre-made class to define default settings to subtitles labels with MDLabel
+    font_name: "Roboto"
+    font_size: "15sp" # 30sp for titles
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "top": 0}
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+
+<CustomTextEntry>: # Pre-made class to define defaultl settings to entry text boxes
+    helper_text_mode: "on_focus"
+    hint_text_color_normal: app.colors["White"]  # White when not focused
+    hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
+
 <MainWindow>:
     name: "Main Window"
 
@@ -61,8 +74,8 @@ WindowManager:
                     text: "Assistance Mode"
                     halign: "center"
 
-            MDBottomNavigationItem:
-                id: tuninig_tab
+            MDBottomNavigationItem: # TUNING TAB
+                id: tuning_tab
                 name: "Tuning mode"
                 text: "Tuning mode"
                 icon: "equalizer"
@@ -71,8 +84,7 @@ WindowManager:
                 on_tab_release:
                     print("tab release")
 
-                on_tab_press:
-                    print("on_tab_press")
+                # Elements
                 BoxLayout:
                     orientation: 'vertical'
                     canvas.before:
@@ -82,11 +94,125 @@ WindowManager:
                             pos: self.pos
                             size: self.size
 
-                    MDLabel:
-                        text: "Tuning Mode"
-                        text_size: self.size
-                        valign: "top"
-                        halign: "center"
+                    GridLayout:
+                        rows: 5
+                        cols: 1
+                        padding: [10, 10, 10, 10]
+                        spacing: 10
+
+                        CustomLabel: # ROW1 
+                            id: tuning_label
+                            text: "Tuning Mode"
+                            font_size: "30sp"
+
+                        BoxLayout: #ROW2
+                            size_hint_y: None
+                            height: 44
+                            padding: [0,0,0,0]
+                            Spinner:
+                                id: limb_dropdown
+                                text: "Limb tuning"
+                                values: ["Right leg", "Left leg", "Right arm", "Left arm"]
+                                
+                                # Customization
+                                size_hint: None, None
+                                size: 200,44
+                                background_color: app.colors["White"]
+                                color: app.colors["White"]
+                                pos_hint: {"center_x": 0.5}
+                                
+                                # Actions
+                                on_text: app.limb_dropdown_clicked(limb_dropdown.text)
+
+                                canvas.before:
+                                    Color:
+                                        rgba: app.colors["Cyan"]
+                                    Rectangle:
+                                        pos: self.pos
+                                        size: self.size
+
+                        BoxLayout: #ROW 3 
+                            orientation: "vertical"
+
+                            CustomLabel: 
+                                id: motor1_label
+                                text: "Right leg"
+
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: [10, 10, 10, 10]
+                                spacing: 10
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor1
+                                    hint_text: "Kc:"
+                                CustomTextEntry: # col 2
+                                    id: ti_motor1
+                                    hint_text: "Ti:"
+                                CustomTextEntry: # col 3
+                                    id: sp_motor1
+                                    hint_text: "SP:"
+                            
+                            CustomTextEntry:
+                                id: pv_motor1
+                                hint_text: "PV:"
+                        
+                        BoxLayout: #ROW 4
+                            orientation: "vertical"
+
+                            CustomLabel: 
+                                id: motor1_label
+                                text: "Right leg"
+
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: [10, 10, 10, 10]
+                                spacing: 10
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor1
+                                    hint_text: "Kc:"
+                                CustomTextEntry: # col 2
+                                    id: ti_motor1
+                                    hint_text: "Ti:"
+                                CustomTextEntry: # col 3
+                                    id: sp_motor1
+                                    hint_text: "SP:"
+                            
+                            CustomTextEntry:
+                                id: pv_motor1
+                                hint_text: "PV:"
+                        
+                        BoxLayout: #ROW 5
+                            orientation: "vertical"
+
+                            CustomLabel: 
+                                id: motor1_label
+                                text: "Right leg"
+
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: [10, 10, 10, 10]
+                                spacing: 10
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor1
+                                    hint_text: "Kc:"
+                                CustomTextEntry: # col 2
+                                    id: ti_motor1
+                                    hint_text: "Ti:"
+                                CustomTextEntry: # col 3
+                                    id: sp_motor1
+                                    hint_text: "SP:"
+                            
+                            CustomTextEntry:
+                                id: pv_motor1
+                                hint_text: "PV:"
+
+
 
 <SecundaryWindow>:
     # Empty

@@ -1,14 +1,17 @@
 # Set the screen size and mode
 from kivy.config import Config
-Config.set('graphics', 'width', '540')
-Config.set('graphics', 'height', '926')
+Config.set('graphics', 'width', '400')
+Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
 
 # Import kivy and kivymd libraries 
 from kivymd.app import MDApp
+from kivymd.uix.label import MDLabel
+from kivymd.uix.textfield import MDTextField
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
+from kivy.uix.dropdown import DropDown
 from ColorManager import ColorManager
 import platform
 
@@ -17,8 +20,11 @@ import platform
 class MainWindow(Screen): pass 
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
+class CustomLabel(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
+class CustomTextEntry(MDTextField): pass # Pre-made class to define defaultl settings to entry text boxes
 
 class TestDesignApp(MDApp):  
+    #------------------------ Init Methods ------------------------
     def __init__(self, **kwargs):
         '''Initializes all methods, initial logical setup and define attributes'''
         super().__init__(**kwargs)
@@ -34,6 +40,15 @@ class TestDesignApp(MDApp):
         Available colors:
         Cyan, Dark Blue, Light Orange, Light Gray, Black, White.
         '''
+
+        self.limb: str = ""
+        self.motors_labels: dict[str] = {
+            "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
+            "Left leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
+            "Right arm": ["motor1", "motor2", "motor3"],
+            "Left arm": ["motor1", "motor2", "motor3"],
+            
+        }
  
     def build(self):
         """Loads kivy design file"""
@@ -44,7 +59,8 @@ class TestDesignApp(MDApp):
 
     def on_start(self): # Method called at the begnnin of the class, just like __init__ and build. 
         self.root.current = "Main Window"
-
+    
+    #------------------------ Window Management ------------------------
     def detect_os(self) -> str:
         '''Detects current OS of device and returns it as string'''
         os_name = platform.system()
@@ -74,8 +90,24 @@ class TestDesignApp(MDApp):
             Window.left = 0
         elif screen == 1: # Secondary screen
             Window.left = 1920
-        
         Window.top = 30 # Slightly under screen top
+
+    #------------------------ Bluetooth tab methods ------------------------
+
+    def bluetooth_connection(self): pass
+
+    #------------------------ Assitance tab methods ------------------------
+
+    def assitance_method(self): pass
+
+    #------------------------ Tuning tab methods ------------------------
+
+    def limb_dropdown_clicked(self, limb: str) -> None: 
+        self.limb = limb
+        print(self.limb)
+    
+
+
 
 def main():
     '''Initializes the app indicating the current OS'''
