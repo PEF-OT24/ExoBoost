@@ -193,6 +193,96 @@ WindowManager:
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text(pv_motor1.text)
+                        
+                        BoxLayout: #ROW 3 
+                            orientation: "vertical"
+                            padding: [10, 10, 10, 10]
+                            spacing: 100
+                            size: self.width, 90
+
+                            CustomLabel: 
+                                id: motor1_label
+                                text: "Hip motor"
+
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: [10, 10, 10, 10]
+                                spacing: 10
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor3
+                                    hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor1.text)
+                                CustomTextEntry: # col 2
+                                    id: ti_motor3
+                                    hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor1.text)
+
+                                CustomTextEntry: # col 3
+                                    id: sp_motor3
+                                    hint_text: "SP:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor1.text)
+
+
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                size: 150, 50
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor3
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor1.text)
+
+                        BoxLayout: #ROW 3 
+                            orientation: "vertical"
+                            padding: [10, 10, 10, 10]
+                            spacing: 100
+                            size: self.width, 90
+
+                            CustomLabel: 
+                                id: motor2_label
+                                text: "Hip motor"
+
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: [10, 10, 10, 10]
+                                spacing: 10
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor2
+                                    hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor1.text)
+                                CustomTextEntry: # col 2
+                                    id: ti_motor2
+                                    hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor1.text)
+
+                                CustomTextEntry: # col 3
+                                    id: sp_motor2
+                                    hint_text: "SP:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor1.text)
+
+
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                size: 150, 50
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor2
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor1.text)
 
 <SecundaryWindow>:
     # Empty
