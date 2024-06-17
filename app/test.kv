@@ -14,14 +14,22 @@ WindowManager:
 
 <CustomTextEntry>: # Pre-made class to define defaultl settings to entry text boxes
     helper_text_mode: "on_focus"
-    hint_text_color_normal: app.colors["White"]  # White when not focused
+    hint_text_color_normal: app.colors["Black"]  # White when not focused
     hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the TextEntry horizontally and vertically
+
+    hint_text: "Fill mode"
+    mode: "fill"
+    fill_color: app.colors["White"]
 
 <MainWindow>:
     name: "Main Window"
 
     BoxLayout:
         orientation: 'vertical'
+        halign: "center"
+        valign: "center"
+        pos_hint: {"center_y": 0.5, "center_x": 0.5}
 
         MDTopAppBar:
             title: "ExoBoost"
@@ -29,7 +37,7 @@ WindowManager:
 
         MDBottomNavigation:
             id: bottom_nav
-            # selected_color_background: app.colors["Light Orange"]
+            # selected_color_background: app.colors["Light Orange"] # Check how to change background color
             panel_color: app.colors["Black"]
 
             # Set active/normal colors
@@ -85,8 +93,14 @@ WindowManager:
                     print("tab release")
 
                 # Elements
-                BoxLayout:
-                    orientation: 'vertical'
+                FloatLayout:
+                    orientation: "vertical"
+                    # size_hint_y: None
+                    # size_hint_x: None
+                    pos_hint: {"center_y": 0.5, "center_x": 0.5}
+                    halign: "center"
+                    valign: "center"
+
                     canvas.before:
                         Color:
                             rgba: app.colors["Dark Blue"]
@@ -97,46 +111,53 @@ WindowManager:
                     GridLayout:
                         rows: 5
                         cols: 1
-                        padding: [10, 10, 10, 10]
+                        padding: 30, 10
                         spacing: 10
 
-                        CustomLabel: # ROW1 
+                        CustomLabel: # ROW 1 
                             id: tuning_label
                             text: "Tuning Mode"
                             font_size: "30sp"
+                            size: self.width, 10
+                            canvas.before:
+                                Color:
+                                    rgba: app.colors["Black"]
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
 
-                        BoxLayout: #ROW2
-                            size_hint_y: None
-                            height: 44
-                            padding: [0,0,0,0]
+                        FloatLayout: # ROW 2
+                            orientation: "vertical"
+                            size: self.width, 10
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the BoxLayout horizontally
+                            
                             Spinner:
                                 id: limb_dropdown
+                                orientation: "verical"
                                 text: "Limb tuning"
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the Spinner horizontally
+
+                                # Option values
                                 values: ["Right leg", "Left leg", "Right arm", "Left arm"]
                                 
                                 # Customization
                                 size_hint: None, None
-                                size: 200,44
+                                size: 200, 44
                                 background_color: app.colors["White"]
                                 color: app.colors["White"]
-                                pos_hint: {"center_x": 0.5}
                                 
                                 # Actions
                                 on_text: app.limb_dropdown_clicked(limb_dropdown.text)
 
-                                canvas.before:
-                                    Color:
-                                        rgba: app.colors["Cyan"]
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
+                            padding: [10, 10, 10, 10]
+                            spacing: 100
+                            size: self.width, 90
 
                             CustomLabel: 
                                 id: motor1_label
-                                text: "Right leg"
+                                text: "Hip motor"
 
                             GridLayout:
                                 rows: 1
@@ -147,72 +168,31 @@ WindowManager:
                                 CustomTextEntry: # col 1
                                     id: kc_motor1
                                     hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor1.text)
                                 CustomTextEntry: # col 2
                                     id: ti_motor1
                                     hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor1.text)
+
                                 CustomTextEntry: # col 3
                                     id: sp_motor1
                                     hint_text: "SP:"
-                            
-                            CustomTextEntry:
-                                id: pv_motor1
-                                hint_text: "PV:"
-                        
-                        BoxLayout: #ROW 4
-                            orientation: "vertical"
-
-                            CustomLabel: 
-                                id: motor1_label
-                                text: "Right leg"
-
-                            GridLayout:
-                                rows: 1
-                                cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
-
-                                CustomTextEntry: # col 1
-                                    id: kc_motor1
-                                    hint_text: "Kc:"
-                                CustomTextEntry: # col 2
-                                    id: ti_motor1
-                                    hint_text: "Ti:"
-                                CustomTextEntry: # col 3
-                                    id: sp_motor1
-                                    hint_text: "SP:"
-                            
-                            CustomTextEntry:
-                                id: pv_motor1
-                                hint_text: "PV:"
-                        
-                        BoxLayout: #ROW 5
-                            orientation: "vertical"
-
-                            CustomLabel: 
-                                id: motor1_label
-                                text: "Right leg"
-
-                            GridLayout:
-                                rows: 1
-                                cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
-
-                                CustomTextEntry: # col 1
-                                    id: kc_motor1
-                                    hint_text: "Kc:"
-                                CustomTextEntry: # col 2
-                                    id: ti_motor1
-                                    hint_text: "Ti:"
-                                CustomTextEntry: # col 3
-                                    id: sp_motor1
-                                    hint_text: "SP:"
-                            
-                            CustomTextEntry:
-                                id: pv_motor1
-                                hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor1.text)
 
 
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                size: 150, 50
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor1
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor1.text)
 
 <SecundaryWindow>:
     # Empty

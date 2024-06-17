@@ -24,7 +24,7 @@ class CustomLabel(MDLabel): pass # Pre-made class to define default settings to 
 class CustomTextEntry(MDTextField): pass # Pre-made class to define defaultl settings to entry text boxes
 
 class TestDesignApp(MDApp):  
-    #------------------------ Init Methods ------------------------
+    #------------------------ Init Methods ------------------------#
     def __init__(self, **kwargs):
         '''Initializes all methods, initial logical setup and define attributes'''
         super().__init__(**kwargs)
@@ -32,7 +32,7 @@ class TestDesignApp(MDApp):
 
         # Detects OS running
         self.os_name = self.detect_os()
-        self.pos_screen(0)
+        self.pos_screen(1)
 
         # Colors dictionary used on the design file
         self.colors: dict = ColorManager()._get_colors()
@@ -60,7 +60,7 @@ class TestDesignApp(MDApp):
     def on_start(self): # Method called at the begnnin of the class, just like __init__ and build. 
         self.root.current = "Main Window"
     
-    #------------------------ Window Management ------------------------
+    #------------------------ Window Management ------------------------#
     def detect_os(self) -> str:
         '''Detects current OS of device and returns it as string'''
         os_name = platform.system()
@@ -105,10 +105,11 @@ class TestDesignApp(MDApp):
     def limb_dropdown_clicked(self, limb: str) -> None: 
         self.limb = limb
         print(self.limb)
+
+    def on_entry_text(self, value: str) -> None: 
+        print(value)
+        # self.root.ids.bottom_nav.ids.tuning_tab.ids.
     
-
-
-
 def main():
     '''Initializes the app indicating the current OS'''
     TestDesignApp().run()
