@@ -14,7 +14,21 @@ import platform
 
 # Create multiple windows, main code will be located in main window
 # SecundaryWindow (as well as new created) might contain differente or new functions to the app
-class MainWindow(Screen): pass 
+class MainWindow(Screen):
+    
+    def search_devices(self):
+        device_list = self.ids.device_list
+        devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
+        device_list.data = devices
+    
+    def connect_disconnect(self):
+        device_list = self.ids.device_list
+        selected_devices = [child for child in device_list.children[0].children if child.selected]
+        if selected_devices:
+            print(f"Connecting/Disconnecting {selected_devices[0].text}")
+        else:
+            print("No device selected")
+
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
 
@@ -26,7 +40,7 @@ class TestDesignApp(MDApp):
 
         # Detects OS running
         self.os_name = self.detect_os()
-        self.pos_screen(1)
+        self.pos_screen(0)
 
         # Colors dictionary used on the design file
         self.colors: dict = ColorManager()._get_colors()

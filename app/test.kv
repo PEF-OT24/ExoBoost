@@ -13,6 +13,11 @@ WindowManager:
         MDTopAppBar:
             title: "ExoBoost"
             md_bg_color: app.colors["Black"]
+            font_name: 'ADLaMDisplay-Regular.ttf'
+            Image:
+                source: 'PossibleLogoW.png'
+                size: self.texture_size
+                  
 
         MDBottomNavigation:
             id: bottom_nav
@@ -48,13 +53,74 @@ WindowManager:
                             size: self.size
 
                     # Elements on app
+# -------------------- Menu Bluetooth --------------------------
                     MDLabel:
                         id: bluetooth_title
                         text: "Bluetooth Connection"
-                        text_size: "25"
+                        font_name: 'ADLaMDisplay-Regular.ttf'
+                        font_size: "25sp"
                         halign: "center"
-                        valign: "top"
-
+                        size_hint_y: 0.5
+                        height: self.texture_size[1]
+                        theme_text_color: "Custom"
+                        text_color: app.colors["White"]
+                    # Boton para buscar dispositivos                       
+                    BoxLayout:
+                        Widget:
+                        MDFillRoundFlatButton:
+                            id: bluetooth_device_search
+                            text: 'Search Devices'
+                            text_color: app.colors['White']
+                            size_hint: None, None
+                            size: '200dp','50dp'
+                            ripple_effect: False
+                            ripple_color: app.colors['Cyan']
+                            on_press: self.md_bg_color = app.colors["Light Orange"]
+                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            on_press: root.search_devices()
+                            md_bg_color: app.colors["Cyan"]
+                            pos_hint: {'center_x':0.5,'center_y':0.5}
+                        Widget:
+                    # Design choice para espacio entre elementos :)
+                    Widget:
+                        size_hint_y: None
+                        height: '20dp'
+                    # Menu con dispositivos disponibles
+                    ScrollView:
+                        size_hint: (1,1)
+                        RecycleView:
+                            id: device_list
+                            viewclass: 'SelectableLabel'
+                            RecycleBoxLayout:
+                                #color: app.colors["White"]
+                                default_size: None, dp(56)
+                                default_size_hint: 1,None
+                                size_hint_y: None
+                                height: self.minimum_height
+                                orientation: 'vertical'
+                    # Botón para conectarse/desconectarse a un dispositivo
+                    BoxLayout:
+                        size_hint_y: None
+                        height: '50 dp'
+                        Widget:
+                        MDFillRoundFlatButton:
+                            id: bluetooth_connect
+                            text: 'CONNECT/DISCONNECT'
+                            text_color: app.colors['White']
+                            size_hint: None, None
+                            ripple_effect: False
+                            ripple_color: app.colors['Cyan']
+                            on_press: self.md_bg_color = app.colors["Light Orange"]
+                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            on_press: root.connect_disconnect()
+                            md_bg_color: app.colors["Cyan"]
+                            pos_hint: {'center_x':0}
+                        Widget:
+                    #Esto es solo para crear un espacio abajo (design choice)
+                    Widget:
+                        size_hint_y: None
+                        height: '48dp'
+# ------------------------ Otros Menus -----------------------------
             MDBottomNavigationItem:
                 id: assistance_tab
                 name: "Assistance mode"
@@ -88,3 +154,22 @@ WindowManager:
 <SecundaryWindow>:
     # Empty
     name: "Secundary Window"
+# Estas son funciones para dar formato a la lista de dispositivos
+# Aqui se le da formato al texto del menú de dispositivos
+<SelectableLabel@MDLabel>:
+    size_hint_y: None
+    height: self.texture_size[1]
+    halign: 'center'
+    valign: 'middle'
+    theme_text_color: 'Custom'
+    text_color: app.colors['White']
+    on_touch_down:
+        self.parent.parent.parent.select_with_touch(self.index, 'down')
+#Aqui se le da formato a la caja que contiene dicho menú :)
+<SelectableRecycleBoxLayout@RecycleBoxLayout>:
+    default_size: None, dp(56)
+    default_size_hint: 1, None
+    size_hint_y: None
+    height: self.minimum_height
+    orientation: 'vertical'
+    
