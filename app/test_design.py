@@ -11,9 +11,12 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
 from ColorManager import ColorManager
 import platform
+from kivy.clock import Clock
+
+Clock.max_iteration = 50  # Increase this value if necessary
 
 # Create multiple windows, main code will be located in main window
-# SecundaryWindow (as well as new created) might contain differente or new functions to the app
+# SecundaryWindow (as well as new created) might contain different or new functions to the app
 class MainWindow(Screen): pass 
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
@@ -42,7 +45,7 @@ class TestDesignApp(MDApp):
             self.kv_loaded = True
         return self.root
 
-    def on_start(self): # Method called at the begnnin of the class, just like __init__ and build. 
+    def on_start(self): 
         self.root.current = "Main Window"
 
     def detect_os(self) -> str:
@@ -70,12 +73,20 @@ class TestDesignApp(MDApp):
     
     def pos_screen(self, screen: int) -> None:
         '''Position screen on desired window for debugging'''
-        if screen == 0: # Main screen
+        if screen == 0: 
             Window.left = 0
-        elif screen == 1: # Secondary screen
+        elif screen == 1: 
             Window.left = 1920
-        
-        Window.top = 30 # Slightly under screen top
+        Window.top = 30 
+
+    def sit_down_stand_up(self):
+        print("Sit down/stand up action triggered")
+
+    def walk(self):
+        print("Walk action triggered")
+
+    def stop(self):
+        print("Stop action triggered")
 
 def main():
     '''Initializes the app indicating the current OS'''
