@@ -1,5 +1,7 @@
 # Byte-compiled / optimized / DLL files
-__pycache__/
+app/__pycache__/
+bin/
+.buildozer/
 *.py[cod]
 *$py.class
 
