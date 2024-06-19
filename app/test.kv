@@ -21,7 +21,7 @@
     hint_text_color_normal: app.colors["Black"]  # White when not focused
     hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the TextEntry horizontally and vertically
-
+    halign: "center"
     hint_text: "Fill mode"
     mode: "fill"
     fill_color: app.colors["White"]
@@ -117,37 +117,34 @@ WindowManager:
                     GridLayout:
                         rows: 5
                         cols: 1
-                        padding: dp(30), dp(10)
+                        padding: dp(10), dp(10)
                         spacing: dp(10)
 
                         CustomLabelAD: # ROW 1 
                             id: tuning_label
                             text: "Tuning Mode"
-                            size: self.width, dp(10)
-                            canvas.before:
-                                Color:
-                                    rgba: app.colors["Dark Blue"]
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-
-                        FloatLayout: # ROW 2
-                            orientation: "vertical"
-                            size: self.width, dp(10)
-                            pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the BoxLayout horizontally
+                            size_hint: None, None
+                            size: (root.width, dp(45))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
+              
+                        BoxLayout: 
+                            orientation: "vertical"
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            size_hint: None, None
+                            size: (root.width, dp(50))
                             Spinner:
                                 id: limb_dropdown
-                                orientation: "verical"
-                                text: "Limb tuning"
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the Spinner horizontally
 
                                 # Option values
+                                text: "Limb tuning"
                                 values: ["Right leg", "Left leg", "Right arm", "Left arm"]
                                 
                                 # Customization
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the Spinner horizontally
+                                orientation: "verical"
                                 size_hint: None, None
-                                size: (dp(200), dp(44))
+                                size: (dp(200), dp(45))
                                 background_color: app.colors["White"]
                                 color: app.colors["White"]
                                 
@@ -156,8 +153,8 @@ WindowManager:
 
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
-                            padding: [10, 10, 10, 10]
-                            spacing: 100
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
                             size: self.width, dp(90)
 
                             CustomLabelRoboto: 
@@ -167,8 +164,8 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor1
@@ -187,23 +184,20 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text(sp_motor1.text)
 
-
                             BoxLayout:
                                 orientation: "vertical"
                                 size_hint: None, None
-                                size: 150, 50
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                                 CustomTextEntry:
                                     id: pv_motor1
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text(pv_motor1.text)
-                        
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
-                            padding: [10, 10, 10, 10]
-                            spacing: 100
-                            size: self.width, 90
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
+                            size: self.width, dp(90)
 
                             CustomLabelRoboto: 
                                 id: motor1_label
@@ -212,83 +206,78 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
 
                                 CustomTextEntry: # col 1
-                                    id: kc_motor3
+                                    id: kc_motor1
                                     hint_text: "Kc:"
                                     on_text_validate:
                                         app.on_entry_text(kc_motor1.text)
                                 CustomTextEntry: # col 2
-                                    id: ti_motor3
+                                    id: ti_motor1
                                     hint_text: "Ti:"
                                     on_text_validate:
                                         app.on_entry_text(ti_motor1.text)
 
                                 CustomTextEntry: # col 3
-                                    id: sp_motor3
+                                    id: sp_motor1
                                     hint_text: "SP:"
                                     on_text_validate:
                                         app.on_entry_text(sp_motor1.text)
 
-
                             BoxLayout:
                                 orientation: "vertical"
                                 size_hint: None, None
-                                size: 150, 50
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                                 CustomTextEntry:
-                                    id: pv_motor3
+                                    id: pv_motor1
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text(pv_motor1.text)
-
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
-                            padding: [10, 10, 10, 10]
-                            spacing: 100
-                            size: self.width, 90
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
+                            size: self.width, dp(90)
 
                             CustomLabelRoboto: 
-                                id: motor2_label
+                                id: motor1_label
                                 text: "Hip motor"
 
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
 
                                 CustomTextEntry: # col 1
-                                    id: kc_motor2
+                                    id: kc_motor1
                                     hint_text: "Kc:"
                                     on_text_validate:
                                         app.on_entry_text(kc_motor1.text)
                                 CustomTextEntry: # col 2
-                                    id: ti_motor2
+                                    id: ti_motor1
                                     hint_text: "Ti:"
                                     on_text_validate:
                                         app.on_entry_text(ti_motor1.text)
 
                                 CustomTextEntry: # col 3
-                                    id: sp_motor2
+                                    id: sp_motor1
                                     hint_text: "SP:"
                                     on_text_validate:
                                         app.on_entry_text(sp_motor1.text)
 
-
                             BoxLayout:
                                 orientation: "vertical"
                                 size_hint: None, None
-                                size: 150, 50
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                                 CustomTextEntry:
-                                    id: pv_motor2
+                                    id: pv_motor1
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text(pv_motor1.text)
-
+                        
 <SecundaryWindow>:
     # Empty
     name: "Secundary Window"
