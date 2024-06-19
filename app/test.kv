@@ -1,14 +1,18 @@
 #:kivy 2.2.1
 
-WindowManager:
-    MainWindow:
-    SecundaryWindow:
-
-<CustomLabel>: # Pre-made class to define default settings to subtitles labels with MDLabel
+<CustomLabelRoboto>: # Pre-made class to define default settings to subtitle labels with MDLabel
     font_name: "Roboto"
     font_size: "15sp" # 30sp for titles
     halign: "center"
-    pos_hint: {"center_x": 0.5, "top": 0}
+    pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+
+<CustomLabelAD>: # Pre-made class to define default settings to title labels with MDLabel
+    font_name: "ADLaMDisplay-Regular.ttf"
+    font_size: "30sp" # 30sp for titles
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
@@ -21,6 +25,10 @@ WindowManager:
     hint_text: "Fill mode"
     mode: "fill"
     fill_color: app.colors["White"]
+
+WindowManager:
+    MainWindow:
+    SecundaryWindow:
 
 <MainWindow>:
     name: "Main Window"
@@ -109,14 +117,13 @@ WindowManager:
                     GridLayout:
                         rows: 5
                         cols: 1
-                        padding: 30, 10
-                        spacing: 10
+                        padding: dp(30), dp(10)
+                        spacing: dp(10)
 
-                        CustomLabel: # ROW 1 
+                        CustomLabelAD: # ROW 1 
                             id: tuning_label
                             text: "Tuning Mode"
-                            font_size: "30sp"
-                            size: self.width, 10
+                            size: self.width, dp(10)
                             canvas.before:
                                 Color:
                                     rgba: app.colors["Dark Blue"]
@@ -126,7 +133,7 @@ WindowManager:
 
                         FloatLayout: # ROW 2
                             orientation: "vertical"
-                            size: self.width, 10
+                            size: self.width, dp(10)
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the BoxLayout horizontally
                             
                             Spinner:
@@ -140,7 +147,7 @@ WindowManager:
                                 
                                 # Customization
                                 size_hint: None, None
-                                size: 200, 44
+                                size: (dp(200), dp(44))
                                 background_color: app.colors["White"]
                                 color: app.colors["White"]
                                 
@@ -151,9 +158,9 @@ WindowManager:
                             orientation: "vertical"
                             padding: [10, 10, 10, 10]
                             spacing: 100
-                            size: self.width, 90
+                            size: self.width, dp(90)
 
-                            CustomLabel: 
+                            CustomLabelRoboto: 
                                 id: motor1_label
                                 text: "Hip motor"
 
@@ -198,7 +205,7 @@ WindowManager:
                             spacing: 100
                             size: self.width, 90
 
-                            CustomLabel: 
+                            CustomLabelRoboto: 
                                 id: motor1_label
                                 text: "Hip motor"
 
@@ -243,7 +250,7 @@ WindowManager:
                             spacing: 100
                             size: self.width, 90
 
-                            CustomLabel: 
+                            CustomLabelRoboto: 
                                 id: motor2_label
                                 text: "Hip motor"
 
