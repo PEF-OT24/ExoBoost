@@ -1,35 +1,37 @@
 #:kivy 2.2.1
-
-<CustomLabelRoboto>: # Pre-made class to define default settings to subtitle labels with MDLabel
-    font_name: "Roboto"
-    font_size: "15sp" # 30sp for titles
+# --------------------------------------- Predefinición de clases para generalizar formato ----------------------------------------
+<CustomLabelRoboto>: # Case predefinida para los subtítulos con formato
+    font_name: "Roboto" # Roboto para texto y subtítulos
+    font_size: "15sp" # 30sp para texto y subtítulos
     halign: "center"
     pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
-<CustomLabelAD>: # Pre-made class to define default settings to title labels with MDLabel
-    font_name: "ADLaMDisplay-Regular.ttf"
-    font_size: "30sp" # 30sp for titles
+<CustomLabelAD>: # Case predefinida para los títulos con formato
+    font_name: "ADLaMDisplay-Regular.ttf" # ADLaMdisplay para títulos
+    font_size: "30sp" # 30sp para títulos
     halign: "center"
     pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
-<CustomTextEntry>: # Pre-made class to define defaultl settings to entry text boxes
+<CustomTextEntry>: # Case predefinida para las entradas de texto con formato
     helper_text_mode: "on_focus"
-    hint_text_color_normal: app.colors["Black"]  # White when not focused
-    hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
-    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the TextEntry horizontally and vertically
+    hint_text_color_normal: app.colors["Black"]  # En negro cuando no está seleccionado
+    hint_text_color_focus: app.colors["Light Orange"]   # En naranja cuando está seleccionado 
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
     halign: "center"
     hint_text: "Fill mode"
     mode: "fill"
-    fill_color: app.colors["White"]
+    fill_color: app.colors["Light Gray"]
 
+# --------------------------------------- Establecer prioridad en las ventanas ---------------------------------------- (SE PUEDE BORRAR)
 WindowManager:
     MainWindow:
     SecundaryWindow:
 
+# --------------------------------------- Ventana principal ----------------------------------------
 <MainWindow>:
     name: "Main Window"
 
@@ -39,23 +41,25 @@ WindowManager:
         valign: "center"
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
 
+        # ------------------------------ Barra titular principal superior -------------------------
         MDTopAppBar:
             title: "ExoBoost"
             md_bg_color: app.colors["Black"]
 
+        # ------------------------------- Se define la arquitectura base como un menú de navegación inferior -------------------------------
         MDBottomNavigation:
             id: bottom_nav
-            # selected_color_background: app.colors["Light Orange"] # Check how to change background color
             panel_color: app.colors["Black"]
 
-            # Set active/normal colors
+            # Establecer colores para los estados de selección
             text_color_normal: app.colors["Cyan"]
             text_color_active: app.colors["Light Orange"]
             icon_color_normal: app.colors["Cyan"]
             icon_color_active: app.colors["Light Orange"]
 
+    # ---------------------------------------------- Menú de Bluetooth -------------------------------------------------- 
             MDBottomNavigationItem:
-                # Bluetooth settings tab 
+                # Configuraciones del menú de bluetooth
                 id: bluetooh_tab
                 name: "Bluetooth settings"
                 text: "Bluetooth settings"
@@ -77,6 +81,7 @@ WindowManager:
                         text: "Bluetooth"
                         halign: "center"
 
+    # ---------------------------------------------- Menú de Asistencia -------------------------------------------------- 
             MDBottomNavigationItem:
                 id: assistance_tab
                 name: "Assistance mode"
@@ -89,8 +94,8 @@ WindowManager:
                 MDLabel:
                     text: "Assistance Mode"
                     halign: "center"
-
-            MDBottomNavigationItem: # TUNING TAB
+    # ---------------------------------------------- Menú de Sintonización -------------------------------------------------- 
+            MDBottomNavigationItem: 
                 id: tuning_tab
                 name: "Tuning mode"
                 text: "Tuning mode"
@@ -100,6 +105,7 @@ WindowManager:
                 on_tab_release:
                     print("tab release")
 
+                # -------------------------------- Fondo del menú --------------------------
                 # Elements
                 FloatLayout:
                     orientation: "vertical"
@@ -113,13 +119,13 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-
                     GridLayout:
                         rows: 5
                         cols: 1
                         padding: dp(10), dp(10)
                         spacing: dp(10)
 
+                        # ----------------------- Título del Menú -------------------------------------------- 
                         CustomLabelAD: # ROW 1 
                             id: tuning_label
                             text: "Tuning Mode"
@@ -127,157 +133,171 @@ WindowManager:
                             size: (root.width, dp(45))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
-              
+                        # ----------------------- Menú desplegable para la selección de la articulación ------------
                         BoxLayout: 
                             orientation: "vertical"
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             size_hint: None, None
                             size: (root.width, dp(50))
+
                             Spinner:
                                 id: limb_dropdown
-
-                                # Option values
-                                text: "Limb tuning"
-                                values: ["Right leg", "Left leg", "Right arm", "Left arm"]
+                                text: "Select a limb"
+                                values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
                                 
-                                # Customization
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the Spinner horizontally
+                                # Personalización
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
                                 orientation: "verical"
                                 size_hint: None, None
                                 size: (dp(200), dp(45))
-                                background_color: app.colors["White"]
+
+                                # Definición de colores
+                                background_color: app.colors["Light Gray"]
+                                on_background_color: self.trigger_update()
                                 color: app.colors["White"]
                                 
-                                # Actions
+                                # Acciones
                                 on_text: app.limb_dropdown_clicked(limb_dropdown.text)
-
-                        BoxLayout: #ROW 3 
-                            orientation: "vertical"
-                            padding: (dp(10), dp(10))
-                            spacing: dp(15)
-                            size: self.width, dp(90)
-
-                            CustomLabelRoboto: 
-                                id: motor1_label
-                                text: "Hip motor"
-
-                            GridLayout:
-                                rows: 1
-                                cols: 3
-                                padding: (dp(10), dp(10))
-                                spacing: dp(10)
-
-                                CustomTextEntry: # col 1
-                                    id: kc_motor1
-                                    hint_text: "Kc:"
-                                    on_text_validate:
-                                        app.on_entry_text(kc_motor1.text)
-                                CustomTextEntry: # col 2
-                                    id: ti_motor1
-                                    hint_text: "Ti:"
-                                    on_text_validate:
-                                        app.on_entry_text(ti_motor1.text)
-
-                                CustomTextEntry: # col 3
-                                    id: sp_motor1
-                                    hint_text: "SP:"
-                                    on_text_validate:
-                                        app.on_entry_text(sp_motor1.text)
-
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                CustomTextEntry:
-                                    id: pv_motor1
-                                    hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text(pv_motor1.text)
-                        BoxLayout: #ROW 3 
-                            orientation: "vertical"
-                            padding: (dp(10), dp(10))
-                            spacing: dp(15)
-                            size: self.width, dp(90)
-
-                            CustomLabelRoboto: 
-                                id: motor1_label
-                                text: "Hip motor"
-
-                            GridLayout:
-                                rows: 1
-                                cols: 3
-                                padding: (dp(10), dp(10))
-                                spacing: dp(10)
-
-                                CustomTextEntry: # col 1
-                                    id: kc_motor1
-                                    hint_text: "Kc:"
-                                    on_text_validate:
-                                        app.on_entry_text(kc_motor1.text)
-                                CustomTextEntry: # col 2
-                                    id: ti_motor1
-                                    hint_text: "Ti:"
-                                    on_text_validate:
-                                        app.on_entry_text(ti_motor1.text)
-
-                                CustomTextEntry: # col 3
-                                    id: sp_motor1
-                                    hint_text: "SP:"
-                                    on_text_validate:
-                                        app.on_entry_text(sp_motor1.text)
-
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                CustomTextEntry:
-                                    id: pv_motor1
-                                    hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text(pv_motor1.text)
-                        BoxLayout: #ROW 3 
-                            orientation: "vertical"
-                            padding: (dp(10), dp(10))
-                            spacing: dp(15)
-                            size: self.width, dp(90)
-
-                            CustomLabelRoboto: 
-                                id: motor1_label
-                                text: "Hip motor"
-
-                            GridLayout:
-                                rows: 1
-                                cols: 3
-                                padding: (dp(10), dp(10))
-                                spacing: dp(10)
-
-                                CustomTextEntry: # col 1
-                                    id: kc_motor1
-                                    hint_text: "Kc:"
-                                    on_text_validate:
-                                        app.on_entry_text(kc_motor1.text)
-                                CustomTextEntry: # col 2
-                                    id: ti_motor1
-                                    hint_text: "Ti:"
-                                    on_text_validate:
-                                        app.on_entry_text(ti_motor1.text)
-
-                                CustomTextEntry: # col 3
-                                    id: sp_motor1
-                                    hint_text: "SP:"
-                                    on_text_validate:
-                                        app.on_entry_text(sp_motor1.text)
-
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                CustomTextEntry:
-                                    id: pv_motor1
-                                    hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text(pv_motor1.text)
                         
+                        # --------------------------- Parámetros PI del motor 1 ------------------------- 
+                        BoxLayout: #ROW 3 
+                            orientation: "vertical"
+                            padding: (dp(10), dp(10))
+                            spacing: dp(20)
+                            size: (self.width, dp(90))
+
+                            CustomLabelRoboto: 
+                                id: motor1_label
+                                text: "Hip motor"
+
+                            # ------------- Parámetros PI ------------- 
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor1
+                                    hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor1.text)
+                                CustomTextEntry: # col 2
+                                    id: ti_motor1
+                                    hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor1.text)
+
+                                # -------- Referencia del motor 1 -------
+                                CustomTextEntry: # col 3
+                                    id: sp_motor1
+                                    hint_text: "SP:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor1.text)
+
+                            # ------------- Valor del motor 2 ------------- 
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor1
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor1.text)
+
+                        # --------------------------- Parámetros PI del motor 2 ------------------------- 
+                        BoxLayout: #ROW 4
+                            orientation: "vertical"
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
+                            size: self.width, dp(90)
+
+                            CustomLabelRoboto: 
+                                id: motor2_label
+                                text: "Knee motor"
+
+                            # ------------- Parámetros PI ------------- 
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor2
+                                    hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor2.text)
+                                CustomTextEntry: # col 2
+                                    id: ti_motor2
+                                    hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor2.text)
+                                # ---------- Referencia del motor 2 -----------
+                                CustomTextEntry: # col 3
+                                    id: sp_motor2
+                                    hint_text: "SP:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor2.text)
+                            
+                            # ------------- Valor del motor 2 ------------- 
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor2
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor2.text)
+
+                        # --------------------------- Parámetros PI del motor 3 ------------------------- 
+                        BoxLayout: #ROW 5
+                            orientation: "vertical"
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
+                            size: self.width, dp(90)
+
+                            CustomLabelRoboto: 
+                                id: motor1_label
+                                text: "Ankle motor"
+
+                            # --------------------- Parámetros PI ------------------------
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor3
+                                    hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor3.text)
+                                CustomTextEntry: # col 2
+                                    id: ti_motor3
+                                    hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor3.text)
+                                # ----------- Referencia del motor 3 -------------------
+                                CustomTextEntry: # col 3
+                                    id: sp_motor3
+                                    hint_text: "SP:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor3.text)
+                            # ------------------ Valor del motor 3 ------------------------
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor3
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor3.text)
+
+# --------------------------------------- Ventana secundaria ----------------------------------------------   
 <SecundaryWindow>:
     # Empty
     name: "Secundary Window"
