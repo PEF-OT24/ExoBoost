@@ -39,22 +39,22 @@ class MainWindow(Screen):
 
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
-class CustomLabelRoboto(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
-class CustomLabelAD(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
-class CustomTextEntry(MDTextField): pass # Pre-made class to define defaultl settings to entry text boxes
+class CustomLabelRoboto(MDLabel): pass # Case predefinida para los subtítulos con formato
+class CustomLabelAD(MDLabel): pass # Case predefinida para los títulos con formato
+class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de texto con formato
 
 class TestDesignApp(MDApp):  
-    #------------------------ Init Methods ------------------------#
+    #------------------------ Métodos de inicio ------------------------#
     def __init__(self, **kwargs):
         '''Initializes all methods, initial logical setup and define attributes'''
         super().__init__(**kwargs)
         self.kv_loaded: bool = False
 
-        # Detects OS running
+        # Detecta el sistema operativo
         self.os_name = self.detect_os()
         self.pos_screen(0)
 
-        # Colors dictionary used on the design file
+        # Diccionario de colores
         self.colors: dict = ColorManager()._get_colors()
         '''
         Available colors:
@@ -80,7 +80,7 @@ class TestDesignApp(MDApp):
     def on_start(self): # Method called at the begnnin of the class, just like __init__ and build. 
         self.root.current = "Main Window"
     
-    #------------------------ Window Management ------------------------#
+    # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
         '''Detects current OS of device and returns it as string'''
         os_name = platform.system()
@@ -112,15 +112,15 @@ class TestDesignApp(MDApp):
             Window.left = 1920
         Window.top = 30 # Slightly under screen top
 
-    #------------------------ Bluetooth tab methods ------------------------
+    #------------------------ Métodos de menú de blutooth ------------------------
 
     def bluetooth_connection(self): pass
 
-    #------------------------ Assitance tab methods ------------------------
+    #------------------------ Métodos del menú de asistencia ------------------------
 
     def assitance_method(self): pass
 
-    #------------------------ Tuning tab methods ------------------------
+    #------------------------ Métodos del menú de sintonizción ------------------------
 
     def limb_dropdown_clicked(self, limb: str) -> None: 
         self.limb = limb
@@ -128,7 +128,6 @@ class TestDesignApp(MDApp):
 
     def on_entry_text(self, value: str) -> None: 
         print(value)
-        # self.root.ids.bottom_nav.ids.tuning_tab.ids.
     
 def main():
     '''Initializes the app indicating the current OS'''
