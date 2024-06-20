@@ -43,13 +43,12 @@ WindowManager:
 
         # ------------------------------ Barra titular principal superior -------------------------
         MDTopAppBar:
-            title: "ExoBoost"
+            #Cambios en la top bar
             md_bg_color: app.colors["Black"]
+            left_action_items: [['PossibleLogoW.png',lambda x: None]]
+            title: "ExoBoost"
             font_name: 'ADLaMDisplay-Regular.ttf'
-            Image:
-                source: 'PossibleLogoW.png'
-                size: self.texture_size
-                  
+            pos_hint: {'center_x':0.5,'center_y':0.5}                              
 
         # ------------------------------- Se define la arquitectura base como un menú de navegación inferior -------------------------------
         MDBottomNavigation:
@@ -84,16 +83,13 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    MDLabel:
+
+                    # Elements on app
+# -------------------- Menu Bluetooth --------------------------
+                    CustomLabelAD:
                         id: bluetooth_title
                         text: "Bluetooth Connection"
-                        font_name: 'ADLaMDisplay-Regular.ttf'
-                        font_size: "25sp"
-                        halign: "center"
-                        size_hint_y: 0.5
-                        height: self.texture_size[1]
-                        theme_text_color: "Custom"
-                        text_color: app.colors["White"]
+
                     # Boton para buscar dispositivos                       
                     BoxLayout:
                         Widget:
@@ -110,6 +106,7 @@ WindowManager:
                             on_press: root.search_devices()
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0.5,'center_y':0.5}
+                            height: root.height*0.065
                         Widget:
                     # Design choice para espacio entre elementos :)
                     Widget:
@@ -142,7 +139,13 @@ WindowManager:
                             ripple_color: app.colors['Cyan']
                             on_press: self.md_bg_color = app.colors["Light Orange"]
                             on_release: self.md_bg_color = app.colors["Cyan"]
-                            on_press: root.connect_disconnect()
+                            width: root.width*0.5
+                            height: root.height*0.065
+                            #on_press: 
+                            try:
+                                root.connect_disconnect()
+                            except:
+                                print('error')
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0}
                         Widget:

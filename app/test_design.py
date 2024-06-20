@@ -21,15 +21,21 @@ class MainWindow(Screen):
     def search_devices(self):
         device_list = self.ids.device_list
         devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
-        device_list.data = devices
+        try:
+            device_list.data = devices
+        except:
+            print('no devices aun')
     
     def connect_disconnect(self):
         device_list = self.ids.device_list
         selected_devices = [child for child in device_list.children[0].children if child.selected]
-        if selected_devices:
-            print(f"Connecting/Disconnecting {selected_devices[0].text}")
-        else:
-            print("No device selected")
+        try:
+            if selected_devices:
+                print(f"Connecting/Disconnecting {selected_devices[0].text}")
+            else:
+                print("No device selected")
+        except:
+            print("boton no funciona aun")
 
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
