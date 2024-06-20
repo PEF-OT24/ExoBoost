@@ -4,6 +4,34 @@ WindowManager:
     MainWindow:
     SecundaryWindow:
 
+<CustomLabelRoboto>: # Pre-made class to define default settings to subtitles labels with MDLabel
+    font_name: "Roboto"
+    font_size: "15sp" # 30sp for titles
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5,"top": 0}
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+
+    
+<CustomLabelAD>: # Pre-made class to define default settings to subtitles labels with MDLabel
+    font_name: "ADLaMDisplay-Regular.ttf"
+    font_size: "30sp" # 30sp for titles
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5,"top": 0}
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+
+<CustomTextEntry>: # Pre-made class to define defaultl settings to entry text boxes
+    helper_text_mode: "on_focus"
+    hint_text_color_normal: app.colors["Black"]  # White when not focused
+    hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the TextEntry horizontally and vertically
+
+    hint_text: "Fill mode"
+    mode: "fill"
+    fill_color: app.colors["White"]
+
+
 <MainWindow>:
     name: "Main Window"
 
@@ -57,13 +85,14 @@ WindowManager:
                             pos: self.pos
                             size: self.size
 
-                    MDLabel:
+                    CustomLabelAD:
                         text: "Assistance Mode"
                         halign: "center"
+                        valign: "top"
                         size_hint_y: None
-                        height: self.texture_size[1] + 20
+                        height: self.texture_size[1] + 10  # Increased height to move higher
                         theme_text_color: "Custom"
-                        text_color: app.colors["White"]                        
+                        text_color: app.colors["White"]
 
                     BoxLayout:
                         orientation: 'vertical'
@@ -78,12 +107,12 @@ WindowManager:
                             size_hint_y: None
                             height: self.minimum_height
                             padding: dp(20)
-                            spacing: dp(10)
+                            spacing: dp(5)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
                             MDLabel:
                                 text: "Height (m)"
-                                halign: "center"
+                                halign: "left"
                                 theme_text_color: "Custom"
                                 text_color: app.colors["White"]
 
@@ -92,43 +121,45 @@ WindowManager:
                                 multiline: False
                                 size_hint_x: None
                                 width: dp(100)
+                                halign: "center"
                                 hint_text: " "
                                 mode: "fill"
                                 fill_color: app.colors["White"]
-                                hint_text_color_normal: app.colors["Black"]  # White when not focused
-                                hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused                                
+                                hint_text_color_normal: app.colors["Black"]
+                                hint_text_color_focus: app.colors["Light Orange"]
 
                         BoxLayout:
                             orientation: 'horizontal'
                             size_hint_y: None
                             height: self.minimum_height
                             padding: dp(20)
-                            spacing: dp(10)
+                            spacing: dp(5)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
                             MDLabel:
                                 text: "Weight (kg)"
-                                halign: "center"
+                                halign: "left"
                                 theme_text_color: "Custom"
                                 text_color: app.colors["White"]
 
                             MDTextField:
                                 id: weight_input
                                 multiline: False
+                                halign: "center"
                                 size_hint_x: None
                                 width: dp(100)
                                 hint_text: " "
                                 mode: "fill"
                                 fill_color: app.colors["White"]
-                                hint_text_color_normal: app.colors["Black"]  # White when not focused
-                                hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
+                                hint_text_color_normal: app.colors["Black"]
+                                hint_text_color_focus: app.colors["Light Orange"]
 
                         BoxLayout:
-                            orientation: 'horizontal'
+                            orientation: 'vertical'
                             size_hint_y: None
                             height: self.minimum_height
                             padding: dp(20)
-                            spacing: dp(10)
+                            spacing: dp(15)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
                             MDLabel:
@@ -137,6 +168,8 @@ WindowManager:
                                 theme_text_color: "Custom"
                                 text_color: app.colors["White"]
 
+                            Widget:
+                                id: assistance_level_slider
                             MDSlider:
                                 id: assistance_level_slider
                                 min: 0
@@ -144,6 +177,8 @@ WindowManager:
                                 value: 50
                                 size_hint_x: 0.8
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                on_value: self.on_slider_value(self.value)
+                            Widget:
 
                         MDBoxLayout:
                             orientation: 'vertical'
@@ -164,7 +199,8 @@ WindowManager:
                                 on_press: self.md_bg_color = app.colors["Light Orange"]
                                 on_release: self.md_bg_color = app.colors["Cyan"]
                                 md_bg_color: app.colors["Cyan"]
-                                width: dp(200)
+                                width: root.width*0.4
+                                height: root.height*0.05
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                             Widget:
 
@@ -179,9 +215,10 @@ WindowManager:
                                 on_press: self.md_bg_color = app.colors["Light Orange"]
                                 on_release: self.md_bg_color = app.colors["Cyan"]
                                 md_bg_color: app.colors["Cyan"]
-                                width: dp(200)
+                                width: root.width*0.4
+                                height: root.height*0.05
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            Widget:                              
+                            Widget:
 
                             Widget:
                             MDFillRoundFlatButton:
@@ -194,9 +231,10 @@ WindowManager:
                                 on_press: self.md_bg_color = app.colors["Light Orange"]
                                 on_release: self.md_bg_color = app.colors["Cyan"]
                                 md_bg_color: app.colors["Cyan"]
-                                width: dp(200)
+                                width: root.width*0.4
+                                height: root.height*0.05
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            Widget:                     
+                            Widget:
 
             MDBottomNavigationItem:
                 id: tuning_tab
