@@ -11,7 +11,6 @@ from kivymd.uix.textfield import MDTextField
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
-from kivy.uix.dropdown import DropDown
 from ColorManager import ColorManager
 import platform
 
@@ -34,7 +33,8 @@ class MainWindow(Screen):
 
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
-class CustomLabel(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
+class CustomLabelRoboto(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
+class CustomLabelAD(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
 class CustomTextEntry(MDTextField): pass # Pre-made class to define defaultl settings to entry text boxes
 
 class TestDesignApp(MDApp):  
