@@ -93,6 +93,9 @@ class TestDesignApp(MDApp):
             return "Windows"
         elif os_name == 'Darwin':
             return "MacOS"
+        elif os_name.startswith('Java'):
+            if 'android' in platform.java_ver()[3][0]:
+                return "Android"
         else:
             return "Unknown"
 
@@ -101,14 +104,14 @@ class TestDesignApp(MDApp):
         os_name = self.detect_os()
         if os_name == 'Linux':
             # Maximize the window on Linux
-            Window.maximize()
+            Window.fullscreen = False
         elif os_name == 'Windows':
             # Fullscreen mode on Windows
             if screen == 0:
                 Window.fullscreen = False
             else:
                 Window.fullscreen = True
-        elif os_name == 'MacOS':
+        elif os_name == 'Android':
             # Fullscreen mode on MacOS
             Window.fullscreen = True
 
