@@ -160,22 +160,180 @@ WindowManager:
                 text: "Assistance mode"
                 icon: "walk"
 
-                on_tab_release:
-                    print("tab release")
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
-                MDLabel:
-                    text: "Assistance Mode"
-                    halign: "center"
-    # ---------------------------------------------- Menú de Sintonización -------------------------------------------------- 
-            MDBottomNavigationItem: 
+                    CustomLabelAD:
+                        text: "Assistance Mode"
+                        halign: "center"
+                        valign: "top"
+                        size_hint_y: None
+                        height: self.texture_size[1] + 10  # Increased height to move higher
+                        theme_text_color: "Custom"
+                        text_color: app.colors["White"]
+
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(20)
+                        spacing: dp(10)
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(5)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            MDLabel:
+                                text: "Height (m)"
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            MDTextField:
+                                id: height_input
+                                multiline: False
+                                size_hint_x: None
+                                width: dp(100)
+                                halign: "center"
+                                hint_text: " "
+                                mode: "fill"
+                                fill_color: app.colors["White"]
+                                hint_text_color_normal: app.colors["Black"]
+                                hint_text_color_focus: app.colors["Light Orange"]
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(5)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            MDLabel:
+                                text: "Weight (kg)"
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            MDTextField:
+                                id: weight_input
+                                multiline: False
+                                halign: "center"
+                                size_hint_x: None
+                                width: dp(100)
+                                hint_text: " "
+                                mode: "fill"
+                                fill_color: app.colors["White"]
+                                hint_text_color_normal: app.colors["Black"]
+                                hint_text_color_focus: app.colors["Light Orange"]
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(15)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            MDLabel:
+                                text: "Assistance Level (%)"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            Widget:
+                                id: assistance_level_slider
+                            MDSlider:
+                                id: assistance_level_slider
+                                min: 0
+                                max: 100
+                                value: 50
+                                size_hint_x: 0.8
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                on_value: self.on_slider_value(self.value)
+                            Widget:
+
+                        MDBoxLayout:
+                            orientation: 'vertical'
+                            padding: dp(20)
+                            spacing: dp(10)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            Widget:
+                            MDFillRoundFlatButton:
+                                id: standup_sitdown_mode
+                                text: 'STAND UP/SIT DOWN'
+                                text_color: app.colors['White']
+                                size_hint: None, None
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_press: self.md_bg_color = app.colors["Light Orange"]
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: root.width*0.4
+                                height: root.height*0.05
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            Widget:
+
+                            Widget:
+                            MDFillRoundFlatButton:
+                                id: walk_mode
+                                text: 'WALK'
+                                text_color: app.colors['White']
+                                size_hint: None, None
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_press: self.md_bg_color = app.colors["Light Orange"]
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: root.width*0.4
+                                height: root.height*0.05
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            Widget:
+
+                            Widget:
+                            MDFillRoundFlatButton:
+                                id: stop_mode
+                                text: 'STOP'
+                                text_color: app.colors['White']
+                                size_hint: None, None
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_press: self.md_bg_color = app.colors["Light Orange"]
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: root.width*0.4
+                                height: root.height*0.05
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            Widget:
+
+            MDBottomNavigationItem:
                 id: tuning_tab
                 name: "Tuning mode"
                 text: "Tuning mode"
                 icon: "equalizer"
 
-                # Actions
-                on_tab_release:
-                    print("tab release")
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
                 # -------------------------------- Fondo del menú --------------------------
                 # Elements
