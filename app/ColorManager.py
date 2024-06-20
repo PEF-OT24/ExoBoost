@@ -27,11 +27,6 @@ class ColorManager():
                 "color": "FFFFFF",
                 "transparency": "255"
             },
-            "color kk":{
-                "color": "AAAAAA",
-                "transparency": "255"
-            }
-        
         }
 
         # Creates a list of available colors names
@@ -66,7 +61,7 @@ class ColorManager():
         '''Return the kivy colors dic'''
         return self.KivyColors
     
-def main(): # Test the color manager on this script
+def main(): 
     test = ColorManager()._get_colors()
     print(test["Light Orange"])
 

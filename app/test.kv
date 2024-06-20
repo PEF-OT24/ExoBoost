@@ -1,27 +1,37 @@
 #:kivy 2.2.1
+# --------------------------------------- Predefinición de clases para generalizar formato ----------------------------------------
+<CustomLabelRoboto>: # Case predefinida para los subtítulos con formato
+    font_name: "Roboto" # Roboto para texto y subtítulos
+    font_size: "15sp" # 30sp para texto y subtítulos
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
 
+<CustomLabelAD>: # Case predefinida para los títulos con formato
+    font_name: "ADLaMDisplay-Regular.ttf" # ADLaMdisplay para títulos
+    font_size: "30sp" # 30sp para títulos
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+
+<CustomTextEntry>: # Case predefinida para las entradas de texto con formato
+    helper_text_mode: "on_focus"
+    hint_text_color_normal: app.colors["Black"]  # En negro cuando no está seleccionado
+    hint_text_color_focus: app.colors["Light Orange"]   # En naranja cuando está seleccionado 
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
+    halign: "center"
+    hint_text: "Fill mode"
+    mode: "fill"
+    fill_color: app.colors["Light Gray"]
+
+# --------------------------------------- Establecer prioridad en las ventanas ---------------------------------------- (SE PUEDE BORRAR)
 WindowManager:
     MainWindow:
     SecundaryWindow:
 
-<CustomLabel>: # Pre-made class to define default settings to subtitles labels with MDLabel
-    font_name: "Roboto"
-    font_size: "15sp" # 30sp for titles
-    halign: "center"
-    pos_hint: {"center_x": 0.5, "top": 0}
-    theme_text_color: "Custom"
-    text_color: app.colors["White"]
-
-<CustomTextEntry>: # Pre-made class to define defaultl settings to entry text boxes
-    helper_text_mode: "on_focus"
-    hint_text_color_normal: app.colors["Black"]  # White when not focused
-    hint_text_color_focus: app.colors["Light Orange"]   # Orange when focused
-    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the TextEntry horizontally and vertically
-
-    hint_text: "Fill mode"
-    mode: "fill"
-    fill_color: app.colors["White"]
-
+# --------------------------------------- Ventana principal ----------------------------------------
 <MainWindow>:
     name: "Main Window"
 
@@ -31,28 +41,28 @@ WindowManager:
         valign: "center"
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
 
+        # ------------------------------ Barra titular principal superior -------------------------
         MDTopAppBar:
-            title: "ExoBoost"
             md_bg_color: app.colors["Black"]
+            left_action_items: [['PossibleLogoW.png',lambda x: None]]
+            title: "ExoBoost"
             font_name: 'ADLaMDisplay-Regular.ttf'
-            Image:
-                source: 'PossibleLogoW.png'
-                size: self.texture_size
-                  
+            pos_hint: {'center_x':0.5,'center_y':0.5}                              
 
+        # ------------------------------- Se define la arquitectura base como un menú de navegación inferior -------------------------------
         MDBottomNavigation:
             id: bottom_nav
-            # selected_color_background: app.colors["Light Orange"] # Check how to change background color
             panel_color: app.colors["Black"]
 
-            # Set active/normal colors
+            # Establecer colores para los estados de selección
             text_color_normal: app.colors["Cyan"]
             text_color_active: app.colors["Light Orange"]
             icon_color_normal: app.colors["Cyan"]
             icon_color_active: app.colors["Light Orange"]
 
+    # ---------------------------------------------- Menú de Bluetooth -------------------------------------------------- 
             MDBottomNavigationItem:
-                # Bluetooth settings tab 
+                # Configuraciones del menú de bluetooth
                 id: bluetooh_tab
                 name: "Bluetooth settings"
                 text: "Bluetooth settings"
@@ -75,16 +85,10 @@ WindowManager:
 
                     # Elements on app
 # -------------------- Menu Bluetooth --------------------------
-                    MDLabel:
+                    CustomLabelAD:
                         id: bluetooth_title
                         text: "Bluetooth Connection"
-                        font_name: 'ADLaMDisplay-Regular.ttf'
-                        font_size: "25sp"
-                        halign: "center"
-                        size_hint_y: 0.5
-                        height: self.texture_size[1]
-                        theme_text_color: "Custom"
-                        text_color: app.colors["White"]
+
                     # Boton para buscar dispositivos                       
                     BoxLayout:
                         Widget:
@@ -101,6 +105,7 @@ WindowManager:
                             on_press: root.search_devices()
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0.5,'center_y':0.5}
+                            height: root.height*0.065
                         Widget:
                     # Design choice para espacio entre elementos :)
                     Widget:
@@ -133,7 +138,13 @@ WindowManager:
                             ripple_color: app.colors['Cyan']
                             on_press: self.md_bg_color = app.colors["Light Orange"]
                             on_release: self.md_bg_color = app.colors["Cyan"]
-                            on_press: root.connect_disconnect()
+                            width: root.width*0.5
+                            height: root.height*0.065
+                            #on_press: 
+                            try:
+                                root.connect_disconnect()
+                            except:
+                                print('error')
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0}
                         Widget:
@@ -141,35 +152,193 @@ WindowManager:
                     Widget:
                         size_hint_y: None
                         height: '48dp'
-# ------------------------ Otros Menus -----------------------------
+    # ---------------------------------------------- Menú de Asistencia -------------------------------------------------- 
+            
             MDBottomNavigationItem:
                 id: assistance_tab
                 name: "Assistance mode"
                 text: "Assistance mode"
                 icon: "walk"
 
-                on_tab_release:
-                    print("tab release")
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
-                MDLabel:
-                    text: "Assistance Mode"
-                    halign: "center"
+                    CustomLabelAD:
+                        text: "Assistance Mode"
+                        halign: "center"
+                        valign: "top"
+                        size_hint_y: None
+                        height: self.texture_size[1] + 10  # Increased height to move higher
+                        theme_text_color: "Custom"
+                        text_color: app.colors["White"]
 
-            MDBottomNavigationItem: # TUNING TAB
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(20)
+                        spacing: dp(10)
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(5)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            MDLabel:
+                                text: "Height (m)"
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            MDTextField:
+                                id: height_input
+                                multiline: False
+                                size_hint_x: None
+                                width: dp(100)
+                                halign: "center"
+                                hint_text: " "
+                                mode: "fill"
+                                fill_color: app.colors["White"]
+                                hint_text_color_normal: app.colors["Black"]
+                                hint_text_color_focus: app.colors["Light Orange"]
+
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(5)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            MDLabel:
+                                text: "Weight (kg)"
+                                halign: "left"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            MDTextField:
+                                id: weight_input
+                                multiline: False
+                                halign: "center"
+                                size_hint_x: None
+                                width: dp(100)
+                                hint_text: " "
+                                mode: "fill"
+                                fill_color: app.colors["White"]
+                                hint_text_color_normal: app.colors["Black"]
+                                hint_text_color_focus: app.colors["Light Orange"]
+
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_y: None
+                            height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(15)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            MDLabel:
+                                text: "Assistance Level (%)"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            Widget:
+                                id: assistance_level_slider
+                            MDSlider:
+                                id: assistance_level_slider
+                                min: 0
+                                max: 100
+                                value: 50
+                                size_hint_x: 0.8
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                on_value: self.on_slider_value(self.value)
+                            Widget:
+
+                        MDBoxLayout:
+                            orientation: 'vertical'
+                            padding: dp(20)
+                            spacing: dp(10)
+                            size_hint_y: None
+                            height: self.minimum_height
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            Widget:
+                            MDFillRoundFlatButton:
+                                id: standup_sitdown_mode
+                                text: 'STAND UP/SIT DOWN'
+                                text_color: app.colors['White']
+                                size_hint: None, None
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_press: self.md_bg_color = app.colors["Light Orange"]
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: root.width*0.4
+                                height: root.height*0.05
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            Widget:
+
+                            Widget:
+                            MDFillRoundFlatButton:
+                                id: walk_mode
+                                text: 'WALK'
+                                text_color: app.colors['White']
+                                size_hint: None, None
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_press: self.md_bg_color = app.colors["Light Orange"]
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: root.width*0.4
+                                height: root.height*0.05
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            Widget:
+
+                            Widget:
+                            MDFillRoundFlatButton:
+                                id: stop_mode
+                                text: 'STOP'
+                                text_color: app.colors['White']
+                                size_hint: None, None
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_press: self.md_bg_color = app.colors["Light Orange"]
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: root.width*0.4
+                                height: root.height*0.05
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            Widget:
+
+            MDBottomNavigationItem:
                 id: tuning_tab
                 name: "Tuning mode"
                 text: "Tuning mode"
                 icon: "equalizer"
 
-                # Actions
-                on_tab_release:
-                    print("tab release")
+                BoxLayout:
+                    orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
 
+                # -------------------------------- Fondo del menú --------------------------
                 # Elements
                 FloatLayout:
                     orientation: "vertical"
-                    # size_hint_y: None
-                    # size_hint_x: None
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
                     halign: "center"
                     valign: "center"
@@ -180,63 +349,63 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-
                     GridLayout:
                         rows: 5
                         cols: 1
-                        padding: 30, 10
-                        spacing: 10
+                        padding: dp(10), dp(10)
+                        spacing: dp(10)
 
-                        CustomLabel: # ROW 1 
+                        # ----------------------- Título del Menú -------------------------------------------- 
+                        CustomLabelAD: # ROW 1 
                             id: tuning_label
                             text: "Tuning Mode"
-                            font_size: "30sp"
-                            size: self.width, 10
-                            canvas.before:
-                                Color:
-                                    rgba: app.colors["Dark Blue"]
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-
-                        FloatLayout: # ROW 2
-                            orientation: "vertical"
-                            size: self.width, 10
-                            pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the BoxLayout horizontally
+                            size_hint: None, None
+                            size: (root.width, dp(45))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
+                        # ----------------------- Menú desplegable para la selección de la articulación ------------
+                        BoxLayout: 
+                            orientation: "vertical"
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            size_hint: None, None
+                            size: (root.width, dp(50))
+
                             Spinner:
                                 id: limb_dropdown
-                                orientation: "verical"
-                                text: "Limb tuning"
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Center the Spinner horizontally
-
-                                # Option values
-                                values: ["Right leg", "Left leg", "Right arm", "Left arm"]
+                                text: "Select a limb"
+                                values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
                                 
-                                # Customization
+                                # Personalización
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
+                                orientation: "verical"
                                 size_hint: None, None
-                                size: 200, 44
-                                background_color: app.colors["White"]
+                                size: (dp(200), dp(45))
+
+                                # Definición de colores
+                                background_color: app.colors["Light Gray"]
+                                on_background_color: self.trigger_update()
                                 color: app.colors["White"]
                                 
-                                # Actions
+                                # Acciones
                                 on_text: app.limb_dropdown_clicked(limb_dropdown.text)
-
+                        
+                        # --------------------------- Parámetros PI del motor 1 ------------------------- 
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
-                            padding: [10, 10, 10, 10]
-                            spacing: 100
-                            size: self.width, 90
+                            padding: (dp(10), dp(10))
+                            spacing: dp(20)
+                            size: (self.width, dp(90))
 
-                            CustomLabel: 
+                            CustomLabelRoboto: 
                                 id: motor1_label
                                 text: "Hip motor"
 
+                            # ------------- Parámetros PI ------------- 
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor1
@@ -249,114 +418,116 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text(ti_motor1.text)
 
+                                # -------- Referencia del motor 1 -------
                                 CustomTextEntry: # col 3
                                     id: sp_motor1
                                     hint_text: "SP:"
                                     on_text_validate:
                                         app.on_entry_text(sp_motor1.text)
 
-
+                            # ------------- Valor del motor 2 ------------- 
                             BoxLayout:
                                 orientation: "vertical"
                                 size_hint: None, None
-                                size: 150, 50
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                                 CustomTextEntry:
                                     id: pv_motor1
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text(pv_motor1.text)
-                        
-                        BoxLayout: #ROW 3 
+
+                        # --------------------------- Parámetros PI del motor 2 ------------------------- 
+                        BoxLayout: #ROW 4
                             orientation: "vertical"
-                            padding: [10, 10, 10, 10]
-                            spacing: 100
-                            size: self.width, 90
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
+                            size: self.width, dp(90)
 
-                            CustomLabel: 
-                                id: motor1_label
-                                text: "Hip motor"
-
-                            GridLayout:
-                                rows: 1
-                                cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
-
-                                CustomTextEntry: # col 1
-                                    id: kc_motor3
-                                    hint_text: "Kc:"
-                                    on_text_validate:
-                                        app.on_entry_text(kc_motor1.text)
-                                CustomTextEntry: # col 2
-                                    id: ti_motor3
-                                    hint_text: "Ti:"
-                                    on_text_validate:
-                                        app.on_entry_text(ti_motor1.text)
-
-                                CustomTextEntry: # col 3
-                                    id: sp_motor3
-                                    hint_text: "SP:"
-                                    on_text_validate:
-                                        app.on_entry_text(sp_motor1.text)
-
-
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                size: 150, 50
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                CustomTextEntry:
-                                    id: pv_motor3
-                                    hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text(pv_motor1.text)
-
-                        BoxLayout: #ROW 3 
-                            orientation: "vertical"
-                            padding: [10, 10, 10, 10]
-                            spacing: 100
-                            size: self.width, 90
-
-                            CustomLabel: 
+                            CustomLabelRoboto: 
                                 id: motor2_label
-                                text: "Hip motor"
+                                text: "Knee motor"
 
+                            # ------------- Parámetros PI ------------- 
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: [10, 10, 10, 10]
-                                spacing: 10
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor2
                                     hint_text: "Kc:"
                                     on_text_validate:
-                                        app.on_entry_text(kc_motor1.text)
+                                        app.on_entry_text(kc_motor2.text)
                                 CustomTextEntry: # col 2
                                     id: ti_motor2
                                     hint_text: "Ti:"
                                     on_text_validate:
-                                        app.on_entry_text(ti_motor1.text)
-
+                                        app.on_entry_text(ti_motor2.text)
+                                # ---------- Referencia del motor 2 -----------
                                 CustomTextEntry: # col 3
                                     id: sp_motor2
                                     hint_text: "SP:"
                                     on_text_validate:
-                                        app.on_entry_text(sp_motor1.text)
-
-
+                                        app.on_entry_text(sp_motor2.text)
+                            
+                            # ------------- Valor del motor 2 ------------- 
                             BoxLayout:
                                 orientation: "vertical"
                                 size_hint: None, None
-                                size: 150, 50
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                                 CustomTextEntry:
                                     id: pv_motor2
                                     hint_text: "PV:"
                                     on_text_validate:
-                                        app.on_entry_text(pv_motor1.text)
+                                        app.on_entry_text(pv_motor2.text)
 
+                        # --------------------------- Parámetros PI del motor 3 ------------------------- 
+                        BoxLayout: #ROW 5
+                            orientation: "vertical"
+                            padding: (dp(10), dp(10))
+                            spacing: dp(15)
+                            size: self.width, dp(90)
+
+                            CustomLabelRoboto: 
+                                id: motor1_label
+                                text: "Ankle motor"
+
+                            # --------------------- Parámetros PI ------------------------
+                            GridLayout:
+                                rows: 1
+                                cols: 3
+                                padding: (dp(10), dp(10))
+                                spacing: dp(10)
+
+                                CustomTextEntry: # col 1
+                                    id: kc_motor3
+                                    hint_text: "Kc:"
+                                    on_text_validate:
+                                        app.on_entry_text(kc_motor3.text)
+                                CustomTextEntry: # col 2
+                                    id: ti_motor3
+                                    hint_text: "Ti:"
+                                    on_text_validate:
+                                        app.on_entry_text(ti_motor3.text)
+                                # ----------- Referencia del motor 3 -------------------
+                                CustomTextEntry: # col 3
+                                    id: sp_motor3
+                                    hint_text: "SP:"
+                                    on_text_validate:
+                                        app.on_entry_text(sp_motor3.text)
+                            # ------------------ Valor del motor 3 ------------------------
+                            BoxLayout:
+                                orientation: "vertical"
+                                size_hint: None, None
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                                CustomTextEntry:
+                                    id: pv_motor3
+                                    hint_text: "PV:"
+                                    on_text_validate:
+                                        app.on_entry_text(pv_motor3.text)
+
+# --------------------------------------- Ventana secundaria ----------------------------------------------   
 <SecundaryWindow>:
     # Empty
     name: "Secundary Window"

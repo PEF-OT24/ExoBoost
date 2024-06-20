@@ -11,9 +11,11 @@ from kivymd.uix.textfield import MDTextField
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
-from kivy.uix.dropdown import DropDown
 from ColorManager import ColorManager
 import platform
+from kivy.clock import Clock
+from kivymd.uix.label import MDLabel
+Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Create multiple windows, main code will be located in main window
 # SecundaryWindow (as well as new created) might contain differente or new functions to the app
@@ -22,33 +24,40 @@ class MainWindow(Screen):
     def search_devices(self):
         device_list = self.ids.device_list
         devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
-        device_list.data = devices
+        try:
+            device_list.data = devices
+        except:
+            print('no devices aun')
     
     def connect_disconnect(self):
         device_list = self.ids.device_list
         selected_devices = [child for child in device_list.children[0].children if child.selected]
-        if selected_devices:
-            print(f"Connecting/Disconnecting {selected_devices[0].text}")
-        else:
-            print("No device selected")
+        try:
+            if selected_devices:
+                print(f"Connecting/Disconnecting {selected_devices[0].text}")
+            else:
+                print("No device selected")
+        except:
+            print("boton no funciona aun")
 
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
-class CustomLabel(MDLabel): pass # Pre-made class to define default settings to titles and subtitles labels with MDLabel
-class CustomTextEntry(MDTextField): pass # Pre-made class to define defaultl settings to entry text boxes
+class CustomLabelRoboto(MDLabel): pass # Case predefinida para los subtítulos con formato
+class CustomLabelAD(MDLabel): pass # Case predefinida para los títulos con formato
+class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de texto con formato
 
 class TestDesignApp(MDApp):  
-    #------------------------ Init Methods ------------------------#
+    #------------------------ Métodos de inicio ------------------------#
     def __init__(self, **kwargs):
         '''Initializes all methods, initial logical setup and define attributes'''
         super().__init__(**kwargs)
         self.kv_loaded: bool = False
 
-        # Detects OS running
+        # Detecta el sistema operativo
         self.os_name = self.detect_os()
         self.pos_screen(0)
 
-        # Colors dictionary used on the design file
+        # Diccionario de colores
         self.colors: dict = ColorManager()._get_colors()
         '''
         Available colors:
@@ -70,11 +79,11 @@ class TestDesignApp(MDApp):
             self.root = Builder.load_file("test.kv")
             self.kv_loaded = True
         return self.root
-
-    def on_start(self): # Method called at the begnnin of the class, just like __init__ and build. 
+    
+    def on_start(self):
         self.root.current = "Main Window"
     
-    #------------------------ Window Management ------------------------#
+    # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
         '''Detects current OS of device and returns it as string'''
         os_name = platform.system()
@@ -84,37 +93,47 @@ class TestDesignApp(MDApp):
             return "Windows"
         elif os_name == 'Darwin':
             return "MacOS"
-        elif os_name.startswith('Java'):
-            if 'android' in platform.java_ver()[3][0]:
-                return "Android"
         else:
             return "Unknown"
-        
-    def toggle_screen(self, state: bool) -> None:
-        '''Toggle between fullscreen and windowed mode depending on OS or selected mode'''
-        if self.os_name == "Linux" or self.os_name == "Windows" or not(state):
-            Window.fullscreen = False
-        if self.os_name == "Android" or state:
-            print("Fullscreen")
-            Window.fullscreen = True
-    
-    def pos_screen(self, screen: int) -> None:
-        '''Position screen on desired window for debugging'''
-        if screen == 0: # Main screen
-            Window.left = 0
-        elif screen == 1: # Secondary screen
-            Window.left = 1920
-        Window.top = 30 # Slightly under screen top
 
-    #------------------------ Bluetooth tab methods ------------------------
+    def pos_screen(self, screen):
+        '''Sets the screen position for each OS'''
+        os_name = self.detect_os()
+        if os_name == 'Linux':
+            # Maximize the window on Linux
+            Window.maximize()
+        elif os_name == 'Windows':
+            # Fullscreen mode on Windows
+            if screen == 0:
+                Window.fullscreen = False
+            else:
+                Window.fullscreen = True
+        elif os_name == 'MacOS':
+            # Fullscreen mode on MacOS
+            Window.fullscreen = True
+
+    def on_slider_value(self, value):
+        '''Handle the slider value change'''
+        print(f"Slider value: {value}")
+
+    def sit_down_stand_up(self):
+        print("Sit down/stand up action triggered")
+
+    def walk(self):
+        print("Walk action triggered")
+
+    def stop(self):
+        print("Stop action triggered")
+
+    #------------------------ Métodos de menú de blutooth ------------------------
 
     def bluetooth_connection(self): pass
 
-    #------------------------ Assitance tab methods ------------------------
+    #------------------------ Métodos del menú de asistencia ------------------------
 
     def assitance_method(self): pass
 
-    #------------------------ Tuning tab methods ------------------------
+    #------------------------ Métodos del menú de sintonizción ------------------------
 
     def limb_dropdown_clicked(self, limb: str) -> None: 
         self.limb = limb
@@ -122,7 +141,6 @@ class TestDesignApp(MDApp):
 
     def on_entry_text(self, value: str) -> None: 
         print(value)
-        # self.root.ids.bottom_nav.ids.tuning_tab.ids.
     
 def main():
     '''Initializes the app indicating the current OS'''
