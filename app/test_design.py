@@ -14,6 +14,7 @@ from kivy.core.window import Window
 from ColorManager import ColorManager
 import platform
 from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.label import MDLabel
 Clock.max_iteration = 1000  # Increase this value if necessary
 

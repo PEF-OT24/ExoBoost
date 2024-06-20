@@ -83,8 +83,6 @@ WindowManager:
                             pos: self.pos
                             size: self.size
 
-                    # Elements on app
-# -------------------- Menu Bluetooth --------------------------
                     CustomLabelAD:
                         id: bluetooth_title
                         text: "Bluetooth Connection"
@@ -162,13 +160,7 @@ WindowManager:
 
                 BoxLayout:
                     orientation: 'vertical'
-                    canvas.before:
-                        Color:
-                            rgba: app.colors["Dark Blue"]
-                        Rectangle:
-                            pos: self.pos
-                            size: self.size
-
+                    
                     CustomLabelAD:
                         text: "Assistance Mode"
                         halign: "center"
@@ -319,7 +311,7 @@ WindowManager:
                                 height: root.height*0.05
                                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                             Widget:
-
+    # -------------------------------------------- Menú de Sintonización --------------------------------------------
             MDBottomNavigationItem:
                 id: tuning_tab
                 name: "Tuning mode"
@@ -349,26 +341,32 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    GridLayout:
+                    GridLayout: # Distribución principal del menú como GridLayout de 5 filas
                         rows: 5
                         cols: 1
                         padding: dp(10), dp(10)
-                        spacing: dp(10)
+                        spacing: dp(5)
 
                         # ----------------------- Título del Menú -------------------------------------------- 
-                        CustomLabelAD: # ROW 1 
-                            id: tuning_label
-                            text: "Tuning Mode"
-                            size_hint: None, None
-                            size: (root.width, dp(45))
-                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                            
-                        # ----------------------- Menú desplegable para la selección de la articulación ------------
                         BoxLayout: 
                             orientation: "vertical"
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             size_hint: None, None
                             size: (root.width, dp(50))
+                            
+                            CustomLabelAD: # ROW 1 
+                                id: tuning_label
+                                text: "Tuning Mode"
+                                size: self.size
+                                pos: self.pos
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            
+                        # ----------------------- Menú desplegable para la selección de la articulación ------------
+                        BoxLayout: 
+                            orientation: "vertical"
+                            size_hint: None, None
+                            size: (root.width*0.95, dp(50))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             Spinner:
                                 id: limb_dropdown
@@ -376,14 +374,13 @@ WindowManager:
                                 values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
                                 
                                 # Personalización
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
                                 orientation: "verical"
                                 size_hint: None, None
                                 size: (dp(200), dp(45))
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
 
                                 # Definición de colores
                                 background_color: app.colors["Light Gray"]
-                                on_background_color: self.trigger_update()
                                 color: app.colors["White"]
                                 
                                 # Acciones
@@ -393,8 +390,10 @@ WindowManager:
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
-                            spacing: dp(20)
-                            size: (self.width, dp(90))
+                            spacing: dp(5)
+                            size_hint: None, None
+                            size: (root.width*0.95,dp(150))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             CustomLabelRoboto: 
                                 id: motor1_label
@@ -406,6 +405,9 @@ WindowManager:
                                 cols: 3
                                 padding: (dp(10), dp(10))
                                 spacing: dp(10)
+                                size_hint: None, None
+                                size: (root.width*0.85, dp(35))
+                                pos_hint: {"center_x":  0.5, "center_y": 0.5}
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor1
@@ -425,7 +427,7 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text(sp_motor1.text)
 
-                            # ------------- Valor del motor 2 ------------- 
+                            # ------------- Valor del motor 1 ------------- 
                             BoxLayout:
                                 orientation: "vertical"
                                 size_hint: None, None
@@ -440,8 +442,10 @@ WindowManager:
                         BoxLayout: #ROW 4
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
-                            spacing: dp(15)
-                            size: self.width, dp(90)
+                            spacing: dp(10)
+                            size_hint: None, None
+                            size: (root.width*0.95,dp(150))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             CustomLabelRoboto: 
                                 id: motor2_label
@@ -453,6 +457,9 @@ WindowManager:
                                 cols: 3
                                 padding: (dp(10), dp(10))
                                 spacing: dp(10)
+                                size_hint: None, None
+                                size: (root.width*0.85, dp(35))
+                                pos_hint: {"center_x":  0.5, "center_y": 0.5}
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor2
@@ -486,11 +493,13 @@ WindowManager:
                         BoxLayout: #ROW 5
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
-                            spacing: dp(15)
-                            size: self.width, dp(90)
+                            spacing: dp(10)
+                            size_hint: None, None
+                            size: (root.width*0.95,dp(150))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             CustomLabelRoboto: 
-                                id: motor1_label
+                                id: motor3_label
                                 text: "Ankle motor"
 
                             # --------------------- Parámetros PI ------------------------
@@ -499,6 +508,9 @@ WindowManager:
                                 cols: 3
                                 padding: (dp(10), dp(10))
                                 spacing: dp(10)
+                                size_hint: None, None
+                                size: (root.width*0.85, dp(35))
+                                pos_hint: {"center_x":  0.5, "center_y": 0.5}
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor3
@@ -531,8 +543,9 @@ WindowManager:
 <SecundaryWindow>:
     # Empty
     name: "Secundary Window"
-# Estas son funciones para dar formato a la lista de dispositivos
-# Aqui se le da formato al texto del menú de dispositivos
+
+# Funciones para dar formato a la lista de dispositivos
+# Se le da formato al texto del menú de dispositivos
 <SelectableLabel@MDLabel>:
     size_hint_y: None
     height: self.texture_size[1]
@@ -542,7 +555,7 @@ WindowManager:
     text_color: app.colors['White']
     on_touch_down:
         self.parent.parent.parent.select_with_touch(self.index, 'down')
-#Aqui se le da formato a la caja que contiene dicho menú :)
+#Aqui se le da formato a la caja que contiene dicho menú 
 <SelectableRecycleBoxLayout@RecycleBoxLayout>:
     default_size: None, dp(56)
     default_size_hint: 1, None
