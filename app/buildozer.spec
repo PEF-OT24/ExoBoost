@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = Test_app1
+title = Test_app3
 
 # (str) Package name
 package.name = myapp
