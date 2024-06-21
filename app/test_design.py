@@ -1,10 +1,10 @@
-# Set the screen size and mode
+# Se establece el tamaño y posición de la pantalla
 from kivy.config import Config
 Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
 
-# Import kivy and kivymd libraries 
+# Importar librerías
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.textfield import MDTextField
@@ -14,13 +14,12 @@ from kivy.core.window import Window
 from ColorManager import ColorManager
 import platform
 from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.label import MDLabel
-Clock.max_iteration = 1000  # Increase this value if necessary
+Clock.max_iteration = 1000  # Aumentar de ser necesario
 
-# Create multiple windows, main code will be located in main window
-# SecundaryWindow (as well as new created) might contain differente or new functions to the app
+# Se crean múltiples ventanas, el código se encontrará en la ventana principal
 class MainWindow(Screen):
-    
     def search_devices(self):
         device_list = self.ids.device_list
         devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
@@ -49,7 +48,7 @@ class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de
 class TestDesignApp(MDApp):  
     #------------------------ Métodos de inicio ------------------------#
     def __init__(self, **kwargs):
-        '''Initializes all methods, initial logical setup and define attributes'''
+        '''Se inicilizan todos los métodos, el set up de la lógica y se definen atributos'''
         super().__init__(**kwargs)
         self.kv_loaded: bool = False
 
@@ -57,13 +56,17 @@ class TestDesignApp(MDApp):
         self.os_name = self.detect_os()
         self.pos_screen(0)
 
+        # Modo de trabajo: {"assistance", "tuning"}
+        self.mode: str = None
+
         # Diccionario de colores
         self.colors: dict = ColorManager()._get_colors()
         '''
         Available colors:
         Cyan, Dark Blue, Light Orange, Light Gray, Black, White.
         '''
-
+        
+        # Diccionario de etiquetas 
         self.limb: str = ""
         self.motors_labels: dict[str] = {
             "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
@@ -72,20 +75,93 @@ class TestDesignApp(MDApp):
             "Left arm": ["motor1", "motor2", "motor3"],
             
         }
- 
+
+        # Diccionario de valores de los parámetros de los motores
+        # Todos se inicializan con un valor arbitrario
+        self.motor_parameters: dict[dict[dict[str]]] =  {
+            "Right leg": {
+                "motor1": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
+                "motor2": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
+                "motor3": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
+            },
+            "Left leg": {
+                "motor1": {"kc": "50", "ti": "100", "sp": "0", "pv": "0"},
+                "motor2": {"kc": "50", "ti": "100", "sp": "0", "pv": "0"},
+                "motor3": {"kc": "50", "ti": "100", "sp": "0", "pv": "0"},
+            },
+            "Right arm": {
+                "motor1": {"kc": "1", "ti": "1", "sp": "0", "pv": "0"},
+                "motor2": {"kc": "1", "ti": "1", "sp": "0", "pv": "0"},
+                "motor3": {"kc": "1", "ti": "1", "sp": "0", "pv": "0"},
+            },
+            "Left arm": {
+                "motor1": {"kc": "10", "ti": "5", "sp": "0", "pv": "0"},
+                "motor2": {"kc": "10", "ti": "5", "sp": "0", "pv": "0"},
+                "motor3": {"kc": "10", "ti": "5", "sp": "0", "pv": "0"},
+            }
+        }
+
+        # Define un sistema de diccionarios para establecer los límites de los parámetros
+        self.motor_params_lims: dict[dict[dict[str]]] =  {
+            "Right leg": {
+                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
+            },
+            "Left leg": {
+                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
+            },
+            "Right arm": {
+                "motor1": {"kc": "1", "ti": "1", "sp": "0"},
+                "motor2": {"kc": "1", "ti": "1", "sp": "0"},
+                "motor3": {"kc": "1", "ti": "1", "sp": "0"},
+            },
+            "Left arm": {
+                "motor1": {"kc": "10", "ti": "5", "sp": "0"},
+                "motor2": {"kc": "10", "ti": "5", "sp": "0"},
+                "motor3": {"kc": "10", "ti": "5", "sp": "0"},
+            }
+        }
+
     def build(self):
-        """Loads kivy design file"""
+        """Carga kivy design file"""
         if not(self.kv_loaded):
             self.root = Builder.load_file("test.kv")
             self.kv_loaded = True
+
+        # Diccionario de TextFields de sintonización para accceso rápido 
+        self.param_entries: dict[dict] = {
+            "motor1": {
+                "kc": self.root.get_screen('Main Window').ids.kc_motor1,
+                "ti": self.root.get_screen('Main Window').ids.ti_motor1,
+                "sp": self.root.get_screen('Main Window').ids.sp_motor1,
+                "pv": self.root.get_screen('Main Window').ids.pv_motor1
+            },
+            "motor2": {
+                "kc": self.root.get_screen('Main Window').ids.kc_motor2,
+                "ti": self.root.get_screen('Main Window').ids.ti_motor2,
+                "sp": self.root.get_screen('Main Window').ids.sp_motor2,
+                "pv": self.root.get_screen('Main Window').ids.pv_motor2
+            },
+            "motor3": {
+                "kc": self.root.get_screen('Main Window').ids.kc_motor3,
+                "ti": self.root.get_screen('Main Window').ids.ti_motor3,
+                "sp": self.root.get_screen('Main Window').ids.sp_motor3,
+                "pv": self.root.get_screen('Main Window').ids.pv_motor3
+            },
+        }
+
         return self.root
     
     def on_start(self):
         self.root.current = "Main Window"
+        self.limb_dropdown_clicked("Right leg")
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
-        '''Detects current OS of device and returns it as string'''
+        '''Detecta el OS y lo devuelve como string'''
         os_name = platform.system()
         if os_name == 'Linux':
             return "Linux"
@@ -99,21 +175,35 @@ class TestDesignApp(MDApp):
         else:
             return "Unknown"
 
-    def pos_screen(self, screen):
-        '''Sets the screen position for each OS'''
+    def pos_screen(self, screen: int):
+        '''Establece modo pantalla completa dependiendo del OS'''
         os_name = self.detect_os()
-        if os_name == 'Linux':
-            # Maximize the window on Linux
-            Window.fullscreen = False
-        elif os_name == 'Windows':
-            # Fullscreen mode on Windows
+        if os_name == 'Linux' or os_name == 'Windows':
+            # Se maximiza/minimiza en windows de acuerdo al parámetro
             if screen == 0:
                 Window.fullscreen = False
             else:
                 Window.fullscreen = True
         elif os_name == 'Android':
-            # Fullscreen mode on MacOS
+            # Pantalla completa en Android
             Window.fullscreen = True
+
+    #------------------------ Métodos generales ------------------------
+
+    def on_tab_select(self, tab: str): 
+        '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
+        if tab == "Assistance mode": 
+            self.mode = "assistance"
+        elif tab == "Bluetooth settings" or tab == "Tuning mode": 
+            self.mode = "tuning"
+        
+        print(self.mode)
+    #------------------------ Métodos de menú de blutooth ------------------------
+
+    def bluetooth_connection(self): pass
+    def send_params(self): raise NotImplementedError("Not implemented function")
+
+    #------------------------ Métodos del menú de asistencia ------------------------
 
     def on_slider_value(self, value):
         '''Handle the slider value change'''
@@ -128,25 +218,78 @@ class TestDesignApp(MDApp):
     def stop(self):
         print("Stop action triggered")
 
-    #------------------------ Métodos de menú de blutooth ------------------------
-
-    def bluetooth_connection(self): pass
-
-    #------------------------ Métodos del menú de asistencia ------------------------
-
-    def assitance_method(self): pass
-
     #------------------------ Métodos del menú de sintonizción ------------------------
 
     def limb_dropdown_clicked(self, limb: str) -> None: 
-        self.limb = limb
-        print(self.limb)
+        '''
+        Función para actualizar los datos de los motores al seleccionar otra extremidad
 
-    def on_entry_text(self, value: str) -> None: 
-        print(value)
-    
+        Entrada: Entrada seleccionada (str)
+        '''
+        # Se obtiene la selección
+        self.limb = limb
+
+        # Se cambian las etiquetas de los motores
+        new_labels: list[str] = self.motors_labels[self.limb]
+        self.root.get_screen('Main Window').ids.motor1_label.text = new_labels[0]
+        self.root.get_screen('Main Window').ids.motor2_label.text = new_labels[1]
+        self.root.get_screen('Main Window').ids.motor3_label.text = new_labels[2]
+
+        # Se cambian los valores de los parámetros PI de los motores
+        new_params: dict[dict[str]]= self.motor_parameters[self.limb]
+        # Motor 1
+        self.root.get_screen('Main Window').ids.kc_motor1.text = new_params["motor1"]["kc"]
+        self.root.get_screen('Main Window').ids.ti_motor1.text = new_params["motor1"]["ti"]
+        # Motor 2
+        self.root.get_screen('Main Window').ids.kc_motor2.text = new_params["motor2"]["kc"]
+        self.root.get_screen('Main Window').ids.ti_motor2.text = new_params["motor2"]["ti"]
+        # Motor 3
+        self.root.get_screen('Main Window').ids.kc_motor3.text = new_params["motor3"]["kc"]
+        self.root.get_screen('Main Window').ids.ti_motor3.text = new_params["motor3"]["ti"]
+
+    def on_entry_text(self, param: str, motor: str, value: str) -> None: 
+        """
+        Método que valida si el texto ingresado por el usuario es válido, tanto de clase como de rango.
+        Entradas: param -> parámetro {'kc', 'ti', 'sp'}
+                  motor -> número de motor {'motor1', 'motor2', 'motor3'}
+                  value -> valor ingresado
+        """
+        max_value = self.motor_params_lims[self.limb][motor][param]
+        old_params: dict[dict[str]] = self.motor_parameters[self.limb]
+
+        if self.is_valid(value, 1): # Validación de dato como int
+            if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
+                # Si es válido, se actualiza el diccionario de parámetros
+                self.motor_parameters[self.limb][motor][param] = value
+            else: # Valor no válido
+                self.param_entries[motor][param].text = old_params[motor][param]
+        else: # Tipo no válido
+            self.param_entries[motor][param].text = old_params[motor][param]
+            
+    # --------------------------- Funciones de uso general -------------------------
+
+    def is_valid(self, var: str, tipo) -> bool:
+        """
+        Valida si un dato en formato de string pertenece a otro tipo de dato. 
+        Función para validación de informaicón
+
+        Entrada: Dato a validar tipo string
+        Salida: Booleano indicando si el dato pertenece a la clase indicada
+        """
+        try:
+            if isinstance(tipo, int):
+                int(var)
+            elif isinstance(tipo, float):
+                float(var)
+            else:
+                raise TypeError("La clase de 'tipo' no está considerada")
+            return True
+        except (ValueError, TypeError):
+            return False
+        
+
 def main():
-    '''Initializes the app indicating the current OS'''
+    '''Se inicializa la app y ajusta la pantalla de acuerdo al sistema operativo'''
     TestDesignApp().run()
 
 if __name__ == '__main__':
