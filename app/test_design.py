@@ -7,7 +7,8 @@ Config.set('graphics', 'fullscreen', '0')
 # Importar librerías
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
-from kivymd.uix.textfield import MDTextField
+from kivy.uix.textinput import TextInput
+from kivymd.uix.textfield import MDTextField, MDTextFieldRect
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
@@ -254,15 +255,16 @@ class TestDesignApp(MDApp):
                   motor -> número de motor {'motor1', 'motor2', 'motor3'}
                   value -> valor ingresado
         """
-        max_value = self.motor_params_lims[self.limb][motor][param]
         old_params: dict[dict[str]] = self.motor_parameters[self.limb]
 
         if self.is_valid(value, 1): # Validación de dato como int
-            if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
-                # Si es válido, se actualiza el diccionario de parámetros
-                self.motor_parameters[self.limb][motor][param] = value
-            else: # Valor no válido
-                self.param_entries[motor][param].text = old_params[motor][param]
+            if param in ["kc", "ti", "sp"]:
+                max_value = self.motor_params_lims[self.limb][motor][param]
+                if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
+                    # Si es válido, se actualiza el diccionario de parámetros
+                    self.motor_parameters[self.limb][motor][param] = value
+                else: # Valor no válido
+                    self.param_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
             self.param_entries[motor][param].text = old_params[motor][param]
             

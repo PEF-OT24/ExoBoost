@@ -17,11 +17,13 @@
     text_color: app.colors["White"]
 
 <CustomTextEntry>: # Case predefinida para las entradas de texto con formato
-    helper_text_mode: "on_focus"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
+    height: self.minimum_height
+    halign: "center"
+    font_size: dp(14)
     hint_text_color_normal: app.colors["Black"]  # En negro cuando no está seleccionado
     hint_text_color_focus: app.colors["Light Orange"]   # En naranja cuando está seleccionado 
-    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
-    halign: "center"
+    helper_text_mode: "on_focus"
     hint_text: "Fill mode"
     mode: "fill"
     fill_color: app.colors["Light Gray"]
@@ -348,6 +350,7 @@ WindowManager:
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
                     halign: "center"
                     valign: "center"
+                    spacing: dp(5)
 
                     canvas.before:
                         Color:
@@ -405,8 +408,8 @@ WindowManager:
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
                             spacing: dp(5)
-                            size_hint: None, None
-                            size: (root.width*0.95,dp(150))
+                            size_hint_x: None
+                            width: root.width*0.95
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             CustomLabelRoboto: 
@@ -457,8 +460,8 @@ WindowManager:
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
                             spacing: dp(10)
-                            size_hint: None, None
-                            size: (root.width*0.95,dp(150))
+                            size_hint_x: None
+                            width: root.width*0.95
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             CustomLabelRoboto: 
@@ -508,8 +511,8 @@ WindowManager:
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
                             spacing: dp(10)
-                            size_hint: None, None
-                            size: (root.width*0.95,dp(150))
+                            size_hint_x: None
+                            width: root.width*0.95
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
                             CustomLabelRoboto: 
