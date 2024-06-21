@@ -1,10 +1,10 @@
-# Set the screen size and mode
+# Se establece el tamaño y posición de la pantalla
 from kivy.config import Config
 Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
 
-# Import kivy and kivymd libraries 
+# Importar librerías
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.textfield import MDTextField
@@ -16,12 +16,10 @@ import platform
 from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.label import MDLabel
-Clock.max_iteration = 1000  # Increase this value if necessary
+Clock.max_iteration = 1000  # Aumentar de ser necesario
 
-# Create multiple windows, main code will be located in main window
-# SecundaryWindow (as well as new created) might contain differente or new functions to the app
+# Se crean múltiples ventanas, el código se encontrará en la ventana principal
 class MainWindow(Screen):
-    
     def search_devices(self):
         device_list = self.ids.device_list
         devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
@@ -50,7 +48,7 @@ class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de
 class TestDesignApp(MDApp):  
     #------------------------ Métodos de inicio ------------------------#
     def __init__(self, **kwargs):
-        '''Initializes all methods, initial logical setup and define attributes'''
+        '''Se inicilizan todos los métodos, el set up de la lógica y se definen atributos'''
         super().__init__(**kwargs)
         self.kv_loaded: bool = False
 
@@ -125,7 +123,7 @@ class TestDesignApp(MDApp):
         }
 
     def build(self):
-        """Loads kivy design file"""
+        """Carga kivy design file"""
         if not(self.kv_loaded):
             self.root = Builder.load_file("test.kv")
             self.kv_loaded = True
@@ -160,7 +158,7 @@ class TestDesignApp(MDApp):
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
-        '''Detects current OS of device and returns it as string'''
+        '''Detecta el OS y lo devuelve como string'''
         os_name = platform.system()
         if os_name == 'Linux':
             return "Linux"
@@ -174,20 +172,17 @@ class TestDesignApp(MDApp):
         else:
             return "Unknown"
 
-    def pos_screen(self, screen):
-        '''Sets the screen position for each OS'''
+    def pos_screen(self, screen: int):
+        '''Establece modo pantalla completa dependiendo del OS'''
         os_name = self.detect_os()
-        if os_name == 'Linux':
-            # Maximize the window on Linux
-            Window.fullscreen = False
-        elif os_name == 'Windows':
-            # Fullscreen mode on Windows
+        if os_name == 'Linux' or os_name == 'Windows':
+            # Se maximiza/minimiza en windows de acuerdo al parámetro
             if screen == 0:
                 Window.fullscreen = False
             else:
                 Window.fullscreen = True
         elif os_name == 'Android':
-            # Fullscreen mode on MacOS
+            # Pantalla completa en Android
             Window.fullscreen = True
 
     def on_slider_value(self, value):
@@ -281,6 +276,7 @@ class TestDesignApp(MDApp):
         except (ValueError, TypeError):
             return False
         
+
 def main():
     '''Se inicializa la app y ajusta la pantalla de acuerdo al sistema operativo'''
     TestDesignApp().run()
