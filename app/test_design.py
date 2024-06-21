@@ -56,6 +56,9 @@ class TestDesignApp(MDApp):
         self.os_name = self.detect_os()
         self.pos_screen(0)
 
+        # Modo de trabajo: {"assistance", "tuning"}
+        self.mode: str = None
+
         # Diccionario de colores
         self.colors: dict = ColorManager()._get_colors()
         '''
@@ -185,6 +188,23 @@ class TestDesignApp(MDApp):
             # Pantalla completa en Android
             Window.fullscreen = True
 
+    #------------------------ Métodos generales ------------------------
+
+    def on_tab_select(self, tab: str): 
+        '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
+        if tab == "Assistance mode": 
+            self.mode = "assistance"
+        elif tab == "Bluetooth settings" or tab == "Tuning mode": 
+            self.mode = "tuning"
+        
+        print(self.mode)
+    #------------------------ Métodos de menú de blutooth ------------------------
+
+    def bluetooth_connection(self): pass
+    def send_params(self): raise NotImplementedError("Not implemented function")
+
+    #------------------------ Métodos del menú de asistencia ------------------------
+
     def on_slider_value(self, value):
         '''Handle the slider value change'''
         print(f"Slider value: {value}")
@@ -197,15 +217,6 @@ class TestDesignApp(MDApp):
 
     def stop(self):
         print("Stop action triggered")
-
-    #------------------------ Métodos de menú de blutooth ------------------------
-
-    def bluetooth_connection(self): pass
-    def send_params(self): raise NotImplementedError("Not implemented function")
-
-    #------------------------ Métodos del menú de asistencia ------------------------
-
-    def assitance_method(self): pass
 
     #------------------------ Métodos del menú de sintonizción ------------------------
 

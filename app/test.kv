@@ -68,9 +68,9 @@ WindowManager:
                 text: "Bluetooth settings"
                 icon: "bluetooth-settings"
 
-                # Actions for the button
+                # Acciones 
                 on_tab_release:
-                    print("tab release")
+                    app.on_tab_select(bluetooh_tab.name)
 
                 # Tab design
                 BoxLayout:
@@ -157,7 +157,11 @@ WindowManager:
                 name: "Assistance mode"
                 text: "Assistance mode"
                 icon: "walk"
-                            
+                
+                # Acciones 
+                on_tab_release:
+                    app.on_tab_select(assistance_tab.name)
+
                 BoxLayout:
                     orientation: 'vertical'
                     canvas.before:
@@ -323,6 +327,10 @@ WindowManager:
                 name: "Tuning mode"
                 text: "Tuning mode"
                 icon: "equalizer"
+
+                # Acciones 
+                on_tab_release:
+                    app.on_tab_select(tuning_tab.name)
 
                 BoxLayout:
                     orientation: 'vertical'
