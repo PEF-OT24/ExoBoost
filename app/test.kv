@@ -157,9 +157,15 @@ WindowManager:
                 name: "Assistance mode"
                 text: "Assistance mode"
                 icon: "walk"
-
+                            
                 BoxLayout:
                     orientation: 'vertical'
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
                     
                     CustomLabelAD:
                         text: "Assistance Mode"
@@ -370,7 +376,7 @@ WindowManager:
 
                             Spinner:
                                 id: limb_dropdown
-                                text: "Select a limb"
+                                text: "Right leg"
                                 values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
                                 
                                 # Personalización
@@ -413,19 +419,19 @@ WindowManager:
                                     id: kc_motor1
                                     hint_text: "Kc:"
                                     on_text_validate:
-                                        app.on_entry_text(kc_motor1.text)
+                                        app.on_entry_text("kc", "motor1", kc_motor1.text)
                                 CustomTextEntry: # col 2
                                     id: ti_motor1
                                     hint_text: "Ti:"
                                     on_text_validate:
-                                        app.on_entry_text(ti_motor1.text)
+                                        app.on_entry_text("ti", "motor1", ti_motor1.text)
 
                                 # -------- Referencia del motor 1 -------
                                 CustomTextEntry: # col 3
                                     id: sp_motor1
                                     hint_text: "SP:"
                                     on_text_validate:
-                                        app.on_entry_text(sp_motor1.text)
+                                        app.on_entry_text("sp", "motor1", sp_motor1.text)
 
                             # ------------- Valor del motor 1 ------------- 
                             BoxLayout:
@@ -436,7 +442,7 @@ WindowManager:
                                     id: pv_motor1
                                     hint_text: "PV:"
                                     on_text_validate:
-                                        app.on_entry_text(pv_motor1.text)
+                                        app.on_entry_text("pv", "motor1", pv_motor1.text)
 
                         # --------------------------- Parámetros PI del motor 2 ------------------------- 
                         BoxLayout: #ROW 4
@@ -465,18 +471,18 @@ WindowManager:
                                     id: kc_motor2
                                     hint_text: "Kc:"
                                     on_text_validate:
-                                        app.on_entry_text(kc_motor2.text)
+                                        app.on_entry_text("kc", "motor2",kc_motor2.text)
                                 CustomTextEntry: # col 2
                                     id: ti_motor2
                                     hint_text: "Ti:"
                                     on_text_validate:
-                                        app.on_entry_text(ti_motor2.text)
+                                        app.on_entry_text("ti", "motor2",ti_motor2.text)
                                 # ---------- Referencia del motor 2 -----------
                                 CustomTextEntry: # col 3
                                     id: sp_motor2
                                     hint_text: "SP:"
                                     on_text_validate:
-                                        app.on_entry_text(sp_motor2.text)
+                                        app.on_entry_text("sp", "motor2",sp_motor2.text)
                             
                             # ------------- Valor del motor 2 ------------- 
                             BoxLayout:
@@ -487,7 +493,7 @@ WindowManager:
                                     id: pv_motor2
                                     hint_text: "PV:"
                                     on_text_validate:
-                                        app.on_entry_text(pv_motor2.text)
+                                        app.on_entry_text("pv", "motor2", pv_motor2.text)
 
                         # --------------------------- Parámetros PI del motor 3 ------------------------- 
                         BoxLayout: #ROW 5
@@ -516,18 +522,18 @@ WindowManager:
                                     id: kc_motor3
                                     hint_text: "Kc:"
                                     on_text_validate:
-                                        app.on_entry_text(kc_motor3.text)
+                                        app.on_entry_text("kc", "motor3",kc_motor3.text)
                                 CustomTextEntry: # col 2
                                     id: ti_motor3
                                     hint_text: "Ti:"
                                     on_text_validate:
-                                        app.on_entry_text(ti_motor3.text)
+                                        app.on_entry_text("ti", "motor3",ti_motor3.text)
                                 # ----------- Referencia del motor 3 -------------------
                                 CustomTextEntry: # col 3
                                     id: sp_motor3
                                     hint_text: "SP:"
                                     on_text_validate:
-                                        app.on_entry_text(sp_motor3.text)
+                                        app.on_entry_text("sp", "motor3",sp_motor3.text)
                             # ------------------ Valor del motor 3 ------------------------
                             BoxLayout:
                                 orientation: "vertical"
@@ -537,7 +543,7 @@ WindowManager:
                                     id: pv_motor3
                                     hint_text: "PV:"
                                     on_text_validate:
-                                        app.on_entry_text(pv_motor3.text)
+                                        app.on_entry_text("pv", "motor3", pv_motor3.text)
 
 # --------------------------------------- Ventana secundaria ----------------------------------------------   
 <SecundaryWindow>:
