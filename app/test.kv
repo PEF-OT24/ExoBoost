@@ -9,10 +9,10 @@
     text_color: app.colors["White"]
 
 <CustomLabelAD>: # Case predefinida para los títulos con formato
-    font_name: "ADLaMDisplay-Regular.ttf" # ADLaMdisplay para títulos
+    font_name: "fonts/ADLaMDisplay-Regular.ttf" # ADLaMdisplay para títulos
     font_size: "30sp" # 30sp para títulos
     halign: "center"
-    pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
+    pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 1}
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
@@ -27,6 +27,125 @@
     hint_text: "Fill mode"
     mode: "fill"
     fill_color: app.colors["Light Gray"]
+
+
+# --------------------------------------- Ventana de PopUp de Información ----------------------------------------
+<LabelTeam>:
+    size_hint_y: None
+    height: dp(100)  # Altura fija para cada fila
+    font_size: "12sp"
+    font_name: "Roboto"
+    theme_text_color: "Custom"
+    text_color: app.colors["Black"]
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+<ImageTeam>:
+    size_hint: None, None
+    size: dp(80), dp(80)  # Tamaño fijo para cada imagen
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    
+<InfoPopUp>:
+    title: 'Información'
+    title_align: "center"
+    title_font: 'fonts/ADLaMDisplay-Regular.ttf'
+    title_size: dp(25)
+    title_color: app.colors["White"]
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5} # Se centra el pop up
+    
+    background_color: app.colors["Blue"]
+    separator_color: 0,0,0,0
+
+    size_hint: None, None
+    size: dp(300), dp(600)
+    canvas.before:
+        Color:
+            rgba: app.colors["Cyan"] # Fondo blanco
+        RoundedRectangle: # Con esquinas redondeadas
+            pos: self.pos
+            size: self.size
+            radius: [10, 10, 10, 10]  
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: (dp(10), dp(10))
+        spacing: dp(10)
+        canvas.before:
+            Color:
+                rgba: app.colors["Dark Cyan"] 
+            RoundedRectangle: # Con esquinas redondeadas
+                pos: self.pos
+                size: self.size
+                radius: [10, 10, 10, 10]  
+        
+        # ----------------------- Información del proyecto --------------------
+        BoxLayout: 
+            orientation: "vertical"
+            size_hint: 1, None
+            height: dp(150)
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            CustomLabelRoboto:
+                id: label_info
+                text: app.info_project
+                font_size: "12sp"
+        
+        MDFillRoundFlatButton: # Botón de acceso al repositorio
+            id: repo_button
+            text: 'Abrir repositorio en github'
+            text_color: app.colors['Black']
+            size_hint: None, None
+            size: '100dp','30dp'
+            ripple_effect: False
+            ripple_color: app.colors['Cyan']
+            md_bg_color: app.colors["Cyan"]
+            pos_hint: {'center_x':0.5,'center_y':0.5}
+                
+            on_press: 
+                self.md_bg_color = app.colors["Light Orange"]
+            on_release: 
+                self.md_bg_color = app.colors["Cyan"]
+                app.open_repo()
+        # ----------------------- Información del equipo ----------------------
+        BoxLayout: # Título para los participantes
+            size_hint: None, None
+            size: dp(280), dp(30)
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+            CustomLabelAD:
+                font_size: "20sp"
+                text: "Equipo PEF-OT24"
+
+
+        ScrollView: # Menú de los participantes
+            size_hint: 1, 1
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            GridLayout: 
+                id: team_grid
+                cols: 2
+                padding: dp(10)
+                spacing: dp(15)
+                size_hint_y: None
+                height: self.minimum_height
+
+        # Botón de exit
+        MDFillRoundFlatButton:
+            id: exit_button
+            text: 'Cerrar'
+            text_color: app.colors['Black']
+            size_hint: None, None
+            size: '100dp','30dp'
+            ripple_effect: False
+            ripple_color: app.colors['Cyan']
+            md_bg_color: app.colors["Cyan"]
+            pos_hint: {'center_x':0.5,'center_y':0.5}
+            # height: root.height*0.065
+                
+            on_press: 
+                self.md_bg_color = app.colors["Light Orange"]
+            on_release: 
+                self.md_bg_color = app.colors["Cyan"]
+                root.dismiss()
+
 
 # --------------------------------------- Establecer prioridad en las ventanas ---------------------------------------- (SE PUEDE BORRAR)
 WindowManager:
@@ -46,9 +165,9 @@ WindowManager:
         # ------------------------------ Barra titular principal superior -------------------------
         MDTopAppBar:
             md_bg_color: app.colors["Black"]
-            left_action_items: [['PossibleLogoW.png',lambda x: None]]
+            left_action_items: [['images/PossibleLogoW.png',lambda x: None]]
             title: "ExoBoost"
-            font_name: 'ADLaMDisplay-Regular.ttf'
+            font_name: 'fonts/ADLaMDisplay-Regular.ttf'
             pos_hint: {'center_x':0.5,'center_y':0.5}                              
 
         # ------------------------------- Se define la arquitectura base como un menú de navegación inferior -------------------------------
@@ -555,13 +674,21 @@ WindowManager:
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text("pv", "motor3", pv_motor3.text)
+    
+    FloatLayout: # Botón para mostrar la información del equipo
+        MDIconButton:
+            icon: "information-outline"
+            pos_hint: {"right": 0.98, "top": 0.99}
+            theme_text_color: "Custom"
+            size: self.size
+            text_color: app.colors["White"]
+            on_release: app.show_popup()
 
 # --------------------------------------- Ventana secundaria ----------------------------------------------   
 <SecundaryWindow>:
     # Empty
     name: "Secundary Window"
 
-# Funciones para dar formato a la lista de dispositivos
 # Se le da formato al texto del menú de dispositivos
 <SelectableLabel@MDLabel>:
     size_hint_y: None
@@ -572,6 +699,7 @@ WindowManager:
     text_color: app.colors['White']
     on_touch_down:
         self.parent.parent.parent.select_with_touch(self.index, 'down')
+
 #Aqui se le da formato a la caja que contiene dicho menú 
 <SelectableRecycleBoxLayout@RecycleBoxLayout>:
     default_size: None, dp(56)

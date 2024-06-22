@@ -1,0 +1,68 @@
+ScreenManager:
+    MainScreen:
+
+<MainScreen>:
+    name: "main"
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: '20dp'
+        padding: '20dp'
+
+        MDLabel:
+            text: "Main Screen"
+            halign: "center"
+            theme_text_color: "Primary"
+
+        MDRaisedButton:
+            text: "Show Pop-up"
+            size_hint: None, None
+            size: dp(150), dp(50)
+            pos_hint: {"center_x": 0.5}
+            on_release: app.show_popup()
+
+<CustomPopup>:
+    title: ''
+    background_color: 1, 1, 1, 1
+    separator_color: 0, 0, 0, 0
+    BoxLayout:
+        orientation: 'vertical'
+        padding: '20dp'
+        spacing: '20dp'
+
+        BoxLayout:
+            size_hint_y: None
+            height: self.minimum_height
+            padding: '10dp'
+
+            Label:
+                text: root.title
+                font_size: '20sp'
+                halign: 'center'
+                valign: 'middle'
+                size_hint_x: None
+                width: self.texture_size[0]
+                canvas.before:
+                    Color:
+                        rgba: (1, 1, 1, 1)
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10, 10, 0, 0]
+
+            Button:
+                text: 'X'
+                size_hint: None, None
+                size: dp(30), dp(30)
+                pos_hint: {'right': 1, 'top': 1}
+                on_release: root.dismiss()
+
+        Label:
+            text: "This is a pop-up!"
+            halign: "center"
+
+        MDRaisedButton:
+            text: "Dismiss"
+            size_hint: None, None
+            size: dp(100), dp(50)
+            pos_hint: {"center_x": 0.5}
+            on_release: root.dismiss()

@@ -1,0 +1,3 @@
+Este proyecto tiene el propósito de generar un exoesqueleto de asistencia motriz a usuarios con movilidad limitada.
+
+Esta aplicación propone una interfaz con el usuario para controlar tanto el modo de operación como la sintonización de los controladores.
