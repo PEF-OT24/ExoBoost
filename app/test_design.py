@@ -4,19 +4,28 @@ Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
 
+# Módulos internos
+from ColorManager import ColorManager
+
 # Importar librerías
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
-from kivy.uix.textinput import TextInput
-from kivymd.uix.textfield import MDTextField, MDTextFieldRect
+from kivymd.uix.textfield import MDTextField
+from kivy.uix.popup import Popup
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
-from ColorManager import ColorManager
-import platform
 from kivy.clock import Clock
-from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.label import MDLabel
+from kivy.uix.image import Image
+from kivy.uix.gridlayout import GridLayout as Grid
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
+
+# Librerías adicionales
+import platform
+import webbrowser
+
 Clock.max_iteration = 1000  # Aumentar de ser necesario
 
 # Se crean múltiples ventanas, el código se encontrará en la ventana principal
@@ -45,6 +54,9 @@ class WindowManager(ScreenManager): pass
 class CustomLabelRoboto(MDLabel): pass # Case predefinida para los subtítulos con formato
 class CustomLabelAD(MDLabel): pass # Case predefinida para los títulos con formato
 class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de texto con formato
+class InfoPopUp(Popup): pass
+class ImageTeam(Image): pass
+class LabelTeam(MDLabel): pass
 
 class TestDesignApp(MDApp):  
     #------------------------ Métodos de inicio ------------------------#
@@ -159,6 +171,19 @@ class TestDesignApp(MDApp):
     def on_start(self):
         self.root.current = "Main Window"
         self.limb_dropdown_clicked("Right leg")
+
+        # Se lee el archivo de texto incluyendo la información del proyecto
+        with open('info_proyecto.txt', 'r', encoding='utf-8') as file:
+            self.info_project = file.read()
+        
+        # --------- Información de descripción del equipo --------
+        self.team_info = [
+            {"image": "images/TeresaHernandez.jpeg", "info": "Teresa Hernández\n\nIngeniería en Mecatrónica"},
+            {"image": "images/CarlosReyes.jpeg", "info": "Carlos Reyes\n\nIngeniería en Mecatrónica"},
+            {"image": "images/DavidVillanueva.jpeg", "info": "David Villanueva\n\nIngeniería en Mecatrónica"},
+            {"image": "images/ItzelMartinez.jpeg", "info": "Itzel Martínez\n\nIngeniería en Mecatrónica & Biomédica"},
+            {"image": "images/EduardoMartinez.jpeg", "info": "Eduardo Martínez\n\nIngeniería en Mecatrónica & Diseño Automotriz"}
+        ]
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
@@ -267,7 +292,43 @@ class TestDesignApp(MDApp):
                     self.param_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
             self.param_entries[motor][param].text = old_params[motor][param]
-            
+    
+    # --------------------------- Métodos del menú Pop Up -------------------------
+    def show_popup(self):
+        self.popup = InfoPopUp()
+        self.popup.open()
+        
+        # Se agrega la información de cada miembro al layout
+        grid: Grid = self.popup.ids.team_grid
+        for person in self.team_info: 
+            grid.add_widget(ImageTeam(source = person["image"]))
+            grid.add_widget(LabelTeam(text = person["info"]))
+
+    def open_repo(self) -> None: 
+        '''
+        Función para abrir el repositorio del código fuente
+        
+        Nota: el usuario necesita acceso al repo para poder abrirlo
+        '''
+        url: str = "https://github.com/PEF-OT24/ExoBoost"
+        try: 
+            webbrowser.open(url)
+        except:
+            dialog = MDDialog(
+            title="Error",
+            text="Ha ocurrido un error.",
+            buttons=[
+                MDFlatButton(
+                    text="Cerrar", on_release=lambda *args: dialog.dismiss()
+                )
+            ],
+            )
+            dialog.open()
+
+    def close_popup(self):
+        '''Función para cerra el pop up de información'''
+        self.popup.dismiss()
+
     # --------------------------- Funciones de uso general -------------------------
 
     def is_valid(self, var: str, tipo) -> bool:

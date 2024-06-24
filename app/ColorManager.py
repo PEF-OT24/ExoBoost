@@ -12,11 +12,15 @@ class ColorManager():
                 "transparency": "255"
             },
             "Dark Cyan":{
-                "color": "3A8E8C",
+                "color": "296362",
                 "transparency": "255"
             },
             "Dark Blue": {
                 "color": "1F3B4D",
+                "transparency": "255"
+            },
+            "Blue":{
+                "color": "5B7789",
                 "transparency": "255"
             },
             "Light Orange": {
