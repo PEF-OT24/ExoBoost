@@ -23,8 +23,7 @@ from kivy.uix.image import Image
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 
-Clock.max_it
-eration = 1000  # Increase this value if necessary
+Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Importar librerías para comunicación
 import platform
