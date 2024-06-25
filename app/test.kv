@@ -30,7 +30,15 @@
 
 <ButtonDevices>:
     text: ""
-
+    size_hint_y: None
+    height: dp(40)  # Altura fija para cada fila
+    font_size: "12sp"
+    font_name: "Roboto"
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+    halign: "center"
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    md_bg_color: app.colors["Dark Blue"]
 # --------------------------------------- Ventana de PopUp de Información ----------------------------------------
 <LabelTeam>:
     size_hint_y: None
