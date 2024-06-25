@@ -102,7 +102,7 @@ WindowManager:
                             ripple_color: app.colors['Cyan']
                             on_press: self.md_bg_color = app.colors["Light Orange"]
                             on_release: self.md_bg_color = app.colors["Cyan"]
-                            on_press: root.search_devices()
+                            on_press: app.search_devices()
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0.5,'center_y':0.5}
                             height: root.height*0.065
@@ -142,7 +142,7 @@ WindowManager:
                             height: root.height*0.065
                             #on_press: 
                             try:
-                                root.connect_disconnect()
+                                app.connect_disconnect()
                             except:
                                 print('error')
                             md_bg_color: app.colors["Cyan"]

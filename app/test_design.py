@@ -17,29 +17,16 @@ from kivy.clock import Clock
 from kivymd.uix.label import MDLabel
 Clock.max_iteration = 1000  # Increase this value if necessary
 
+# Importar librerías para comunicación
+import asyncio
+import json 
+import os
+import math
+from BLE import Connection, communication_manager
+
 # Create multiple windows, main code will be located in main window
 # SecundaryWindow (as well as new created) might contain differente or new functions to the app
-class MainWindow(Screen):
-    
-    def search_devices(self):
-        device_list = self.ids.device_list
-        devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
-        try:
-            device_list.data = devices
-        except:
-            print('no devices aun')
-    
-    def connect_disconnect(self):
-        device_list = self.ids.device_list
-        selected_devices = [child for child in device_list.children[0].children if child.selected]
-        try:
-            if selected_devices:
-                print(f"Connecting/Disconnecting {selected_devices[0].text}")
-            else:
-                print("No device selected")
-        except:
-            print("boton no funciona aun")
-
+class MainWindow(Screen): pass
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
 class CustomLabelRoboto(MDLabel): pass # Case predefinida para los subtítulos con formato
@@ -78,10 +65,21 @@ class TestDesignApp(MDApp):
         if not(self.kv_loaded):
             self.root = Builder.load_file("test.kv")
             self.kv_loaded = True
+            # self.get_permissions() # Carga los permisos para Android, REVISAR 
         return self.root
     
     def on_start(self):
         self.root.current = "Main Window"
+
+    async def launch_app(self):
+        """Lazamiento de aplicación con el manejo de metodos asincronos"""
+        # Se puede poner dentro de start
+        await self.async_run(async_lib='asyncio')
+
+    async def start(self):
+        """Inicia la app de forma asincrona esperando que la tarea de lanzamiento finalize"""
+        task = asyncio.create_task(self.launch_app())
+        (_, pending) = await asyncio.wait({task}, return_when='FIRST_COMPLETED')
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
@@ -129,9 +127,66 @@ class TestDesignApp(MDApp):
         print("Stop action triggered")
 
     #------------------------ Métodos de menú de blutooth ------------------------
+    def search_devices(self):
+        device_list = self.root.get_screen("Main Window").ids.device_list
+        devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
+        try:
+            device_list.data = devices
+        except:
+            print('no devices aun')
+    
+    def connect_disconnect(self):
+        device_list = self.root.get_screen("Main Window").ids.device_list
+        selected_devices = [child for child in device_list.children[0].children if child.selected]
+        try:
+            if selected_devices:
+                print(f"Connecting/Disconnecting {selected_devices[0].text}")
+            else:
+                print("No device selected")
+        except:
+            print("boton no funciona aun")
 
-    def bluetooth_connection(self): pass
+    def get_permissions(self):
+        """Solicita permisos de acceso a ubicación y bluetooth"""
+        if self.os_name == 'android':
+            from android.permissions import Permission, request_permissions  # type: ignore
+            def callback(permission, results):
+                if all([res for res in results]):
+                    print('Got all permissions')
+                else:
+                    print('Did not get all permissions')
+            try:
+                request_permissions([Permission.BLUETOOTH,
+                     Permission.BLUETOOTH_ADMIN, 
+                     Permission.WAKE_LOCK, 
+                     Permission.BLUETOOTH_CONNECT,
+                     callback])
+            except Exception as e:
+                print(e)
 
+    def start_BLE(self, flag: bool) -> None:
+        """Metodo que inicia el proceso de conexión y comunicación BLE"""
+        if flag:
+            # ---- Hueco para activar el spinner al iniciar el bluetooth.
+            # self.root.get_screen('main_window').ids.spinner.active = True
+            try:
+                self.ble_task = asyncio.create_task(run_BLE(self, self.dataTx_queue, self.battery_queue, self.deviceSelect_queue, self.angle_queue, self.manipulation_queue))
+                self.update_battery_task = asyncio.ensure_future(self.update_battery_value())
+                self.update_acceleration_task = asyncio.ensure_future(self.update_acceleration_value())
+                self.update_speed_task = asyncio.ensure_future(self.update_speed_value())
+                self.update_manipulation_task = asyncio.ensure_future(self.update_manipulation_value())
+            except Exception as e:
+                print(e)
+
+    def device_clicked(self, _, value: str) -> None:
+        """Metodo que inicializa el proceso de selección de dispositvo"""
+        if value == "ESP32":
+            self.device_clicked_task = asyncio.ensure_future(self.device_event_selected(value))
+
+    async def device_event_selected(self, value: str) -> None:
+        """Metodo que maneja el proceso de almacenar el dispostivo seleccionado en una queue y la transición a conexión"""
+        await self.deviceSelect_queue.put(value)
+        self.root.get_screen('main_window').ids.spinner.active = True
     #------------------------ Métodos del menú de asistencia ------------------------
 
     def assitance_method(self): pass
@@ -144,10 +199,46 @@ class TestDesignApp(MDApp):
 
     def on_entry_text(self, value: str) -> None: 
         print(value)
+
+async def run_BLE(app: MDApp, dataTx_queue: asyncio.Queue, battery_queue: asyncio.Queue, deviceSelect_queue: asyncio.Queue,
+                  angle_queue: asyncio.Queue, manipulation_queue: asyncio.Queue) -> None:
+    """Método que inicia la conexión por el protocolo de BLE, asi como la comunicación entre servidor y cliente y el manejo de queues
+       para el envio y repcion de datos"""
     
-def main():
-    '''Initializes the app indicating the current OS'''
-    TestDesignApp().run()
+    read_char = "00002A3D-0000-1000-8000-00805f9b34fb"
+    flag = asyncio.Event()
+    connection = Connection(loop=loop,
+                            uuid=UUID,
+                            address=ADDRESS,
+                            read_char=read_char,
+                            write_char=read_char,
+                            flag=flag,
+                            app=app,
+                            deviceSelect_queue=deviceSelect_queue)
+    disconnect_flag['disconnect'] = False
+
+    try:
+        asyncio.ensure_future(connection.manager())
+        asyncio.ensure_future(communication_manager(connection=connection,
+                                                    write_char=read_char,
+                                                    read_char=read_char,
+                                                    dataTx_queue=dataTx_queue,
+                                                    battery_queue=battery_queue, angle_queue=angle_queue,
+                                                    manipulation_queue=manipulation_queue, disconnect_flag=disconnect_flag))
+        print(f"fetching connection")
+        await connection.flag.wait()
+    finally:
+        print(f"flag status confirmed!")
+
+async def mainThread():
+    """Hilo principal para el lanzamiento de la aplicación"""
+    ExoBoostApp = TestDesignApp()
+    task_runApp = asyncio.create_task(ExoBoostApp.start())
+    (done, pending) = await asyncio.wait({task_runApp}, return_when='FIRST_COMPLETED')
 
 if __name__ == '__main__':
-    main()
+    """Función principal que lanza la aplicación"""
+    disconnect_flag = {'disconnect': False}
+    ADDRESS, UUID = None, None
+    loop = asyncio.get_event_loop()
+    asyncio.run(mainThread())
