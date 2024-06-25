@@ -7,8 +7,20 @@ class ColorManager():
                 "color": "4FBDBA",
                 "transparency": "255"
             },
+            "Light Cyan":{
+                "color": "80D6D4",
+                "transparency": "255"
+            },
+            "Dark Cyan":{
+                "color": "296362",
+                "transparency": "255"
+            },
             "Dark Blue": {
                 "color": "1F3B4D",
+                "transparency": "255"
+            },
+            "Blue":{
+                "color": "5B7789",
                 "transparency": "255"
             },
             "Light Orange": {
