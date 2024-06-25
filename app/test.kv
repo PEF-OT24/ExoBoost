@@ -204,6 +204,8 @@ WindowManager:
                             pos: self.pos
                             size: self.size
 
+                    # Elements on app
+                    # -------------------- Menu Bluetooth --------------------------
                     CustomLabelAD:
                         id: bluetooth_title
                         text: "Bluetooth Connection"
@@ -219,9 +221,11 @@ WindowManager:
                             size: '200dp','50dp'
                             ripple_effect: False
                             ripple_color: app.colors['Cyan']
-                            on_press: self.md_bg_color = app.colors["Light Orange"]
-                            on_release: self.md_bg_color = app.colors["Cyan"]
-                            on_press: root.search_devices()
+                            on_press: 
+                                self.md_bg_color = app.colors["Light Orange"]
+                                app.search_devices()
+                            on_release: 
+                                self.md_bg_color = app.colors["Cyan"]
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0.5,'center_y':0.5}
                             height: root.height*0.065
@@ -232,17 +236,11 @@ WindowManager:
                         height: '20dp'
                     # Menu con dispositivos disponibles
                     ScrollView:
-                        size_hint: (1,1)
-                        RecycleView:
+                        GridLayout:
                             id: device_list
-                            viewclass: 'SelectableLabel'
-                            RecycleBoxLayout:
-                                #color: app.colors["White"]
-                                default_size: None, dp(56)
-                                default_size_hint: 1,None
-                                size_hint_y: None
-                                height: self.minimum_height
-                                orientation: 'vertical'
+                            cols: 1
+                            size_hint_y: None
+                            height: self.minimum_height
                     # Botón para conectarse/desconectarse a un dispositivo
                     BoxLayout:
                         size_hint_y: None
@@ -261,7 +259,7 @@ WindowManager:
                             height: root.height*0.065
                             #on_press: 
                             try:
-                                root.connect_disconnect()
+                                app.connect_disconnect()
                             except:
                                 print('error')
                             md_bg_color: app.colors["Cyan"]
@@ -692,15 +690,15 @@ WindowManager:
 # Se le da formato al texto del menú de dispositivos
 <SelectableLabel@MDLabel>:
     size_hint_y: None
-    height: self.texture_size[1]
+    height: dp(15)
     halign: 'center'
     valign: 'middle'
     theme_text_color: 'Custom'
     text_color: app.colors['White']
     on_touch_down:
-        self.parent.parent.parent.select_with_touch(self.index, 'down')
+        app.on_device_select(self.text)
 
-#Aqui se le da formato a la caja que contiene dicho menú 
+#Aqui se le da formato a la caja que contiene dicho menú :)
 <SelectableRecycleBoxLayout@RecycleBoxLayout>:
     default_size: None, dp(56)
     default_size_hint: 1, None
