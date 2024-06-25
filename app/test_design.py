@@ -173,8 +173,11 @@ class TestDesignApp(MDApp):
         self.limb_dropdown_clicked("Right leg")
 
         # Se lee el archivo de texto incluyendo la información del proyecto
-        with open('info_proyecto.txt', 'r', encoding='utf-8') as file:
-            self.info_project = file.read()
+        try:
+            self.info_project = open("info_proyecto.txt", 'r', encoding='utf-8').read()
+        except: 
+            # In case the file cannot be openned
+            self.info_project = "No info found"
         
         # --------- Información de descripción del equipo --------
         self.team_info = [
