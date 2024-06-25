@@ -12,12 +12,14 @@ from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
 from ColorManager import ColorManager
-import platform
 from kivy.clock import Clock
 from kivymd.uix.label import MDLabel
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.button import Button
 Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Importar librerías para comunicación
+import platform
 import asyncio
 import json 
 import os
@@ -71,9 +73,10 @@ class TestDesignApp(MDApp):
     def on_start(self):
         self.root.current = "Main Window"
 
+        self.device_list: GridLayout = self.root.get_screen("Main Window").ids.device_list
+
     async def launch_app(self):
         """Lazamiento de aplicación con el manejo de metodos asincronos"""
-        # Se puede poner dentro de start
         await self.async_run(async_lib='asyncio')
 
     async def start(self):
@@ -128,23 +131,19 @@ class TestDesignApp(MDApp):
 
     #------------------------ Métodos de menú de blutooth ------------------------
     def search_devices(self):
-        device_list = self.root.get_screen("Main Window").ids.device_list
-        devices = [{'text': f'DISPOSITIVO {i}'} for i in range(1,4)]
-        try:
-            device_list.data = devices
-        except:
-            print('no devices aun')
+        items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
+        self.device_list.clear_widgets()  # Limpiar widgets anteriores
+        self.displayed_items = []  # Resetear lista de elementos desplegados
+
+        for item in items:
+            btn = Button(text=item, size_hint_y=None, height=40)
+            btn.bind(on_release=self.on_device_select)
+            self.device_list.add_widget(btn)
+            self.displayed_items.append(btn)
     
-    def connect_disconnect(self):
-        device_list = self.root.get_screen("Main Window").ids.device_list
-        selected_devices = [child for child in device_list.children[0].children if child.selected]
-        try:
-            if selected_devices:
-                print(f"Connecting/Disconnecting {selected_devices[0].text}")
-            else:
-                print("No device selected")
-        except:
-            print("boton no funciona aun")
+    def on_device_select(self, instance: str): print(f'{instance.text} fue presionado')
+
+    def connect_disconnect(self): pass
 
     def get_permissions(self):
         """Solicita permisos de acceso a ubicación y bluetooth"""
