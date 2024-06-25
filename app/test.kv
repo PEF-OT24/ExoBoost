@@ -28,7 +28,6 @@
     mode: "fill"
     fill_color: app.colors["Light Gray"]
 
-
 # --------------------------------------- Ventana de PopUp de Información ----------------------------------------
 <LabelTeam>:
     size_hint_y: None
@@ -257,11 +256,6 @@ WindowManager:
                             on_release: self.md_bg_color = app.colors["Cyan"]
                             width: root.width*0.5
                             height: root.height*0.065
-                            #on_press: 
-                            try:
-                                app.connect_disconnect()
-                            except:
-                                print('error')
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0}
                         Widget:
