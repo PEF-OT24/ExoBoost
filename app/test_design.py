@@ -45,6 +45,7 @@ class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de
 class InfoPopUp(Popup): pass
 class ImageTeam(Image): pass
 class LabelTeam(MDLabel): pass
+class ButtonDevices(Button): pass
 
 class TestDesignApp(MDApp):  
     #------------------------ Métodos de inicio ------------------------#
@@ -253,7 +254,7 @@ class TestDesignApp(MDApp):
         self.displayed_items = []  # Resetear lista de elementos desplegados
 
         for item in items:
-            btn = Button(text=item, size_hint_y=None, height=40)
+            btn = ButtonDevices(text=item, size_hint_y=None, height=40)
             btn.bind(on_release=self.on_device_select)
             self.device_list.add_widget(btn)
             self.displayed_items.append(btn)
