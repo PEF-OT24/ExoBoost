@@ -36,6 +36,12 @@ from BLE import Connection, communication_manager
 
 # Create multiple windows, main code will be located in main window
 # SecundaryWindow (as well as new created) might contain differente or new functions to the app
+class SplashScreen(Screen):
+    def on_enter(self, *args):
+        Clock.schedule_once(self.switch_to_main,3)
+    def switch_to_main(self, dt):
+        self.manager.current = 'Main Window'
+
 class MainWindow(Screen): pass
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
@@ -158,7 +164,7 @@ class TestDesignApp(MDApp):
         return self.root
     
     def on_start(self):
-        self.root.current = "Main Window"
+        self.root.current = "Splash Screen"
         self.limb_dropdown_clicked("Right leg")
 
         # Se lee el archivo de texto incluyendo la información del proyecto
@@ -258,7 +264,7 @@ class TestDesignApp(MDApp):
             btn.bind(on_release=self.on_device_select)
             self.device_list.add_widget(btn)
             self.displayed_items.append(btn)
-    
+    # Método que imprime dispositivo seleccionado
     def on_device_select(self, instance: str): print(f'{instance.text} fue presionado')
 
     def connect_disconnect(self): pass
