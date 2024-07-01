@@ -29,7 +29,6 @@
 #endif
 
 uint32_t intensity = 0;
-uint8_t CANBUSSend_PIDvalues[8u];
 uint8_t CANBUSSend_Control[8u];
 uint8_t CANBUSSend_Stop[8u];
 uint8_t CANBUSReceive[8u];
@@ -88,6 +87,14 @@ void setup() {
     SendSetPoint();
 }
 
+char* decimalToHex(int decimalValue) {
+  // Convierte valores decimales a valores hexadecimales
+  char* hexArray;
+  if decimalValue == NULL {return;}
+  sprintf(hexArray, "%X", decimalValue);
+  return hexArray;
+}
+
 void ISRSysTick(void) {
     doControlFlag = true;
 }
@@ -111,15 +118,18 @@ void CAN0IntHandler(void) {
 }
 
 void SendParameters(){
+  // Se define la variable que almacena el valor
+  uint8_t CANBUSSend_PIDvalues[8u];
+
   // Define PID parameter values
-  CANBUSSend_PIDvalues[0] = 0x32;
-  CANBUSSend_PIDvalues[1] = 0x00;
-  CANBUSSend_PIDvalues[2] = 0x64;
-  CANBUSSend_PIDvalues[3] = 0x32;
-  CANBUSSend_PIDvalues[4] = 0x64;
-  CANBUSSend_PIDvalues[5] = 0x05;
-  CANBUSSend_PIDvalues[6] = 0x64;
-  CANBUSSend_PIDvalues[7] = 0x00;
+  CANBUSSend_PIDvalues[0] = "0x32";
+  CANBUSSend_PIDvalues[1] = "0x00";
+  CANBUSSend_PIDvalues[2] = "0x00";
+  CANBUSSend_PIDvalues[3] = "0x00";
+  CANBUSSend_PIDvalues[4] = "0x00";
+  CANBUSSend_PIDvalues[5] = "0x00";
+  CANBUSSend_PIDvalues[6] = "0x00";
+  CANBUSSend_PIDvalues[7] = "0x00";
   
   sMsgObjectTx_PIDvalues.ui32MsgID = 0x141;
   sMsgObjectTx_PIDvalues.ui32MsgIDMask = 0xFFFFFFFF;
