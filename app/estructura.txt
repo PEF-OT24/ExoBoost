@@ -1,0 +1,45 @@
+Estructura para la comunicación de datos con JSON
+
+Datos que se van a mandar: 
+- Parámetros PI de los 3 motores para cada extremidad
+    - Right leg: 
+        - Motor 1
+            - KC
+            - TI
+            - SP
+            - PV
+        - Motor 2
+            - KC
+            - TI
+            - SP
+            - PV
+        - Motor 3
+            - KC
+            - TI
+            - SP
+            - PV
+
+    - Left leg: (Se repite)
+    - Right arm: (Se repite)
+    - Left arm: (Se repite)
+
+- Estado
+    - Apagado
+    - 
+
+Estructura base
+
+"motor": {
+    "KC": float,
+    "TI", float, 
+    "SP", float, 
+    "PV", float
+}
+
+Estructura para cada extremidad
+
+"extremidad": {
+    "motor 1": motor, 
+    "motor 2": motor, 
+    "motor 3", motor
+}
