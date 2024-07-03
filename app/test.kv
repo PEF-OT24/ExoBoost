@@ -352,22 +352,36 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    
-                    CustomLabelAD:
-                        text: "Assistance Mode"
-                        halign: "center"
-                        valign: "top"
+
+                    BoxLayout:
+                        orientation: 'vertical'
                         size_hint_y: None
-                        height: self.texture_size[1] + 10  # Increased height to move higher
-                        theme_text_color: "Custom"
-                        text_color: app.colors["White"]
+                        height: dp(60)
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                        canvas.before:
+                            Color:
+                                rgba: app.colors["Dark Blue"]
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    
+                        CustomLabelAD:
+                            text: "Assistance Mode"
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            valign: "center"
+                            #halign: "center"
+                            #size_hint_y: None
+                            #height: self.texture_size[1] + dp(10)  # Increased height to move higher
+                            #height: dp(35)
+                            #theme_text_color: "Custom"
+                            #text_color: app.colors["White"]
 
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
                         height: self.minimum_height
-                        padding: dp(20)
-                        spacing: dp(10)
+                        padding: dp(5)
+                        spacing: dp(5)
                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
                         BoxLayout:
