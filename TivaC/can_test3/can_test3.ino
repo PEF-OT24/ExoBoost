@@ -29,7 +29,6 @@
 #endif
 
 uint32_t intensity = 0;
-uint8_t CANBUSSend_Control[8u];
 uint8_t CANBUSSend_Stop[8u];
 uint8_t CANBUSReceive[8u];
 uint8_t inByte = 0;
@@ -37,7 +36,6 @@ bool doControlFlag = 0;
 
 tCANMsgObject sMsgObjectRx;
 tCANMsgObject sMsgObjectTx_PIDvalues;
-tCANMsgObject sMsgObjectTx_Control;
 tCANMsgObject sMsgObjectTx_Stop;
 
 void setup() {
@@ -81,18 +79,23 @@ void setup() {
     SysTickEnable();
 
     IntMasterEnable();
-
-    // Sends PID parameters
     SendParameters();
-    SendSetPoint();
+    //set_speed(1, 380, true);
+    //set_absolute_position(1, 90, 0, true);
 }
 
-char* decimalToHex(int decimalValue) {
-  // Convierte valores decimales a valores hexadecimales
-  char* hexArray;
-  if decimalValue == NULL {return;}
-  sprintf(hexArray, "%X", decimalValue);
-  return hexArray;
+void split32bits(int32_t number, uint8_t *byteArray) {
+    // Se divide el número en 4 enteros de 8 bits
+    byteArray[0] = (number >> 24) & 0xFF;  // byte más significativo
+    byteArray[1] = (number >> 16) & 0xFF;
+    byteArray[2] = (number >> 8) & 0xFF;
+    byteArray[3] = number & 0xFF;  // byte menos significativo
+}
+
+void split16bits(int16_t number, uint8_t *byteArray) {
+    // Se divide el número en 2 enteros de 8 bits
+    byteArray[0] = (number >> 8) & 0xFF; // byte más significativo	
+    byteArray[1] = number & 0xFF;  // byte menos significativo
 }
 
 void ISRSysTick(void) {
@@ -122,14 +125,14 @@ void SendParameters(){
   uint8_t CANBUSSend_PIDvalues[8u];
 
   // Define PID parameter values
-  CANBUSSend_PIDvalues[0] = "0x32";
-  CANBUSSend_PIDvalues[1] = "0x00";
-  CANBUSSend_PIDvalues[2] = "0x00";
-  CANBUSSend_PIDvalues[3] = "0x00";
-  CANBUSSend_PIDvalues[4] = "0x00";
-  CANBUSSend_PIDvalues[5] = "0x00";
-  CANBUSSend_PIDvalues[6] = "0x00";
-  CANBUSSend_PIDvalues[7] = "0x00";
+  CANBUSSend_PIDvalues[0] = 0x32; 
+  CANBUSSend_PIDvalues[1] = 0x00;
+  CANBUSSend_PIDvalues[2] = 0x64;
+  CANBUSSend_PIDvalues[3] = 0x32;
+  CANBUSSend_PIDvalues[4] = 0x64;
+  CANBUSSend_PIDvalues[5] = 0x32;
+  CANBUSSend_PIDvalues[6] = 0x64;
+  CANBUSSend_PIDvalues[7] = 0x32;
   
   sMsgObjectTx_PIDvalues.ui32MsgID = 0x141;
   sMsgObjectTx_PIDvalues.ui32MsgIDMask = 0xFFFFFFFF;
@@ -138,56 +141,152 @@ void SendParameters(){
   CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx_PIDvalues, MSG_OBJ_TYPE_TX);
 }
 
-void SendSetPoint(){
-  // Define PID parameter values
-  CANBUSSend_Control[0] = 0xA2;
-  CANBUSSend_Control[1] = 0x00;
-  CANBUSSend_Control[2] = 0x00;
-  CANBUSSend_Control[3] = 0x00;
-  CANBUSSend_Control[4] = 0x00;
-  CANBUSSend_Control[5] = 0x68;
-  CANBUSSend_Control[6] = 0x01;
-  CANBUSSend_Control[7] = 0x00;
+void set_speed(int8_t ID, int64_t speed_ref, bool show){
   
-  sMsgObjectTx_Control.ui32MsgID = 0x141;
-  sMsgObjectTx_Control.ui32MsgIDMask = 0xFFFFFFFF;
-  sMsgObjectTx_Control.ui32MsgLen = 8u;
-  sMsgObjectTx_Control.pui8MsgData = CANBUSSend_Control;
-  CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx_Control, MSG_OBJ_TYPE_TX); 
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  tCANMsgObject Message_Rx;
+  uint8_t CAN_data_TX[8u];
+  uint8_t CAN_data_RX[8u];
+
+  // Escala el valor a enviar 0.01 dps/LSB
+  int32_t sp = speed_ref * 100;
+
+  //if (sp > 2147483647){
+  //  return;
+  //}
+
+  uint8_t byteArray[4];
+  split32bits(sp, byteArray);
+  
+  // Define el setpoint de la velocidad
+  CAN_data_TX[0] = 0xA2;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = byteArray[3];
+  CAN_data_TX[5] = byteArray[2];
+  CAN_data_TX[6] = byteArray[1];
+  CAN_data_TX[7] = byteArray[0];
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x140 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.pui8MsgData = CAN_data_TX;
+
+  // Define el mensaje para leer por CAN
+  Message_Rx.ui32MsgID = 0x240 + ID;
+  Message_Rx.ui32MsgIDMask = 0xFFFFFFFF; // Lee todos los mensajes
+  Message_Rx.ui32MsgLen = 8u;
+  Message_Rx.pui8MsgData = CAN_data_RX;
+
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
+
+  // Lee el mensaje de respuesta
+  CANMessageSet(CAN0_BASE, 2, &Message_Rx, MSG_OBJ_TYPE_RXTX_REMOTE);
+
+  // Imprime el mensaje si el usuario lo indica
+  if (show){
+    char buffer[50];
+    while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {Serial.println("waiting");}
+    sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X", 
+            CAN_data_RX[0], CAN_data_RX[1], CAN_data_RX[2], CAN_data_RX[3], 
+            CAN_data_RX[4], CAN_data_RX[5], CAN_data_RX[6], CAN_data_RX[7]);
+    Serial.println(buffer);
+  }
 }
 
-void StopMotor(){
-  // Define PID parameter values
-  CANBUSSend_Stop[0] = 0x81;
-  CANBUSSend_Stop[1] = 0x00;
-  CANBUSSend_Stop[2] = 0x00;
-  CANBUSSend_Stop[3] = 0x00;
-  CANBUSSend_Stop[4] = 0x00;
-  CANBUSSend_Stop[5] = 0x00;
-  CANBUSSend_Stop[6] = 0x00;
-  CANBUSSend_Stop[7] = 0x00;
+void set_absolute_position(int8_t ID, int64_t position_ref, int64_t max_speed, bool show){ // NO FUNCIONA
   
-  sMsgObjectTx_Stop.ui32MsgID = 0x141;
-  sMsgObjectTx_Stop.ui32MsgIDMask = 0xFFFFFFFF;
-  sMsgObjectTx_Stop.ui32MsgLen = 8u;
-  sMsgObjectTx_Stop.pui8MsgData = CANBUSSend_Control;
-  CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx_Stop, MSG_OBJ_TYPE_TX); 
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  tCANMsgObject Message_Rx;
+  uint8_t CAN_data_TX[8u];
+  uint8_t CAN_data_RX[8u];
+
+  // Escala el valor a enviar 0.01 dps/LSB
+  int32_t sp = position_ref * 100;
+
+  //if (sp > 2147483647){
+  //  return;
+  //}
+
+  uint8_t byteArray_speed[2];
+  uint8_t byteArray_position[4];
+
+  // Split the number into 4 bytes
+  split32bits(sp, byteArray_position);
+  split16bits(max_speed, byteArray_speed);
+  
+  // Define el setpoint de la velocidad
+  CAN_data_TX[0] = 0xA4;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0;
+  CAN_data_TX[3] = 0;
+  CAN_data_TX[4] = byteArray_position[3];
+  CAN_data_TX[5] = byteArray_position[2];
+  CAN_data_TX[6] = byteArray_position[1];
+  CAN_data_TX[7] = byteArray_position[0];
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x140 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.pui8MsgData = CAN_data_TX;
+
+  // Define el mensaje para leer por CAN
+  Message_Rx.ui32MsgID = 0x240 + ID;
+  Message_Rx.ui32MsgIDMask = 0xFFFFFFFF; // Lee todos los mensajes
+  Message_Rx.ui32MsgLen = 8u;
+  Message_Rx.pui8MsgData = CAN_data_RX;
+
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
+
+  // Lee el mensaje de respuesta
+  CANMessageSet(CAN0_BASE, 2, &Message_Rx, MSG_OBJ_TYPE_RXTX_REMOTE);
+
+  // Imprime el mensaje si el usuario lo indica
+  if (show){
+    char buffer[50];
+    while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {Serial.println("waiting");}
+    sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X", 
+            CAN_data_RX[0], CAN_data_RX[1], CAN_data_RX[2], CAN_data_RX[3], 
+            CAN_data_RX[4], CAN_data_RX[5], CAN_data_RX[6], CAN_data_RX[7]);
+    Serial.println(buffer);
+  }
 }
 
+void stop_motor(int8_t ID){
+  
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x81; // con 80 se apaga el motor
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x140 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.pui8MsgData = CAN_data_TX;
+  
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
+
+}
 void loop() {
   // Wait for the message to be transmitted
-  SendSetPoint();
-  while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {
-    Serial.println("waiting");
-    }
-  
-  // Get the received CAN message
-  CANMessageGet(CAN0_BASE, 2, &sMsgObjectRx, false);
-  
-  // Print received CAN data to the serial monitor
-  char buffer[50];
-  sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X", 
-          CANBUSReceive[0], CANBUSReceive[1], CANBUSReceive[2], CANBUSReceive[3], 
-          CANBUSReceive[4], CANBUSReceive[5], CANBUSReceive[6], CANBUSReceive[7]);
-  Serial.println(buffer);
+  stop_motor(1);
+  //set_absolute_position(1, 90, 0, true);
 }
