@@ -4,6 +4,7 @@ bin/
 .buildozer/
 *.py[cod]
 *$py.class
+.vscode/
 
 # test
 # C extensions

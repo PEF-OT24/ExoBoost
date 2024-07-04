@@ -36,6 +36,12 @@ from BLE import Connection, communication_manager
 
 # Create multiple windows, main code will be located in main window
 # SecundaryWindow (as well as new created) might contain differente or new functions to the app
+class SplashScreen(Screen):
+    def on_enter(self, *args):
+        Clock.schedule_once(self.switch_to_main,3)
+    def switch_to_main(self, dt):
+        self.manager.current = 'Main Window'
+
 class MainWindow(Screen): pass
 class SecundaryWindow(Screen): pass
 class WindowManager(ScreenManager): pass
@@ -45,29 +51,22 @@ class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de
 class InfoPopUp(Popup): pass
 class ImageTeam(Image): pass
 class LabelTeam(MDLabel): pass
+class ButtonDevices(MDFlatButton): pass
 
 class TestDesignApp(MDApp):  
     #------------------------ Métodos de inicio ------------------------#
     def __init__(self, **kwargs):
         '''Se inicilizan todos los métodos, el set up de la lógica y se definen atributos'''
         super().__init__(**kwargs)
-        self.kv_loaded: bool = False
 
+        # -------------------------- Atributos internos --------------------------
+        self.kv_loaded: bool = False
+        self.mode: str = None # Modo de operación la app: {assistance, tuning}
+        
         # Detecta el sistema operativo
         self.os_name = self.detect_os()
-        self.pos_screen(0)
-
-        # Modo de trabajo: {"assistance", "tuning"}
-        self.mode: str = None
-
-        # Diccionario de colores
-        self.colors: dict = ColorManager()._get_colors()
-        '''
-        Available colors:
-        Cyan, Dark Blue, Light Orange, Light Gray, Black, White.
-        '''
         
-        # Diccionario de etiquetas 
+        # Diccionario de etiquetas para la sintonización
         self.limb: str = ""
         self.motors_labels: dict[str] = {
             "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
@@ -76,10 +75,37 @@ class TestDesignApp(MDApp):
             "Left arm": ["motor1", "motor2", "motor3"],
             
         }
-
+        
+        # Límites de los parámetros PI de los motores
+        self.motor_params_lims =  {
+            "Right leg": {
+                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
+            },
+            "Left leg": {
+                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
+            },
+            "Right arm": {
+                "motor1": {"kc": "1", "ti": "1", "sp": "0"},
+                "motor2": {"kc": "1", "ti": "1", "sp": "0"},
+                "motor3": {"kc": "1", "ti": "1", "sp": "0"},
+            },
+            "Left arm": {
+                "motor1": {"kc": "10", "ti": "5", "sp": "0"},
+                "motor2": {"kc": "10", "ti": "5", "sp": "0"},
+                "motor3": {"kc": "10", "ti": "5", "sp": "0"},
+            }
+        }
+        # -------------------------- Atributos externos --------------------------
+        """
+        Variables que se mandarán a través de bluetooth
+        """
         # Diccionario de valores de los parámetros de los motores
         # Todos se inicializan con un valor arbitrario
-        self.motor_parameters: dict[dict[dict[str]]] =  {
+        self.motor_parameters =  {
             "Right leg": {
                 "motor1": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
                 "motor2": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
@@ -102,30 +128,15 @@ class TestDesignApp(MDApp):
             }
         }
 
-        # Define un sistema de diccionarios para establecer los límites de los parámetros
-        self.motor_params_lims: dict[dict[dict[str]]] =  {
-            "Right leg": {
-                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
-            },
-            "Left leg": {
-                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
-            },
-            "Right arm": {
-                "motor1": {"kc": "1", "ti": "1", "sp": "0"},
-                "motor2": {"kc": "1", "ti": "1", "sp": "0"},
-                "motor3": {"kc": "1", "ti": "1", "sp": "0"},
-            },
-            "Left arm": {
-                "motor1": {"kc": "10", "ti": "5", "sp": "0"},
-                "motor2": {"kc": "10", "ti": "5", "sp": "0"},
-                "motor3": {"kc": "10", "ti": "5", "sp": "0"},
-            }
-        }
+        # -------------------------- Métodos iniciales --------------------------
+        self.pos_screen(0)
 
+        # Diccionario de colores
+        self.colors: dict = ColorManager()._get_colors()
+        '''
+        Colores disponibles:
+        Cyan, Dark Blue, Light Orange, Light Gray, Black, White.
+        '''
     def build(self):
         """Carga kivy design file"""
         if not(self.kv_loaded):
@@ -157,7 +168,7 @@ class TestDesignApp(MDApp):
         return self.root
     
     def on_start(self):
-        self.root.current = "Main Window"
+        self.root.current = "Splash Screen"
         self.limb_dropdown_clicked("Right leg")
 
         # Se lee el archivo de texto incluyendo la información del proyecto
@@ -253,11 +264,11 @@ class TestDesignApp(MDApp):
         self.displayed_items = []  # Resetear lista de elementos desplegados
 
         for item in items:
-            btn = Button(text=item, size_hint_y=None, height=40)
+            btn = ButtonDevices(text=item)
             btn.bind(on_release=self.on_device_select)
             self.device_list.add_widget(btn)
             self.displayed_items.append(btn)
-    
+    # Método que imprime dispositivo seleccionado
     def on_device_select(self, instance: str): print(f'{instance.text} fue presionado')
 
     def connect_disconnect(self): pass
