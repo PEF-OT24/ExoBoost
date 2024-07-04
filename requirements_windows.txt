@@ -18,3 +18,4 @@ qrcode==7.4.2
 requests==2.31.0
 typing_extensions==4.7.1
 urllib3==2.0.4
+pyjnius==1.6.1
