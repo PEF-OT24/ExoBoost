@@ -240,25 +240,15 @@ class TestDesignApp(MDApp):
     #------------------------ Métodos de menú de blutooth ------------------------
 
     def bluetooth_connection(self): pass
+
     def send_params(self): raise NotImplementedError("Not implemented function")
 
-    #------------------------ Métodos del menú de asistencia ------------------------
-
-    def on_slider_value(self, value):
-        '''Handle the slider value change'''
-        print(f"Slider value: {value}")
-
-    def sit_down_stand_up(self):
-        print("Sit down/stand up action triggered")
-
-    def walk(self):
-        print("Walk action triggered")
-
-    def stop(self):
-        print("Stop action triggered")
-
-    #------------------------ Métodos de menú de blutooth ------------------------
     def search_devices(self):
+        try:
+            import BLE_python
+        except:
+            print("Library not imported propertly")
+            self.show_popup()
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
         self.displayed_items = []  # Resetear lista de elementos desplegados
@@ -314,7 +304,20 @@ class TestDesignApp(MDApp):
         """Metodo que maneja el proceso de almacenar el dispostivo seleccionado en una queue y la transición a conexión"""
         await self.deviceSelect_queue.put(value)
         self.root.get_screen('main_window').ids.spinner.active = True
+
     #------------------------ Métodos del menú de asistencia ------------------------
+    def on_slider_value(self, value):
+        '''Handle the slider value change'''
+        print(f"Slider value: {value}")
+
+    def sit_down_stand_up(self):
+        print("Sit down/stand up action triggered")
+
+    def walk(self):
+        print("Walk action triggered")
+
+    def stop(self):
+        print("Stop action triggered")
 
     def assitance_method(self): pass
 
@@ -410,7 +413,8 @@ class TestDesignApp(MDApp):
         Valida si un dato en formato de string pertenece a otro tipo de dato. 
         Función para validación de informaicón
 
-        Entrada: Dato a validar tipo string
+        Entradas: var  - Dato a validar tipo string
+                  tipo - valor correspondiente a la clase para validación
         Salida: Booleano indicando si el dato pertenece a la clase indicada
         """
         try:
