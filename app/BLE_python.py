@@ -50,23 +50,31 @@ class BLELibrary:
         # self.connect_to_device(device.getAddress())
 
     def connect_to_device(self, address):
-        device = self.bluetooth_adapter.getRemoteDevice(address)
-        self.gatt = device.connectGatt(self.context, False, MyGattCallback(self))
+        '''Given the address of a BLE device, creates a connection to it.'''
+        device = self.bluetooth_adapter.getRemoteDevice(address) # Gets the remote device with its address
+        self.gatt = device.connectGatt(self.context, False, MyGattCallback(self)) # Creates a connection GATT with that device
 
     def create_gatt_server(self):
-        # Create GATT server with one service and one characteristic
+        # Se definen los UUIDs del service y la characteristic
         service_uuid = UUID.fromString('0000180d-0000-1000-8000-00805f9b34fb')  # Replace with your custom UUID
         characteristic_uuid = UUID.fromString('00002a37-0000-1000-8000-00805f9b34fb')  # Replace with your custom UUID
 
+        # Se crea el service
         service = BluetoothGattService(service_uuid, BluetoothGattService.SERVICE_TYPE_PRIMARY)
+        # Se crea la characteristic
         characteristic = BluetoothGattCharacteristic(characteristic_uuid,
                                                      BluetoothGattCharacteristic.PROPERTY_WRITE,
                                                      BluetoothGattCharacteristic.PERMISSION_WRITE)
+        # Se añade la characteristic al servicio
         service.addCharacteristic(characteristic)
 
-        # Add the service to the GATT server
+        # Se crea el GATT server
         self.gatt_server = self.bluetooth_manager.openGattServer(self.context, MyGattCallback(self))
+
+        # Se añade el servicio al GATT server
         self.gatt_server.addService(service)
+
+        # Se muestra el resultado
         print('GATT server created')
 
     def send_json_data(self, data):
@@ -113,6 +121,7 @@ if __name__ == '__main__':
         'key1': 'value1',
         'key2': 'value2'
     }
+
     ble_library.send_json_data(data_to_send)
 
     # Convert GATT services to JSON
