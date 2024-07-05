@@ -34,16 +34,10 @@ import math
 import webbrowser
 from BLE import Connection, communication_manager
 
-# Create multiple windows, main code will be located in main window
-# SecundaryWindow (as well as new created) might contain differente or new functions to the app
 class SplashScreen(Screen):
-    '''Clase para la pantalla de inicio'''
     def on_enter(self, *args):
-        '''Acción al entrar en la pantalla de inicio'''
         Clock.schedule_once(self.switch_to_main,3)
-
-    def switch_to_main(self):
-        '''Cambia la pantalla de inicio a la principal'''
+    def switch_to_main(self, dt):
         self.manager.current = 'Main Window'
 
 class MainWindow(Screen): pass
