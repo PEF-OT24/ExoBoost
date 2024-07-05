@@ -244,10 +244,16 @@ class TestDesignApp(MDApp):
     #------------------------ Métodos de menú de Bluetooth ------------------------
 
     def bluetooth_connection(self): pass
+
     def send_params(self): raise NotImplementedError("Not implemented function")
 
     #Crea lista de 5 dispositivos en el menú de bluetooth
     def search_devices(self):
+        try:
+            import BLE_python
+        except:
+            print("Library not imported propertly")
+            self.show_popup()
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
         self.displayed_items = []  # Resetear lista de elementos desplegados
@@ -416,7 +422,8 @@ class TestDesignApp(MDApp):
         Valida si un dato en formato de string pertenece a otro tipo de dato. 
         Función para validación de informaicón
 
-        Entrada: Dato a validar tipo string
+        Entradas: var  - Dato a validar tipo string
+                  tipo - valor correspondiente a la clase para validación
         Salida: Booleano indicando si el dato pertenece a la clase indicada
         """
         try:
