@@ -38,3 +38,6 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # Close .bashrc
 source ~/.bashrc
+
+Additional packages:
+sudo apt-get install xclip xset

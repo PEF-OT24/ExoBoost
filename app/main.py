@@ -32,7 +32,6 @@ import json
 import os
 import math
 import webbrowser
-from BLE import Connection, communication_manager
 
 class SplashScreen(Screen):
     def on_enter(self, *args):
@@ -275,20 +274,6 @@ class TestDesignApp(MDApp):
             except Exception as e:
                 print(e)
 
-    def start_BLE(self, flag: bool) -> None:
-        """Metodo que inicia el proceso de conexión y comunicación BLE"""
-        if flag:
-            # ---- Hueco para activar el spinner al iniciar el bluetooth.
-            # self.root.get_screen('main_window').ids.spinner.active = True
-            try:
-                self.ble_task = asyncio.create_task(run_BLE(self, self.dataTx_queue, self.battery_queue, self.deviceSelect_queue, self.angle_queue, self.manipulation_queue))
-                self.update_battery_task = asyncio.ensure_future(self.update_battery_value())
-                self.update_acceleration_task = asyncio.ensure_future(self.update_acceleration_value())
-                self.update_speed_task = asyncio.ensure_future(self.update_speed_value())
-                self.update_manipulation_task = asyncio.ensure_future(self.update_manipulation_value())
-            except Exception as e:
-                print(e)
-
     def device_clicked(self, _, value: str) -> None:
         """Metodo que inicializa el proceso de selección de dispositvo"""
         if value == "ESP32":
@@ -424,36 +409,6 @@ class TestDesignApp(MDApp):
 
     def on_entry_text(self, value: str) -> None: 
         print(value)
-
-async def run_BLE(app: MDApp, dataTx_queue: asyncio.Queue, battery_queue: asyncio.Queue, deviceSelect_queue: asyncio.Queue,
-                  angle_queue: asyncio.Queue, manipulation_queue: asyncio.Queue) -> None:
-    """Método que inicia la conexión por el protocolo de BLE, asi como la comunicación entre servidor y cliente y el manejo de queues
-       para el envio y repcion de datos"""
-    
-    read_char = "00002A3D-0000-1000-8000-00805f9b34fb"
-    flag = asyncio.Event()
-    connection = Connection(loop=loop,
-                            uuid=UUID,
-                            address=ADDRESS,
-                            read_char=read_char,
-                            write_char=read_char,
-                            flag=flag,
-                            app=app,
-                            deviceSelect_queue=deviceSelect_queue)
-    disconnect_flag['disconnect'] = False
-
-    try:
-        asyncio.ensure_future(connection.manager())
-        asyncio.ensure_future(communication_manager(connection=connection,
-                                                    write_char=read_char,
-                                                    read_char=read_char,
-                                                    dataTx_queue=dataTx_queue,
-                                                    battery_queue=battery_queue, angle_queue=angle_queue,
-                                                    manipulation_queue=manipulation_queue, disconnect_flag=disconnect_flag))
-        print(f"fetching connection")
-        await connection.flag.wait()
-    finally:
-        print(f"flag status confirmed!")
 
 async def mainThread():
     """Hilo principal para el lanzamiento de la aplicación"""
