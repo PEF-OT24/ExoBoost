@@ -241,7 +241,7 @@ class TestDesignApp(MDApp):
     def send_params(self): raise NotImplementedError("Not implemented function")
 
     def search_devices(self):
-        import BLE3
+        import BLE1
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
         self.displayed_items = []  # Resetear lista de elementos desplegados
