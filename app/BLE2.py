@@ -3,7 +3,7 @@ from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
 # Se acceden a los permisos necesarios
-permissions = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.ACCESS_FINE_LOCATION]
+permissions = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.BLUETOOTH_CONNECT, Permission.BLUETOOTH_SCAN]
 request_permissions(permissions)
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
