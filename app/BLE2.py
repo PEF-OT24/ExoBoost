@@ -11,7 +11,7 @@ BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 IntentFilter = autoclass('android.content.IntentFilter')
 BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
-#Context = autoclass('android.content.Context')
+Context = autoclass('android.content.Context')
 
 """
 class DeviceReceiver(BroadcastReceiver):
