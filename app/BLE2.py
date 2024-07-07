@@ -4,7 +4,6 @@ from time import sleep
 
 # Se acceden a los permisos necesarios
 permissions = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.BLUETOOTH_CONNECT, Permission.BLUETOOTH_SCAN]
-request_permissions(permissions)
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
@@ -40,6 +39,9 @@ class BluetoothManager:
 
         # Indicador de si el Bluetooth esta habilitado
         self.ble_enable = self.is_bluetooth_enabled()
+
+        # Se solicitan los permisos
+        request_permissions(permissions)
 
     def is_bluetooth_enabled(self) -> bool:
         '''Detecta si el BLE está habilitado'''

@@ -25,6 +25,9 @@ from kivymd.uix.button import MDFlatButton
 
 Clock.max_iteration = 1000  # Increase this value if necessary
 
+# Librería de BLE
+from BLE2 import BluetoothManager
+
 # Importar librerías para comunicación
 import platform
 import asyncio
@@ -96,6 +99,10 @@ class TestDesignApp(MDApp):
                 "motor3": {"kc": "10", "ti": "5", "sp": "0"},
             }
         }
+
+        # Parámetros de BLE
+        self.ble = BluetoothManager()
+
         # -------------------------- Atributos externos --------------------------
         """
         Variables que se mandarán a través de bluetooth
@@ -233,10 +240,8 @@ class TestDesignApp(MDApp):
 
     def search_devices(self):
         # Inicialización de BLE
-        from BLE2 import BluetoothManager
-        ble = BluetoothManager()
-        print(f"Bluetooth enabled: {ble.is_bluetooth_enabled()}\n")
-        if not(ble.is_bluetooth_enabled()): ble.enable_bluetooth() # Si no está habilitado lo habilita
+        print(f"Bluetooth enabled: {self.ble.is_bluetooth_enabled()}\n")
+        if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
 
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
