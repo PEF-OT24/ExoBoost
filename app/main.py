@@ -232,7 +232,12 @@ class TestDesignApp(MDApp):
     def send_params(self): raise NotImplementedError("Not implemented function")
 
     def search_devices(self):
-        import BLE2
+        # Inicialización de BLE
+        from BLE2 import BluetoothManager
+        ble = BluetoothManager()
+        print(f"Bluetooth enabled: {ble.is_bluetooth_enabled()}\n")
+        if not(ble.is_bluetooth_enabled()): ble.enable_bluetooth() # Si no está habilitado lo habilita
+
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
         self.displayed_items = []  # Resetear lista de elementos desplegados

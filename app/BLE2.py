@@ -13,8 +13,7 @@ IntentFilter = autoclass('android.content.IntentFilter')
 BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
 Context = autoclass('android.content.Context')
 
-"""
-class DeviceReceiver(BroadcastReceiver):
+"""class DeviceReceiver(BroadcastReceiver):
     '''Clase para el manejo de los dispositivos encontrados'''
     def __init__(self, manager):
         self.manager = manager
@@ -27,7 +26,7 @@ class DeviceReceiver(BroadcastReceiver):
             device_name = device.getName()
             device_address = device.getAddress()
             self.manager.found_devices.append((device_name, device_address))
-
+"""
 class BluetoothManager:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
@@ -35,7 +34,7 @@ class BluetoothManager:
         # Crea el objeto principal para manejar el Bluetooth
         self.bluetooth_adapter = BluetoothAdapter.getDefaultAdapter()
         self.found_devices = [] # Arreglo para guardar dispositivos
-        self.receiver = DeviceReceiver(self)
+        # self.receiver = DeviceReceiver(self)
         self.intent_filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         self.context = autoclass('org.kivy.android.PythonActivity').mActivity
 
@@ -51,23 +50,23 @@ class BluetoothManager:
         if not self.ble_enable:
             self.bluetooth_adapter.enable()
 
-    def start_discovery(self):
-        '''Inicia la busqueda de dispositivos Bluetooth cancelando la anterior'''
-        if self.bluetooth_adapter.isDiscovering():
-            self.bluetooth_adapter.cancelDiscovery()
-            sleep(0.1) # Espera 100 ms para volver a escanear
-        self.found_devices = []
-        self.context.registerReceiver(self.receiver, self.intent_filter)
-        self.bluetooth_adapter.startDiscovery()
+    # def start_discovery(self):
+    #     '''Inicia la busqueda de dispositivos Bluetooth cancelando la anterior'''
+    #     if self.bluetooth_adapter.isDiscovering():
+    #         self.bluetooth_adapter.cancelDiscovery()
+    #         sleep(0.1) # Espera 100 ms para volver a escanear
+    #     self.found_devices = []
+    #     self.context.registerReceiver(self.receiver, self.intent_filter)
+    #     self.bluetooth_adapter.startDiscovery()
 
-    def stop_discovery(self):
-        '''Detiene la busqueda de dispositivos Bluetooth'''
-        if self.bluetooth_adapter.isDiscovering():
-            self.bluetooth_adapter.cancelDiscovery()
-        self.context.unregisterReceiver(self.receiver)
+    # def stop_discovery(self):
+    #     '''Detiene la busqueda de dispositivos Bluetooth'''
+    #     if self.bluetooth_adapter.isDiscovering():
+    #         self.bluetooth_adapter.cancelDiscovery()
+    #     self.context.unregisterReceiver(self.receiver)
 
-    def get_found_devices(self):
-        return self.found_devices
+    # def get_found_devices(self):
+    #     return self.found_devices
 
 def main():
     bt_manager = BluetoothManager()
@@ -76,20 +75,19 @@ def main():
     bt_manager.enable_bluetooth()
     print("Bluetooth enabled:", bt_manager.is_bluetooth_enabled())
 
-    # Inicia el escaneo de dispositivos
-    bt_manager.start_discovery()
-    print("Scanning for devices...")
+    # # Inicia el escaneo de dispositivos
+    # bt_manager.start_discovery()
+    # print("Scanning for devices...")
 
-    # Escanea por 10 segundos
-    sleep(10)  
+    # # Escanea por 10 segundos
+    # sleep(10)  
 
-    # Detiene el escaneo
-    bt_manager.stop_discovery()
+    # # Detiene el escaneo
+    # bt_manager.stop_discovery()
 
-    # Muestra los dispositivos encontrados
-    devices = bt_manager.get_found_devices()
-    print("Found devices:", devices)
+    # # Muestra los dispositivos encontrados
+    # devices = bt_manager.get_found_devices()
+    # print("Found devices:", devices)
 
 if __name__ == "__main__":
     main()
-"""
