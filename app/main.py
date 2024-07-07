@@ -185,15 +185,6 @@ class TestDesignApp(MDApp):
         ]
 
         self.device_list: Grid = self.root.get_screen("Main Window").ids.device_list
-
-    async def launch_app(self):
-        """Lazamiento de aplicación con el manejo de metodos asincronos"""
-        await self.async_run(async_lib='asyncio')
-
-    async def start(self):
-        """Inicia la app de forma asincrona esperando que la tarea de lanzamiento finalize"""
-        task = asyncio.create_task(self.launch_app())
-        (_, pending) = await asyncio.wait({task}, return_when='FIRST_COMPLETED')
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
@@ -251,38 +242,11 @@ class TestDesignApp(MDApp):
             btn.bind(on_release=self.on_device_select)
             self.device_list.add_widget(btn)
             self.displayed_items.append(btn)
+            
     # Método que imprime dispositivo seleccionado
     def on_device_select(self, instance: str): print(f'{instance.text} fue presionado')
 
     def connect_disconnect(self): pass
-
-    def get_permissions(self):
-        """Solicita permisos de acceso a ubicación y bluetooth"""
-        if self.os_name == 'android':
-            from android.permissions import Permission, request_permissions  # type: ignore
-            def callback(permission, results):
-                if all([res for res in results]):
-                    print('Got all permissions')
-                else:
-                    print('Did not get all permissions')
-            try:
-                request_permissions([Permission.BLUETOOTH,
-                     Permission.BLUETOOTH_ADMIN, 
-                     Permission.WAKE_LOCK, 
-                     Permission.BLUETOOTH_CONNECT,
-                     callback])
-            except Exception as e:
-                print(e)
-
-    def device_clicked(self, _, value: str) -> None:
-        """Metodo que inicializa el proceso de selección de dispositvo"""
-        if value == "ESP32":
-            self.device_clicked_task = asyncio.ensure_future(self.device_event_selected(value))
-
-    async def device_event_selected(self, value: str) -> None:
-        """Metodo que maneja el proceso de almacenar el dispostivo seleccionado en una queue y la transición a conexión"""
-        await self.deviceSelect_queue.put(value)
-        self.root.get_screen('main_window').ids.spinner.active = True
 
     #------------------------ Métodos del menú de asistencia ------------------------
     def on_slider_value(self, value):
@@ -410,15 +374,7 @@ class TestDesignApp(MDApp):
     def on_entry_text(self, value: str) -> None: 
         print(value)
 
-async def mainThread():
-    """Hilo principal para el lanzamiento de la aplicación"""
-    ExoBoostApp = TestDesignApp()
-    task_runApp = asyncio.create_task(ExoBoostApp.start())
-    (done, pending) = await asyncio.wait({task_runApp}, return_when='FIRST_COMPLETED')
-
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
-    disconnect_flag = {'disconnect': False}
-    ADDRESS, UUID = None, None
-    loop = asyncio.get_event_loop()
-    asyncio.run(mainThread())
+    ExoBoostApp = TestDesignApp()
+    ExoBoostApp.run()
