@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = basic_BLE
+title = scan_BLE_import
 
 # (str) Package name
 package.name = myapp
