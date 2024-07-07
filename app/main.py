@@ -371,9 +371,6 @@ class TestDesignApp(MDApp):
         except (ValueError, TypeError):
             return False
 
-    def on_entry_text(self, value: str) -> None: 
-        print(value)
-
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
     ExoBoostApp = TestDesignApp()
