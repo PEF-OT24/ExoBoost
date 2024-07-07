@@ -54,7 +54,7 @@ class InfoPopUp(Popup): pass
 class ImageTeam(Image): pass
 class LabelTeam(MDLabel): pass
 class ButtonDevices(MDFlatButton): pass
-
+#class CustomScroll(GridLayout): pass
 
 class TestDesignApp(MDApp):
     #------------------------ Métodos de inicio ------------------------#
@@ -253,7 +253,8 @@ class TestDesignApp(MDApp):
             import BLE_python
         except:
             print("Library not imported propertly")
-            self.show_popup()
+            self.display_devices()
+    def display_devices(self):    
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
         self.displayed_items = []  # Resetear lista de elementos desplegados
