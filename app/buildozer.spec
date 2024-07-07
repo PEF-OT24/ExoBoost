@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = Test_app3
+title = basic_BLE
 
 # (str) Package name
 package.name = myapp
