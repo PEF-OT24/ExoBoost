@@ -9,7 +9,7 @@ request_permissions(permissions)
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
-#IntentFilter = autoclass('android.content.IntentFilter')
+IntentFilter = autoclass('android.content.IntentFilter')
 #BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
 #Context = autoclass('android.content.Context')
 
