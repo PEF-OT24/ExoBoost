@@ -27,13 +27,6 @@ from kivy.uix.dropdown import DropDown
 
 Clock.max_iteration = 1000  # Increase this value if necessary
 
-# Librería de BLE
-try:
-    import BLE2
-    from BLE2 import BluetoothManager
-except Exception as e:
-    print(e)
-
 # Importar librerías para comunicación
 import platform
 import asyncio
@@ -78,6 +71,10 @@ class TestDesignApp(MDApp):
         
         # Detecta el sistema operativo
         self.os_name = self.detect_os()
+        if self.os_name == "Android":
+            # Librería de BLE
+            import BLE2
+            from BLE2 import BluetoothManager
         
         # Diccionario de etiquetas para la sintonización
         self.limb: str = ""

@@ -4,11 +4,13 @@ from time import sleep
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
+BluetoothManager_pyjnius = autoclass('android.bluetooth.BluetoothManager')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
-PythonActivity = autoclass('org.kivy.android.PythonActivity')
+PythonActivity = autoclass('org.kivy.android.PythonActivity').mActivity
 BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
 ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
+Context = autoclass('android.content.Context')
 
 # class ScanCallbackClass(ScanCallback):
 #     def __init__(self, manager):
@@ -49,10 +51,10 @@ class BluetoothManager:
 
         # ----------- Atributos de BLE -----------
         # Entorno de Python para Android
-        self.context = PythonActivity.mActivity
+        self.context = PythonActivity
 
         # Manejo de BLE principal
-        self.bluetooth_adapter = BluetoothAdapter.getDefaultAdapter()
+        self.bluetooth_adapter = self.initialize_bluetooth()
 
         # Escaneador de BLE
         self.ble_enable = self.is_bluetooth_enabled()
@@ -63,6 +65,12 @@ class BluetoothManager:
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
+
+    def initialize_bluetooth(self):
+        '''Inicializa el objeto BluetoothAdapter'''
+        bluetooth_manager = PythonActivity.getSystemService(Context.BLUETOOTH_SERVICE)
+        bluetooth_adapter = bluetooth_manager.getAdapter()
+        return bluetooth_adapter
 
     def request_ble_permissions(self):
         '''Solicitar permisos para el uso de Bluetooth'''
