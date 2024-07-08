@@ -2,8 +2,6 @@ from jnius import autoclass, PythonJavaClass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
-# Se acceden a los permisos necesarios
-
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
@@ -61,7 +59,7 @@ class BluetoothManager:
         if self.ble_enable == None: self.ble_scanner = None
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
-        self.scan_callback = ScanCallback()
+        self.scan_callback = ScanCallback
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
