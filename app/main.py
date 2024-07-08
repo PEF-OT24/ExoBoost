@@ -22,6 +22,8 @@ from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
+from kivymd.uix.slider import MDSlider
+from kivy.uix.dropdown import DropDown
 
 Clock.max_iteration = 1000  # Increase this value if necessary
 
@@ -57,6 +59,7 @@ class InfoPopUp(Popup): pass
 class ImageTeam(Image): pass
 class LabelTeam(MDLabel): pass
 class ButtonDevices(MDFlatButton): pass
+#class CustomScroll(GridLayout): pass
 
 class ErrorPopup(Popup):
     '''Clase para mostrar un error genérico'''
@@ -142,7 +145,7 @@ class TestDesignApp(MDApp):
             }
         }
 
-        # -------------------------- Métodos iniciales --------------------------
+        # Pantalla para desplegar app (no. de monitor)
         self.pos_screen(0)
 
         # Diccionario de colores
@@ -183,7 +186,6 @@ class TestDesignApp(MDApp):
     
     def on_start(self):
         self.root.current = "Splash Screen"
-        self.limb_dropdown_clicked("Right leg")
 
         # Se lee el archivo de texto incluyendo la información del proyecto
         try:
@@ -238,16 +240,19 @@ class TestDesignApp(MDApp):
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
         if tab == "Assistance mode": 
             self.mode = "assistance"
-        elif tab == "Bluetooth settings" or tab == "Tuning mode": 
+        elif tab == "Bluetooth settings": 
+            self.mode = "bluetooth"
+        elif tab == "Tuning mode": 
             self.mode = "tuning"
         
         print(self.mode)
-    #------------------------ Métodos de menú de blutooth ------------------------
+    #------------------------ Métodos de menú de Bluetooth ------------------------
 
     def bluetooth_connection(self): pass
 
     def send_params(self): raise NotImplementedError("Not implemented function")
 
+    #Crea lista de 5 dispositivos en el menú de bluetooth
     def search_devices(self):
         # --------- Manejo de BLE ---------------
         print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
@@ -279,25 +284,27 @@ class TestDesignApp(MDApp):
     def on_device_select(self, instance: str): print(f'{instance.text} fue presionado')
 
     def connect_disconnect(self): pass
-
     #------------------------ Métodos del menú de asistencia ------------------------
+    # ----------------------- Imprime valor del slider -----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
-        print(f"Slider value: {value}")
-
+        print(f"Assitance Level: {value}")
+    #-------------------- Imprimen acciones en botones de asistencia -----------------
+    # Pararse/Sentarse
     def sit_down_stand_up(self):
         print("Sit down/stand up action triggered")
-
+    #Caminar
     def walk(self):
         print("Walk action triggered")
-
+    #Detenerse
     def stop(self):
         print("Stop action triggered")
 
     def assitance_method(self): pass
 
     #------------------------ Métodos del menú de sintonizción ------------------------
-
+    
+    #Método para desplegar valores de PI en cada motor de acuerdo a la extremidad seleccionada
     def limb_dropdown_clicked(self, limb: str) -> None: 
         '''
         Función para actualizar los datos de los motores al seleccionar otra extremidad

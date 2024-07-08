@@ -1,5 +1,12 @@
 #:kivy 2.2.1
 # --------------------------------------- Predefinición de clases para generalizar formato ----------------------------------------
+
+# Librería y clase para dar formato a menu desplegable (Pantalla de tunning)
+#: import Factory kivy.factory.Factory
+<sp@SpinnerOption>:
+    color: app.colors['White']
+    background_color: app.colors['Dark Blue']
+
 <CustomLabelRoboto>: # Case predefinida para los subtítulos con formato
     font_name: "Roboto" # Roboto para texto y subtítulos
     font_size: "15sp" # 30sp para texto y subtítulos
@@ -8,7 +15,7 @@
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
-<CustomLabelAD>: # Case predefinida para los títulos con formato
+<CustomLabelAD>: # Clase predefinida para los títulos con formato
     font_name: "fonts/ADLaMDisplay-Regular.ttf" # ADLaMdisplay para títulos
     font_size: "30sp" # 30sp para títulos
     halign: "center"
@@ -16,7 +23,7 @@
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
-<CustomTextEntry>: # Case predefinida para las entradas de texto con formato
+<CustomTextEntry>: # Clase predefinida para las entradas de texto con formato
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
     height: self.minimum_height
     halign: "center"
@@ -28,18 +35,24 @@
     mode: "fill"
     fill_color: app.colors["Light Gray"]
 
+# Clase para dar formato a dispositivos desplegados y que funcionen como botones
 <ButtonDevices>:
     text: ""
     size_hint_y: None
     height: dp(40)  # Altura fija para cada fila
+    width: root.width
+    #width: dp(300)
+    #adjust_width: True
+    #width: device_list.width
+    #size: self.size
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
+    #Texto dentro del boton
     font_size: "12sp"
     font_name: "Roboto"
     theme_text_color: "Custom"
     text_color: app.colors["White"]
-    halign: "center"
-    pos: self.pos
-    size: self.size
-    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    halign: 'left'
+    #Fondo del boton y efectos
     md_bg_color: app.colors["Dark Blue"]
     ripple_effect: False
     ripple_color: app.colors['Dark Blue']
@@ -78,12 +91,13 @@
     text_color: app.colors["Black"]
     halign: "center"
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
-
+# Para dar formato a las imágenes dentro del popup
 <ImageTeam>:
     size_hint: None, None
     size: dp(80), dp(80)  # Tamaño fijo para cada imagen
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
-    
+
+# ---------------- Estructura del popup -------------------------    
 <InfoPopUp>:
     title: 'Información'
     title_align: "center"
@@ -117,7 +131,7 @@
                 size: self.size
                 radius: [10, 10, 10, 10]  
         
-        # ----------------------- Información del proyecto --------------------
+    # ----------------------- Información del proyecto --------------------
         BoxLayout: 
             orientation: "vertical"
             size_hint: 1, None
@@ -144,7 +158,7 @@
             on_release: 
                 self.md_bg_color = app.colors["Cyan"]
                 app.open_repo()
-        # ----------------------- Información del equipo ----------------------
+    # ----------------------- Información del equipo ----------------------
         BoxLayout: # Título para los participantes
             size_hint: None, None
             size: dp(280), dp(30)
@@ -177,7 +191,6 @@
             ripple_color: app.colors['Cyan']
             md_bg_color: app.colors["Cyan"]
             pos_hint: {'center_x':0.5,'center_y':0.5}
-            # height: root.height*0.065
                 
             on_press: 
                 self.md_bg_color = app.colors["Light Orange"]
@@ -206,12 +219,13 @@ WindowManager:
                 size: self.size
         Widget:
             size_hint_y: 0.2
+        # Logo de la app
         Image:
             source: 'images/PossibleLogoW.png'
             size_hint: None, None
             size: dp(100),dp(100)
             pos_hint: {'center_x':0.5}
-
+        # Título de la app
         CustomLabelAD:
             id: start_text
             text: "ExoBoost"
@@ -231,7 +245,7 @@ WindowManager:
         valign: "center"
         pos_hint: {"center_y": 0.5, "center_x": 0.5}
 
-        # ------------------------------ Barra titular principal superior -------------------------
+    # ------------------------------ Barra titular principal superior -------------------------
         MDTopAppBar:
             md_bg_color: app.colors["Black"]
             left_action_items: [['images/PossibleLogoW.png',lambda x: None]]
@@ -239,7 +253,7 @@ WindowManager:
             font_name: 'fonts/ADLaMDisplay-Regular.ttf'
             pos_hint: {'left':0.5,'center_y':0.5}                              
 
-        # ------------------------------- Se define la arquitectura base como un menú de navegación inferior -------------------------------
+    # ---------------------- Se define la arquitectura base como un menú de navegación inferior -----------------------
         MDBottomNavigation:
             id: bottom_nav
             panel_color: app.colors["Black"]
@@ -274,12 +288,12 @@ WindowManager:
                             size: self.size
 
                     # Elements on app
-                    # -------------------- Menu Bluetooth --------------------------
+            # -------------------- Título del menú --------------------------
                     CustomLabelAD:
                         id: bluetooth_title
                         text: "Bluetooth Connection"
 
-                    # Boton para buscar dispositivos                       
+            # -------------------- Botón para buscar dispositivos -------------------                      
                     BoxLayout:
                         Widget:
                         MDFillRoundFlatButton:
@@ -299,7 +313,7 @@ WindowManager:
                             pos_hint: {'center_x':0.5,'center_y':0.5}
                             height: root.height*0.065
                         Widget:
-                    #El spinner se agregará después cuando funcione el método de conexión
+                # Aquí va un spinner se agregará después cuando funcione el método de conexión
                     # MDSpinner:
                     #     id: loading_spinner
                     #     size_hint: None, None
@@ -307,12 +321,15 @@ WindowManager:
                     #     color: app.colors['Light Orange']
                     #     pos_hint: {'center_x':0.5,'center_y':0.5}
                     #     active: True
-                    # Menu con dispositivos disponibles
+            # ------------------ Menu con dispositivos disponibles ------------------------
                     ScrollView:
                         id: devices_scroll
                         pos_hint: {'center_x':0.5}
                         size_hint_x: None
-                        width: self.width
+                        adaptative_width: True
+                        width: root.width*0.6
+                        #width: root.width*0.5
+                        #width: device_list.width
                         height: self.height
                         do_scroll_y: True
                         bar_margin: 3
@@ -321,16 +338,25 @@ WindowManager:
                         bar_inactive_color: app.colors['Light Orange']
                         effect_cls: "DampedScrollEffect"
                         scroll_type: ['bars','content']
+                        
                         GridLayout:
                             id: device_list
                             cols: 1
                             size_hint_y: None
+                            #pos: self.pos
+                            #halign: 'center'
+                            pos_hint: {'center_x':0.5}
                             height: self.minimum_height
+                            #padding: dp(20)
+                            #width: self.minimum_width
+                            #width: root.width*0.5
+                            width: devices_scroll.width
                             on_children:
                                 self.height = self.minimum_height
+                                #self.width = self.minimum_width
                     Widget:
                         height: '10dp'
-                    # Botón para conectarse/desconectarse a un dispositivo
+            #-------------------- Botón para conectarse/desconectarse a un dispositivo ----------------------------
                     BoxLayout:
                         size_hint_y: None
                         height: '50 dp'
@@ -354,7 +380,7 @@ WindowManager:
                         size_hint_y: None
                         height: '48dp'
     # ---------------------------------------------- Menú de Asistencia -------------------------------------------------- 
-            
+            # ------------------- Item de navegación horizontal -------------------------
             MDBottomNavigationItem:
                 id: assistance_tab
                 name: "Assistance mode"
@@ -364,7 +390,7 @@ WindowManager:
                 # Acciones 
                 on_tab_release:
                     app.on_tab_select(assistance_tab.name)
-
+        # --------------------------------- Layout General --------------------------------------
                 BoxLayout:
                     orientation: 'vertical'
                     canvas.before:
@@ -373,30 +399,12 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-
-                    BoxLayout:
-                        orientation: 'vertical'
-                        size_hint_y: None
-                        height: dp(60)
+            #--------------------------- Titulo del menú --------------------------   
+                    CustomLabelAD:
+                        text: "Assistance Mode"
                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                        canvas.before:
-                            Color:
-                                rgba: app.colors["Dark Blue"]
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    
-                        CustomLabelAD:
-                            text: "Assistance Mode"
-                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            valign: "center"
-                            #halign: "center"
-                            #size_hint_y: None
-                            #height: self.texture_size[1] + dp(10)  # Increased height to move higher
-                            #height: dp(35)
-                            #theme_text_color: "Custom"
-                            #text_color: app.colors["White"]
-
+            
+            #-------------------------- Datos del usuario -------------------------- 
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: None
@@ -412,7 +420,8 @@ WindowManager:
                             padding: dp(20)
                             spacing: dp(5)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
+                            
+                    # ------------------------ Altura -----------------------
                             MDLabel:
                                 text: "Height (m)"
                                 halign: "left"
@@ -431,6 +440,7 @@ WindowManager:
                                 hint_text_color_normal: app.colors["Black"]
                                 hint_text_color_focus: app.colors["Light Orange"]
 
+                    # ------------------------ Peso ----------------------------
                         BoxLayout:
                             orientation: 'horizontal'
                             size_hint_y: None
@@ -438,7 +448,7 @@ WindowManager:
                             padding: dp(20)
                             spacing: dp(5)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
+                            
                             MDLabel:
                                 text: "Weight (kg)"
                                 halign: "left"
@@ -456,88 +466,109 @@ WindowManager:
                                 fill_color: app.colors["White"]
                                 hint_text_color_normal: app.colors["Black"]
                                 hint_text_color_focus: app.colors["Light Orange"]
+                            
 
-                        BoxLayout:
-                            orientation: 'vertical'
+            #-------------------------- Nivel de asistencia ---------------------------------
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: dp(10)
+                        spacing: dp(10)
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                        
+                        MDLabel:
+                            text: "Assistance Level (%)"
+                            halign: "center"
+                            theme_text_color: "Custom"
+                            text_color: app.colors["White"]
+                        
+                        Widget:
                             size_hint_y: None
-                            height: self.minimum_height
-                            padding: dp(20)
-                            spacing: dp(15)
-                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
-                            MDLabel:
-                                text: "Assistance Level (%)"
-                                halign: "center"
-                                theme_text_color: "Custom"
-                                text_color: app.colors["White"]
-
-                            Widget:
-                                id: assistance_level_slider
+                            height: '20dp'
+                        AnchorLayout:
+                            size_hint_y: None
+                            height: '20dp'
+                            
                             MDSlider:
                                 id: assistance_level_slider
+                                anchor_x: 'center'
+                                anchor_y: 'center'
+                                color: app.colors["Light Orange"]
                                 min: 0
                                 max: 100
+                                step: 10
                                 value: 50
                                 size_hint_x: 0.8
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                on_value: self.on_slider_value(self.value)
-                            Widget:
+                                hint_text_color: app.colors['Light Orange']
+                                thumb_color_active: app.colors['Light Orange']
+                                thumb_color_inactive: app.colors['Light Orange']
+                                on_value: app.on_slider_value(self.value)
+                        
+                    Widget:
+                        size_hint_y: None
+                        height: '20dp'
 
-                        MDBoxLayout:
-                            orientation: 'vertical'
-                            padding: dp(20)
-                            spacing: dp(10)
-                            size_hint_y: None
-                            height: self.minimum_height
+            #-------------------------- Botones de acción ---------------------------------
+                    BoxLayout:
+                        orientation: 'vertical'
+                        padding: dp(20)
+                        spacing: dp(10)
+                        size_hint_y: None
+                        height: self.minimum_height
+                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                # ------------------ Botón para pararse y sentarse ------------------
+                        Widget:
+                        MDFillRoundFlatButton:
+                            id: standup_sitdown_mode
+                            text: 'STAND UP/SIT DOWN'
+                            text_color: app.colors['White']
+                            size_hint: None, None
+                            ripple_effect: False
+                            ripple_color: app.colors['Cyan']
+                            on_press: 
+                                self.md_bg_color = app.colors["Light Orange"]
+                                app.sit_down_stand_up()
+                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            md_bg_color: app.colors["Cyan"]
+                            width: root.width*0.4
+                            height: root.height*0.05
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
-                            Widget:
-                            MDFillRoundFlatButton:
-                                id: standup_sitdown_mode
-                                text: 'STAND UP/SIT DOWN'
-                                text_color: app.colors['White']
-                                size_hint: None, None
-                                ripple_effect: False
-                                ripple_color: app.colors['Cyan']
-                                on_press: self.md_bg_color = app.colors["Light Orange"]
-                                on_release: self.md_bg_color = app.colors["Cyan"]
-                                md_bg_color: app.colors["Cyan"]
-                                width: root.width*0.4
-                                height: root.height*0.05
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            Widget:
-
-                            Widget:
-                            MDFillRoundFlatButton:
-                                id: walk_mode
-                                text: 'WALK'
-                                text_color: app.colors['White']
-                                size_hint: None, None
-                                ripple_effect: False
-                                ripple_color: app.colors['Cyan']
-                                on_press: self.md_bg_color = app.colors["Light Orange"]
-                                on_release: self.md_bg_color = app.colors["Cyan"]
-                                md_bg_color: app.colors["Cyan"]
-                                width: root.width*0.4
-                                height: root.height*0.05
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            Widget:
-
-                            Widget:
-                            MDFillRoundFlatButton:
-                                id: stop_mode
-                                text: 'STOP'
-                                text_color: app.colors['White']
-                                size_hint: None, None
-                                ripple_effect: False
-                                ripple_color: app.colors['Cyan']
-                                on_press: self.md_bg_color = app.colors["Light Orange"]
-                                on_release: self.md_bg_color = app.colors["Cyan"]
-                                md_bg_color: app.colors["Cyan"]
-                                width: root.width*0.4
-                                height: root.height*0.05
-                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            Widget:
+                        Widget:
+                # -------------------- Botón para caminar ----------------------------
+                        MDFillRoundFlatButton:
+                            id: walk_mode
+                            text: 'WALK'
+                            text_color: app.colors['White']
+                            size_hint: None, None
+                            ripple_effect: False
+                            ripple_color: app.colors['Cyan']
+                            on_press: 
+                                self.md_bg_color = app.colors["Light Orange"]
+                                app.walk()
+                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            md_bg_color: app.colors["Cyan"]
+                            width: root.width*0.4
+                            height: root.height*0.05
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                        Widget:
+                # -------------------- Botón para detenerse ---------------------        
+                        MDFillRoundFlatButton:
+                            id: stop_mode
+                            text: 'STOP'
+                            text_color: app.colors['White']
+                            size_hint: None, None
+                            ripple_effect: False
+                            ripple_color: app.colors['Cyan']
+                            on_press: 
+                                self.md_bg_color = app.colors["Light Orange"]
+                                app.stop()
+                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            md_bg_color: app.colors["Cyan"]
+                            width: root.width*0.4
+                            height: root.height*0.05
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                        Widget:
     # -------------------------------------------- Menú de Sintonización --------------------------------------------
             MDBottomNavigationItem:
                 id: tuning_tab
@@ -558,7 +589,7 @@ WindowManager:
                             pos: self.pos
                             size: self.size
 
-                # -------------------------------- Fondo del menú --------------------------
+            # ------------------------------------ Fondo del menú --------------------------------------
                 # Elements
                 FloatLayout:
                     orientation: "vertical"
@@ -579,7 +610,7 @@ WindowManager:
                         padding: dp(10), dp(10)
                         spacing: dp(5)
 
-                        # ----------------------- Título del Menú -------------------------------------------- 
+            # ---------------------------------- Título del Menú -------------------------------------------- 
                         BoxLayout: 
                             orientation: "vertical"
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
@@ -593,7 +624,7 @@ WindowManager:
                                 pos: self.pos
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
-                        # ----------------------- Menú desplegable para la selección de la articulación ------------
+            # ----------------------- Menú desplegable para la selección de la articulación ------------
                         BoxLayout: 
                             orientation: "vertical"
                             size_hint: None, None
@@ -602,23 +633,24 @@ WindowManager:
 
                             Spinner:
                                 id: limb_dropdown
-                                text: "Right leg"
+                                text: "Right Leg"
                                 values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
                                 
                                 # Personalización
-                                orientation: "verical"
                                 size_hint: None, None
                                 size: (dp(200), dp(45))
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
+                                sync_height: True
 
                                 # Definición de colores
-                                background_color: app.colors["Light Gray"]
-                                color: app.colors["White"]
+                                background_color: app.colors["Dark Blue"]
+                                color: app.colors["Cyan"]
                                 
                                 # Acciones
                                 on_text: app.limb_dropdown_clicked(limb_dropdown.text)
+                                option_cls: Factory.sp #Formato personalizado al inicio
                         
-                        # --------------------------- Parámetros PI del motor 1 ------------------------- 
+            # --------------------------- Parámetros PI del motor 1 ------------------------- 
                         BoxLayout: #ROW 3 
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
@@ -631,7 +663,7 @@ WindowManager:
                                 id: motor1_label
                                 text: "Hip motor"
 
-                            # ------------- Parámetros PI ------------- 
+                            # ------------- Parámetros PI (text entry) --------------- 
                             GridLayout:
                                 rows: 1
                                 cols: 3
@@ -670,7 +702,7 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text("pv", "motor1", pv_motor1.text)
 
-                        # --------------------------- Parámetros PI del motor 2 ------------------------- 
+            # --------------------------- Parámetros PI del motor 2 ------------------------- 
                         BoxLayout: #ROW 4
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
@@ -721,7 +753,7 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text("pv", "motor2", pv_motor2.text)
 
-                        # --------------------------- Parámetros PI del motor 3 ------------------------- 
+            # --------------------------- Parámetros PI del motor 3 ------------------------- 
                         BoxLayout: #ROW 5
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
@@ -770,8 +802,8 @@ WindowManager:
                                     hint_text: "PV:"
                                     on_text_validate:
                                         app.on_entry_text("pv", "motor3", pv_motor3.text)
-    
-    FloatLayout: # Botón para mostrar la información del equipo
+    # -------------------------- Botón info de equipo -------------------------------------------
+    FloatLayout: 
         MDIconButton:
             icon: "information-outline"
             pos_hint: {"right": 0.98, "top": 0.99}
@@ -783,26 +815,4 @@ WindowManager:
 # --------------------------------------- Ventana secundaria ----------------------------------------------   
 <SecundaryWindow>:
     # Empty
-    name: "Secundary Window"
-
-# Se le da formato al texto del menú de dispositivos
-<SelectableLabel@MDLabel>:
-    size_hint_y: None
-    height: dp(15)
-    halign: 'center'
-    valign: 'middle'
-    theme_text_color: 'Custom'
-    text_color: app.colors['White']
-    #pos_hint: {"center_x":0.5,"center_y":0.5}
-    on_touch_down:
-        self.parent.parent.parent.select_with_touch(self.index,'down')
-        #app.on_device_select(self.text)
-
-#Aqui se le da formato a la caja que contiene dicho menú :)
-<SelectableRecycleBoxLayout@RecycleBoxLayout>:
-    default_size: None, dp(56)
-    default_size_hint: 1, None
-    size_hint_y: None
-    height: self.minimum_height
-    orientation: 'vertical'
-    
+    name: "Secundary Window"    
