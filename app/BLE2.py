@@ -1,4 +1,4 @@
-from jnius import autoclass, cast,  JavaMethod, PythonJavaClass
+from jnius import autoclass, PythonJavaClass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
@@ -9,15 +9,18 @@ permissions = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.BLUE
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 IntentFilter = autoclass('android.content.IntentFilter')
-BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
-Context = autoclass('android.content.Context')
+# BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
+# Context = autoclass('android.content.Context')
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
 class DeviceReceiver(PythonJavaClass):
     __javainterfaces__ = ['android/content/BroadcastReceiver']
     __javacontext__ = 'app'
 
-    @JavaMethod('(Landroid/content/Context;Landroid/content/Intent;)V')
+    def __init__(self, manager):
+        super().__init__()
+        self.manager = manager
+
     def onReceive(self, context, intent):
         action = intent.getAction()
         if action == BluetoothDevice.ACTION_FOUND:
