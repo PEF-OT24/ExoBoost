@@ -36,7 +36,7 @@ class BluetoothManager:
         # Crea el objeto principal para manejar el Bluetooth
         self.bluetooth_adapter = BluetoothAdapter.getDefaultAdapter()
         self.found_devices = [] # Arreglo para guardar dispositivos
-        self.receiver = DeviceReceiver()
+        self.receiver = DeviceReceiver(self)
         self.intent_filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         self.context = PythonActivity.mActivity
 
