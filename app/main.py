@@ -55,6 +55,11 @@ class ImageTeam(Image): pass
 class LabelTeam(MDLabel): pass
 class ButtonDevices(MDFlatButton): pass
 
+class ErrorPopup(Popup):
+    '''Clase para mostrar un error genérico'''
+    def __init__(self, **kwargs):
+        super(ErrorPopup, self).__init__(**kwargs)
+
 class TestDesignApp(MDApp):  
     #------------------------ Métodos de inicio ------------------------#
     def __init__(self, **kwargs):
@@ -358,13 +363,9 @@ class TestDesignApp(MDApp):
             webbrowser.open(url)
         except:
             dialog = MDDialog(
-            title="Error",
-            text="Ha ocurrido un error.",
-            buttons=[
-                MDFlatButton(
-                    text="Cerrar", on_release=lambda *args: dialog.dismiss()
-                )
-            ],
+                title="Error",
+                text="Ha ocurrido un error.",
+                buttons=[MDFlatButton(text="Cerrar", on_release=lambda *args: dialog.dismiss())]
             )
             dialog.open()
 

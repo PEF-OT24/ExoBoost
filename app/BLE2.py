@@ -13,36 +13,36 @@ BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
 ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
 
-class ScanCallbackClass(ScanCallback):
-    def __init__(self, manager):
-        super(ScanCallbackClass, self).__init__()
-        self.manager = manager
-        self.errors = {
-            "0x00000001": "SCAN_FAILED_ALREADY_STARTED",
-            "0x00000002": "SACAN_FAILED_APPLICATION_REGISTRATION_FAILED",
-            "0x00000003": "SCAN_FAILED_FEATURE_UNSUPPORTED",
-            "0x00000004": "SCAN_FAILED_INTERNAL_ERROR",
-            "0x00000005": "SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES",
-            "0x00000006": "SCAN_FAILED_SCANNING_TOO_FREQUENTLY",
-        }
+# class ScanCallbackClass(ScanCallback):
+#     def __init__(self, manager):
+#         super(ScanCallbackClass, self).__init__()
+#         self.manager = manager
+#         self.errors = {
+#             "0x00000001": "SCAN_FAILED_ALREADY_STARTED",
+#             "0x00000002": "SACAN_FAILED_APPLICATION_REGISTRATION_FAILED",
+#             "0x00000003": "SCAN_FAILED_FEATURE_UNSUPPORTED",
+#             "0x00000004": "SCAN_FAILED_INTERNAL_ERROR",
+#             "0x00000005": "SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES",
+#             "0x00000006": "SCAN_FAILED_SCANNING_TOO_FREQUENTLY",
+#         }
 
-    def onScanResult(self, callbackType, result):
-        device = result.getDevice()
-        device_name = device.getName()
-        device_address = device.getAddress()
-        self.manager.found_devices.append((device_name, device_address))
+#     def onScanResult(self, callbackType, result):
+#         device = result.getDevice()
+#         device_name = device.getName()
+#         device_address = device.getAddress()
+#         self.manager.found_devices.append((device_name, device_address))
 
-    def onBatchScanResults(self, results):
-        for result in results:
-            self.onScanResult(None, result)
+#     def onBatchScanResults(self, results):
+#         for result in results:
+#             self.onScanResult(None, result)
 
-    def onScanFailed(self, errorCode):
-        print("Scan failed with error code:", errorCode)
-        try: 
-            print(self.errors[str(errorCode)])
-        except Exception as e: 
-            print("Error en el key del diccionario")
-            print(e)
+#     def onScanFailed(self, errorCode):
+#         print("Scan failed with error code:", errorCode)
+#         try: 
+#             print(self.errors[str(errorCode)])
+#         except Exception as e: 
+#             print("Error en el key del diccionario")
+#             print(e)
 
 class BluetoothManager:
     '''Clase principal para el manejo de Bluetooth'''
@@ -59,7 +59,7 @@ class BluetoothManager:
         if self.ble_enable == None: self.ble_scanner = None
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
-        self.scan_callback = ScanCallbackClass(self)
+        self.scan_callback = ScanCallback
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
