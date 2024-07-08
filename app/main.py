@@ -26,7 +26,7 @@ from kivymd.uix.button import MDFlatButton
 Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Librería de BLE
-try: 
+try:
     import BLE2
     from BLE2 import BluetoothManager
 except Exception as e:
