@@ -47,6 +47,9 @@ ScanResult = autoclass('android.bluetooth.le.ScanResult')
 class BluetoothManager:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
+        # Solicitar permisos
+        request_permissions(permissions)
+
         # ----------- Atributos de BLE -----------
         # Entorno de Python para Android
         self.context = PythonActivity.mActivity
@@ -65,9 +68,6 @@ class BluetoothManager:
         self.found_devices = [] # Arreglo para guardar dispositivos
 
         # ----------- Métodos inicializadores -----------
-
-        # Solicitar permisos
-        request_permissions(permissions)
     
     def is_bluetooth_enabled(self) -> bool:
         '''Detecta si el BLE está habilitado'''
@@ -99,6 +99,7 @@ class BluetoothManager:
             self.ble_scanner.stopScan(self.scan_callback)
 
     def get_found_devices(self):
+        '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''
         return self.found_devices
 
 def main():
