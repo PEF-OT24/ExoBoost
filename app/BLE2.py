@@ -61,7 +61,7 @@ class BluetoothManager:
         if self.ble_enable == None: self.ble_scanner = None
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
-        self.scan_callback = ScanCallback
+        self.scan_callback = ScanCallback()
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
