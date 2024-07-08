@@ -1,4 +1,4 @@
-from jnius import autoclass, cast
+from jnius import autoclass, cast,  JavaMethod, PythonJavaClass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
@@ -13,6 +13,19 @@ BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
 Context = autoclass('android.content.Context')
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
+class DeviceReceiver(PythonJavaClass):
+    __javainterfaces__ = ['android/content/BroadcastReceiver']
+    __javacontext__ = 'app'
+
+    @JavaMethod('(Landroid/content/Context;Landroid/content/Intent;)V')
+    def onReceive(self, context, intent):
+        action = intent.getAction()
+        if action == BluetoothDevice.ACTION_FOUND:
+            device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+            device_name = device.getName()
+            device_address = device.getAddress()
+            self.manager.found_devices.append((device_name, device_address))
+
 class BluetoothManager:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
@@ -20,7 +33,7 @@ class BluetoothManager:
         # Crea el objeto principal para manejar el Bluetooth
         self.bluetooth_adapter = BluetoothAdapter.getDefaultAdapter()
         self.found_devices = [] # Arreglo para guardar dispositivos
-        self.receiver = self.create_receiver()
+        self.receiver = DeviceReceiver()
         self.intent_filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         self.context = PythonActivity.mActivity
 
@@ -30,17 +43,6 @@ class BluetoothManager:
         # Se solicitan los permisos
         request_permissions(permissions)
 
-    def create_receiver(self):
-        # Define a BroadcastReceiver with a simple function
-        def onReceive(context, intent):
-            action = intent.getAction()
-            if action == BluetoothDevice.ACTION_FOUND:
-                device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                device_name = device.getName()
-                device_address = device.getAddress()
-                self.found_devices.append((device_name, device_address))
-
-        return BroadcastReceiver(onReceive)
     
     def is_bluetooth_enabled(self) -> bool:
         '''Detecta si el BLE está habilitado'''
