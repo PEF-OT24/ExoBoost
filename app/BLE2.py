@@ -13,9 +13,8 @@ Context = autoclass('android.content.Context')
 
 ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
-
 class ScanCallbackClass(PythonJavaClass):
-    __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
+    #__javainterfaces__ = ['android/bluetooth/le/ScanCallback']
     __javaclass__ = 'android/bluetooth/le/ScanCallback'
 
     def __init__(self):
