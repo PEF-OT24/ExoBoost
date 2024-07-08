@@ -38,10 +38,11 @@
 # Clase para dar formato a dispositivos desplegados y que funcionen como botones
 <ButtonDevices>:
     text: ""
-    size_hint_y: None
-    height: dp(40)  # Altura fija para cada fila
-    width: root.width
-    #width: dp(300)
+    #size_hint_y: None
+    size_hint_x: None
+    #height: dp(200)  # Altura fija para cada fila
+    #width: root.width
+    width: dp(200)
     #adjust_width: True
     #width: device_list.width
     #size: self.size
@@ -51,7 +52,7 @@
     font_name: "Roboto"
     theme_text_color: "Custom"
     text_color: app.colors["White"]
-    halign: 'left'
+    #halign: 'left'
     #Fondo del boton y efectos
     md_bg_color: app.colors["Dark Blue"]
     ripple_effect: False
@@ -306,9 +307,10 @@ WindowManager:
                         pos_hint: {'center_x':0.5}
                         size_hint_x: None
                         adaptative_width: True
-                        width: root.width*0.6
-                        #width: root.width*0.5
+                        width: root.width*0.4
+                        #width: dp(300)
                         #width: device_list.width
+                        #width: self.width 
                         height: self.height
                         do_scroll_y: True
                         bar_margin: 3

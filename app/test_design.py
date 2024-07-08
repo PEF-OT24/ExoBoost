@@ -260,7 +260,7 @@ class TestDesignApp(MDApp):
         self.displayed_items = []  # Resetear lista de elementos desplegados
 
         for item in items:
-            btn = ButtonDevices(text=item)
+            btn = ButtonDevices(text="                  "+item+"               ")
             btn.bind(on_release=self.on_device_select)
             self.device_list.add_widget(btn)
             self.displayed_items.append(btn)
