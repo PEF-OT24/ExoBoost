@@ -3,7 +3,6 @@ from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
 # Se acceden a los permisos necesarios
-permissions = [Permission.BLUETOOTH, Permission.BLUETOOTH_ADMIN, Permission.BLUETOOTH_CONNECT, Permission.BLUETOOTH_SCAN, Permission.ACCESS_FINE_LOCATION]
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
@@ -47,8 +46,8 @@ ScanResult = autoclass('android.bluetooth.le.ScanResult')
 class BluetoothManager:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
-        # Solicitar permisos
-        request_permissions(permissions)
+        # ----------- Métodos inicializadores -----------
+        self.request_ble_permissions()
 
         # ----------- Atributos de BLE -----------
         # Entorno de Python para Android
@@ -67,8 +66,17 @@ class BluetoothManager:
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
 
-        # ----------- Métodos inicializadores -----------
-    
+    def request_ble_permissions(self):
+        '''Solicitar permisos para el uso de Bluetooth'''
+        permissions = [
+            Permission.BLUETOOTH, 
+            Permission.BLUETOOTH_ADMIN, 
+            Permission.BLUETOOTH_CONNECT, 
+            Permission.BLUETOOTH_SCAN, 
+            Permission.ACCESS_FINE_LOCATION
+        ]
+        request_permissions(permissions)
+
     def is_bluetooth_enabled(self) -> bool:
         '''Detecta si el BLE está habilitado'''
         return self.bluetooth_adapter.isEnabled()

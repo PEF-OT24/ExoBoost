@@ -26,8 +26,8 @@ from kivymd.uix.button import MDFlatButton
 Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Librería de BLE
-import BLE1
-# from BLE2 import BluetoothManager
+import BLE2
+from BLE2 import BluetoothManager
 
 # Importar librerías para comunicación
 import platform
@@ -108,7 +108,7 @@ class TestDesignApp(MDApp):
         }
 
         # Parámetros de BLE
-        # self.ble = BluetoothManager()
+        self.ble = BluetoothManager()
 
         # -------------------------- Atributos externos --------------------------
         """
@@ -247,20 +247,19 @@ class TestDesignApp(MDApp):
 
     def search_devices(self):
         # --------- Manejo de BLE ---------------
-        # Inicialización 
-        # print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
-        # if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
+        print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
+        if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
 
-        # # Escanea  por 5 segundos
-        # print("Escaneado comenzando")
-        # self.ble.start_ble_scan()
-        # sleep(5)
-        # print("Escaneado detenido")
-        # self.ble.stop_ble_scan()
+        # Escanea  por 5 segundos
+        print("Escaneado comenzando")
+        self.ble.start_ble_scan()
+        sleep(5)
+        print("Escaneado detenido")
+        self.ble.stop_ble_scan()
 
-        # # Se obtienen los dispositivos encontrados
-        # devices = self.ble.get_found_devices()
-        # print(devices)
+        # Se obtienen los dispositivos encontrados
+        devices = self.ble.get_found_devices()
+        print(devices)
 
         # --------- Lógica de la lista ---------------
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
