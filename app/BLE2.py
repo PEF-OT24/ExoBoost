@@ -8,22 +8,28 @@ BluetoothManager = autoclass('android.bluetooth.BluetoothManager')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 PythonActivity = autoclass('org.kivy.android.PythonActivity').mActivity
 BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
-ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
 
-class ScanCallbackClass(ScanCallback):
+ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
+
+
+class ScanCallbackClass(PythonJavaClass):
     __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
+    __javaclass__ = 'android/bluetooth/le/ScanCallback'
 
-    @java_method('(ILjava/lang/String;)V')
-    def onScanFailed(self, errorCode, errorMsg):
-        print(f"Scan failed with error code {errorCode}: {errorMsg}")
+    def __init__(self):
+        super().__init__()
 
-    @java_method('(Landroid/bluetooth/le/ScanResult;)V')
+    @java_method('(I)V')
+    def onScanFailed(self, errorCode):
+        print(f"Scan failed with error code {errorCode}")
+
+    @java_method('(ILandroid/bluetooth/le/ScanResult;)V')
     def onScanResult(self, callbackType, result):
         print(f"Scan result: {result}")
 
-    @java_method('(ILjava/util/List;)V')
+    @java_method('(Ljava/util/List;)V')
     def onBatchScanResults(self, results):
         print(f"Batch scan results: {results}")
 
