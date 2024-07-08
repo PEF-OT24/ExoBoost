@@ -71,7 +71,8 @@ class BluetoothManager:
             Permission.BLUETOOTH_ADMIN, 
             Permission.BLUETOOTH_CONNECT, 
             Permission.BLUETOOTH_SCAN, 
-            Permission.ACCESS_FINE_LOCATION
+            Permission.ACCESS_FINE_LOCATION,
+            Permission.ACCESS_COARSE_LOCATION
         ]
         request_permissions(permissions)
 
