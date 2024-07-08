@@ -35,6 +35,7 @@ import json
 import os
 import math
 import webbrowser
+from time import sleep
 
 class SplashScreen(Screen):
     def on_enter(self, *args):
@@ -242,6 +243,14 @@ class TestDesignApp(MDApp):
         # Inicialización de BLE
         print(f"Bluetooth enabled: {self.ble.is_bluetooth_enabled()}\n")
         if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
+
+        # Escanea por dispositivos por 5 segundos
+        self.ble.start_discovery()
+        sleep(5)
+        self.ble.stop_discovery()
+        devices = self.ble.get_found_devices
+        print(devices)
+
 
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
