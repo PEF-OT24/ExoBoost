@@ -89,14 +89,14 @@ class BluetoothManager:
             if self.bluetooth_adapter.isDiscovering():
                 self.bluetooth_adapter.cancelDiscovery()
             self.found_devices.clear() # Limpiar los dispositivos encontrados
-            self.bluetooth_le_scanner.startScan(self.scan_callback)
+            self.ble_scanner.startScan(self.scan_callback)
         else: 
             print("Error: Bluetooth no disponible")
 
     def stop_ble_scan(self):
         '''Detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando'''
         if self.ble_scanner and self.bluetooth_adapter.isDiscovering():
-            self.bluetooth_le_scanner.stopScan(self.scan_callback)
+            self.ble_scanner.stopScan(self.scan_callback)
 
     def get_found_devices(self):
         return self.found_devices
