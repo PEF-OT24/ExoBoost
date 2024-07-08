@@ -248,12 +248,14 @@ class TestDesignApp(MDApp):
     def search_devices(self):
         # --------- Manejo de BLE ---------------
         # Inicialización 
-        print(f"Bluetooth enabled: {self.ble.is_bluetooth_enabled()}\n")
+        print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
         if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
 
         # Escanea  por 5 segundos
+        print("Escaneado comenzando")
         self.ble.start_ble_scan()
         sleep(5)
+        print("Escaneado detenido")
         self.ble.stop_ble_scan()
 
         # Se obtienen los dispositivos encontrados

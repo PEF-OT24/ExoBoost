@@ -86,43 +86,46 @@ class BluetoothManager:
         Solo funciona cuando self.ble_scanner no es None
         '''
         if self.ble_scanner:
+            print("Scanning for devices...")
             if self.bluetooth_adapter.isDiscovering():
+                print("Cancelling discovery")
                 self.bluetooth_adapter.cancelDiscovery()
+            print("Scanning between devices...")
             self.found_devices.clear() # Limpiar los dispositivos encontrados
-            self.ble_scanner.startScan(self.scan_callback)
+            self.ble_scanner.startScan(ScanCallback)
         else: 
             print("Error: Bluetooth no disponible")
 
     def stop_ble_scan(self):
         '''Detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando'''
         if self.ble_scanner and self.bluetooth_adapter.isDiscovering():
-            self.ble_scanner.stopScan(self.scan_callback)
+            self.ble_scanner.stopScan(ScanCallback)
 
     def get_found_devices(self):
         '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''
         return self.found_devices
 
-def main():
-    # Ejemplo de uso para implementar el manejo de Bluetooth
-    bt_manager = BluetoothManager()
+# def main():
+#     # Ejemplo de uso para implementar el manejo de Bluetooth
+#     bt_manager = BluetoothManager()
 
-    # Habilita el Bluetooth
-    bt_manager.enable_bluetooth()
-    print("Bluetooth enabled:", bt_manager.is_bluetooth_enabled())
+#     # Habilita el Bluetooth
+#     bt_manager.enable_bluetooth()
+#     print("Bluetooth enabled:", bt_manager.is_bluetooth_enabled())
 
-    # Inicia el escaneo de dispositivos
-    bt_manager.start_ble_scan()
-    print("Scanning for devices...")
+#     # Inicia el escaneo de dispositivos
+#     bt_manager.start_ble_scan()
+#     print("Scanning for devices...")
 
-    # Escanea por 10 segundos
-    sleep(10)  
+#     # Escanea por 10 segundos
+#     sleep(10)  
 
-    # Detiene el escaneo
-    bt_manager.stop_ble_scan()
+#     # Detiene el escaneo
+#     bt_manager.stop_ble_scan()
 
-    # Muestra los dispositivos encontrados
-    devices = bt_manager.get_found_devices()
-    print("Found devices:", devices)
+#     # Muestra los dispositivos encontrados
+#     devices = bt_manager.get_found_devices()
+#     print("Found devices:", devices)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
