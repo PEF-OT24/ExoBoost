@@ -257,8 +257,8 @@ class TestDesignApp(MDApp):
         self.device_list.clear_widgets()  # Limpiar widgets anteriores
         self.displayed_items = []  # Resetear lista de elementos desplegados
 
-        for item in items:
-            btn = ButtonDevices(text=item)
+        for item in devices:
+            btn = ButtonDevices(text=item[0])
             btn.bind(on_release=self.on_device_select)
             self.device_list.add_widget(btn)
             self.displayed_items.append(btn)

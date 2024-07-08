@@ -1,3 +1,4 @@
+# Ejemplo simple para detectar si el BLE esta disponible en el dispositivo
 from jnius import autoclass
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
 

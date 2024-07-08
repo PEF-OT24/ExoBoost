@@ -11,20 +11,7 @@ BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 IntentFilter = autoclass('android.content.IntentFilter')
 BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
 Context = autoclass('android.content.Context')
-
-class DeviceReceiver(BroadcastReceiver):
-    '''Clase para el manejo de los dispositivos encontrados'''
-    def __init__(self, manager):
-        self.manager = manager
-        super(DeviceReceiver, self).__init__()
-
-    def onReceive(self, context, intent):
-        action = intent.getAction()
-        if action == BluetoothDevice.ACTION_FOUND:
-            device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            device_name = device.getName()
-            device_address = device.getAddress()
-            self.manager.found_devices.append((device_name, device_address))
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
 
 class BluetoothManager:
     '''Clase principal para el manejo de Bluetooth'''
@@ -33,9 +20,9 @@ class BluetoothManager:
         # Crea el objeto principal para manejar el Bluetooth
         self.bluetooth_adapter = BluetoothAdapter.getDefaultAdapter()
         self.found_devices = [] # Arreglo para guardar dispositivos
-        self.receiver = DeviceReceiver(self)
+        self.receiver = self.create_receiver()
         self.intent_filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        self.context = autoclass('org.kivy.android.PythonActivity').mActivity
+        self.context = PythonActivity.mActivity
 
         # Indicador de si el Bluetooth esta habilitado
         self.ble_enable = self.is_bluetooth_enabled()
@@ -43,6 +30,18 @@ class BluetoothManager:
         # Se solicitan los permisos
         request_permissions(permissions)
 
+    def create_receiver(self):
+        # Define a BroadcastReceiver with a simple function
+        def onReceive(context, intent):
+            action = intent.getAction()
+            if action == BluetoothDevice.ACTION_FOUND:
+                device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                device_name = device.getName()
+                device_address = device.getAddress()
+                self.found_devices.append((device_name, device_address))
+
+        return BroadcastReceiver(onReceive)
+    
     def is_bluetooth_enabled(self) -> bool:
         '''Detecta si el BLE está habilitado'''
         return self.bluetooth_adapter.isEnabled()
