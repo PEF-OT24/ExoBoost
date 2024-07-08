@@ -71,7 +71,8 @@ class TestDesignApp(MDApp):
         
         # Detecta el sistema operativo
         self.os_name = self.detect_os()
-        if self.os_name == "Android":
+        if self.os_name == "Android" or self.os_name == "Linux":
+            print("Importando librería de BLE")
             # Librería de BLE
             import BLE2
             from BLE2 import BluetoothManager
