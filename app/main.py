@@ -75,7 +75,7 @@ class TestDesignApp(MDApp):
             print("Importando librería de BLE")
             # Librería de BLE
             import BLE2
-            from BLE2 import BluetoothManager
+            from BLE2 import BluetoothManager_App
         
         # Diccionario de etiquetas para la sintonización
         self.limb: str = ""
@@ -112,7 +112,7 @@ class TestDesignApp(MDApp):
         }
 
         # Parámetros de BLE
-        self.ble = BluetoothManager()
+        self.ble = BluetoothManager_App()
 
         # -------------------------- Atributos externos --------------------------
         """

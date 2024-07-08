@@ -1,10 +1,10 @@
-from jnius import autoclass, PythonJavaClass
+from jnius import autoclass, PythonJavaClass, java_method
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
-BluetoothManager_pyjnius = autoclass('android.bluetooth.BluetoothManager')
+BluetoothManager = autoclass('android.bluetooth.BluetoothManager')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice')
 PythonActivity = autoclass('org.kivy.android.PythonActivity').mActivity
 BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
@@ -12,38 +12,22 @@ ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
 
-# class ScanCallbackClass(ScanCallback):
-#     def __init__(self, manager):
-#         super(ScanCallbackClass, self).__init__()
-#         self.manager = manager
-#         self.errors = {
-#             "0x00000001": "SCAN_FAILED_ALREADY_STARTED",
-#             "0x00000002": "SACAN_FAILED_APPLICATION_REGISTRATION_FAILED",
-#             "0x00000003": "SCAN_FAILED_FEATURE_UNSUPPORTED",
-#             "0x00000004": "SCAN_FAILED_INTERNAL_ERROR",
-#             "0x00000005": "SCAN_FAILED_OUT_OF_HARDWARE_RESOURCES",
-#             "0x00000006": "SCAN_FAILED_SCANNING_TOO_FREQUENTLY",
-#         }
+class ScanCallbackClass(ScanCallback):
+    __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
 
-#     def onScanResult(self, callbackType, result):
-#         device = result.getDevice()
-#         device_name = device.getName()
-#         device_address = device.getAddress()
-#         self.manager.found_devices.append((device_name, device_address))
+    @java_method('(ILjava/lang/String;)V')
+    def onScanFailed(self, errorCode, errorMsg):
+        print(f"Scan failed with error code {errorCode}: {errorMsg}")
 
-#     def onBatchScanResults(self, results):
-#         for result in results:
-#             self.onScanResult(None, result)
+    @java_method('(Landroid/bluetooth/le/ScanResult;)V')
+    def onScanResult(self, callbackType, result):
+        print(f"Scan result: {result}")
 
-#     def onScanFailed(self, errorCode):
-#         print("Scan failed with error code:", errorCode)
-#         try: 
-#             print(self.errors[str(errorCode)])
-#         except Exception as e: 
-#             print("Error en el key del diccionario")
-#             print(e)
+    @java_method('(ILjava/util/List;)V')
+    def onBatchScanResults(self, results):
+        print(f"Batch scan results: {results}")
 
-class BluetoothManager:
+class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
         # ----------- Métodos inicializadores -----------
@@ -61,7 +45,8 @@ class BluetoothManager:
         if self.ble_enable == None: self.ble_scanner = None
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
-        self.scan_callback = ScanCallback()
+        print("Creando objecto de ScanCallback")
+        self.scan_callback = ScanCallbackClass()
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
@@ -119,28 +104,3 @@ class BluetoothManager:
     def get_found_devices(self):
         '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''
         return self.found_devices
-
-# def main():
-#     # Ejemplo de uso para implementar el manejo de Bluetooth
-#     bt_manager = BluetoothManager()
-
-#     # Habilita el Bluetooth
-#     bt_manager.enable_bluetooth()
-#     print("Bluetooth enabled:", bt_manager.is_bluetooth_enabled())
-
-#     # Inicia el escaneo de dispositivos
-#     bt_manager.start_ble_scan()
-#     print("Scanning for devices...")
-
-#     # Escanea por 10 segundos
-#     sleep(10)  
-
-#     # Detiene el escaneo
-#     bt_manager.stop_ble_scan()
-
-#     # Muestra los dispositivos encontrados
-#     devices = bt_manager.get_found_devices()
-#     print("Found devices:", devices)
-
-# if __name__ == "__main__":
-#     main()
