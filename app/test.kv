@@ -60,7 +60,28 @@
     on_press: self.md_bg_color = app.colors['Light Orange']
     on_release: self.md_bg_color = app.colors['Dark Blue']
 
+# --------------------------------------- Ventana de PopUp de Error ----------------------------------------
+<ErrorPopup>:
+    title: 'Error'
+    size_hint: None, None
+    size: 400, 200
+    auto_dismiss: False
 
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+
+        Label:
+            id: error_popup
+            text: 'An error has occurred!'
+            font_size: 18
+
+        Button:
+            text: 'Close'
+            size_hint_y: None
+            height: '48dp'
+            on_release: root.dismiss()
 # --------------------------------------- Ventana de PopUp de Información ----------------------------------------
 <LabelTeam>:
     size_hint_y: None

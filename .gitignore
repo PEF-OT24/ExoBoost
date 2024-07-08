@@ -6,6 +6,7 @@ bin/
 *$py.class
 .vscode/
 
+# test
 # C extensions
 *.so
 
