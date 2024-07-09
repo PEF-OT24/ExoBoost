@@ -1,4 +1,4 @@
-package com.github.hbldh.bleak;
+package com.example;
 
 import java.net.ConnectException;
 import java.util.concurrent.CompletableFuture;
