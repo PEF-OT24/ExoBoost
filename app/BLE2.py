@@ -11,8 +11,6 @@ BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
 
-ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
-
 class ScanCallbackClass(PythonJavaClass):
     __javaclass__ = 'android/bluetooth/le/ScanCallback'
     __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
