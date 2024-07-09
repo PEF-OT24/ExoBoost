@@ -15,10 +15,8 @@ ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
 class ScanCallbackClass(PythonJavaClass):
     __javaclass__ = 'android/bluetooth/le/ScanCallback'
-
-    # El constructor es opcional cuando se hereda de clases de Java con PythonJavaClass
-    # def __init__(self):
-    #     super(ScanCallbackClass, self).__init__()
+    __javainterfaces__ = []
+    # __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
 
     # Decoradores indicando las variables de entrada y salida 
     @java_method('(I)V')
