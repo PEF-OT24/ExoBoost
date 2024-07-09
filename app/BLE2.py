@@ -14,12 +14,13 @@ Context = autoclass('android.content.Context')
 ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
 class ScanCallbackClass(PythonJavaClass):
-    __javainterfaces__ = ['android/bluetooth/BluetoothAdapter/LeScanCallback']
     __javaclass__ = 'android/bluetooth/le/ScanCallback'
 
-    def __init__(self):
-        super().__init__()
+    # El constructor es opcional cuando se hereda de clases de Java con PythonJavaClass
+    # def __init__(self):
+    #     super(ScanCallbackClass, self).__init__()
 
+    # Decoradores indicando las variables de entrada y salida 
     @java_method('(I)V')
     def onScanFailed(self, errorCode):
         print(f"Scan failed with error code {errorCode}")
