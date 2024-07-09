@@ -15,8 +15,8 @@ ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
 class ScanCallbackClass(PythonJavaClass):
     __javaclass__ = 'android/bluetooth/le/ScanCallback'
-    __javainterfaces__ = []
-    # __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
+    __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
+    # __javainterfaces__ = []
 
     # Decoradores indicando las variables de entrada y salida 
     @java_method('(I)V')
