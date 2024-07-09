@@ -1,4 +1,4 @@
-from jnius import autoclass, PythonJavaClass, java_method
+from jnius import autoclass, PythonJavaClass, java_method, JavaClass, MetaJavaClass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 
@@ -11,10 +11,8 @@ BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
 
-class ScanCallbackClass(PythonJavaClass):
+class ScanCallbackClass(JavaClass, metaclass=MetaJavaClass):
     __javaclass__ = 'android/bluetooth/le/ScanCallback'
-    __javainterfaces__ = ['android/bluetooth/le/ScanCallback']
-    # __javainterfaces__ = []
 
     # Decoradores indicando las variables de entrada y salida 
     @java_method('(I)V')
