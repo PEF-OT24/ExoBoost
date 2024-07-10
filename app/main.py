@@ -80,7 +80,7 @@ class TestDesignApp(MDApp):
             from BLE2 import BluetoothManager_App
         
         # Diccionario de etiquetas para la sintonización
-        self.limb: str = ""
+        self.limb: str = "Right leg"
         self.motors_labels: dict[str] = {
             "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
             "Left leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
@@ -114,7 +114,7 @@ class TestDesignApp(MDApp):
         }
 
         # Parámetros de BLE
-        self.ble = BluetoothManager_App()
+        # self.ble = BluetoothManager_App()
 
         # -------------------------- Atributos externos --------------------------
         """
