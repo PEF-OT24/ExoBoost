@@ -13,7 +13,7 @@ package.domain = org.test
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,ttf,txt,jpeg
+source.include_exts = py,png,jpg,kv,atlas,ttf,txt,jpeg,java,class
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -177,7 +177,7 @@ android.permissions = INTERNET, ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, WA
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-#android.add_src =
+android.add_src = com/example/PythonScanCallback.java
 
 # (list) Android AAR archives to add
 #android.add_aars =
