@@ -25,6 +25,8 @@ from kivymd.uix.button import MDFlatButton
 from kivymd.uix.slider import MDSlider
 from kivy.uix.dropdown import DropDown
 
+# GNZHT-CXNFD-H982D-WE7H3-29YL3
+
 Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Importar librerías para comunicación
