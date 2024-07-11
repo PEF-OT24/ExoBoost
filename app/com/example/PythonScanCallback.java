@@ -1,34 +1,31 @@
 package com.example;
 
-import java.util.List;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import java.util.List;
 
-public final class PythonScanCallback extends ScanCallback {
-    public interface Interface {
-        void onScanFailed(int errorCode);
-        void onScanResult(int callbackType, ScanResult result);
-        void onBatchScanResults(List<ScanResult> results);
-    }
+public class CustomScanCallback extends ScanCallback {
 
-    private Interface callback;
-
-    public PythonScanCallback(Interface pythonCallback) {
-        this.callback = pythonCallback;
+    // Constructor vacío
+    public CustomScanCallback() {
+        super();
     }
 
     @Override
     public void onScanFailed(int errorCode) {
-        callback.onScanFailed(errorCode);
+        // Implementación personalizada del método
+        System.out.println("Scan failed with error code: " + errorCode);
     }
 
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
-        callback.onScanResult(callbackType, result);
+        // Implementación personalizada del método
+        System.out.println("Scan result: " + result);
     }
 
     @Override
     public void onBatchScanResults(List<ScanResult> results) {
-        callback.onBatchScanResults(results);
+        // Implementación personalizada del método
+        System.out.println("Batch scan results: " + results);
     }
 }

@@ -1,47 +1,27 @@
-from jnius import autoclass, PythonJavaClass, java_method
+import os
+from jnius import autoclass, JavaClass, java_method
 
-# Implementación de una clase de Java en Python, definida a partir de un archivo .class
+# Establece el CLASSPATH al directorio que contiene el archivo .class
+os.environ['CLASSPATH'] = 'com/example'
 
-# Se impoarta la clase
-MyCustomClass = autoclass('com.example.MyCustomClass')
+# Importa la clase Java
+PythonScanCallback = autoclass('com.example.PythonScanCallback')
 
-class TestJava(PythonJavaClass):
-    __javainterfaces__ = ['com.example.MyCustomClass']  # Se indica la clase
+# Define una interfaz en Python para manejar los eventos
+class PythonScanCallbackInterface(JavaClass):
+    __javainterfaces__ = ['com.example.PythonScanCallback$Interface']
 
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-        self.messages = []
-        
-    @java_method('()Ljava/lang/String;')
-    def getMessage(self):
-        pass  
+    @java_method('(I)V')
+    def onScanFailed(self, errorCode):
+        print(f"Scan failed with error code {errorCode}")
 
-    @java_method('(Ljava/lang/String;)V')
-    def setMessage(self, message):
-        '''Añadir nuevos mensajes'''
-        self.messages.append(message)
+    @java_method('(ILjava/lang/String;)V')
+    def onScanResult(self, callbackType, result):
+        print(f"Scan result - Callback Type: {callbackType}, Result: {result}")
 
-    @java_method('()V')
-    def printMessage(self):
-        pass  
+# Crea una instancia de PythonScanCallback y pásala a la clase Java
+callback_instance = PythonScanCallback(PythonScanCallbackInterface())
 
-    # Additional Python methods
-    def returnMessages(self):
-        return self.messages
-
-if __name__ == "__main__":
-    # Create an instance of MyCustomClassWrapper
-    testjavaclass = TestJava("Hello from Python!")
-
-    # Call Java methods through the wrapper
-    print("Original message:", testjavaclass.getMessage())
-    testjavaclass.setMessage("Adding more text")
-    print("Updated message:", testjavaclass.getMessage())
-
-    # Call the Java printMessage method
-    print("Último mensaje")
-    testjavaclass.printMessage()
-
-    print("Todos los mensajes")
-    print(testjavaclass.returnMessages())
+# Prueba de llamadas
+callback_instance.onScanFailed(1)
+callback_instance.onScanResult(2, "Scan Result Data")
