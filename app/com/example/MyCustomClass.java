@@ -2,7 +2,7 @@ package com.example;
 
 import java.util.List;
 
-public final class PythonScanCallback {
+public final class MyCustomClass {
 
     // Definición de la interfaz
     public interface Interface {
@@ -12,7 +12,7 @@ public final class PythonScanCallback {
 
     private Interface callback;
 
-    public PythonScanCallback(Interface pythonCallback) {
+    public MyCustomClass(Interface pythonCallback) {
         this.callback = pythonCallback;
     }
 
