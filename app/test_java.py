@@ -6,10 +6,11 @@ from jnius import autoclass, PythonJavaClass, java_method
 MyCustomClass = autoclass('com.example.MyCustomClass')
 
 class TestJava(PythonJavaClass):
-    __javaclass__ = 'com.example.MyCustomClass'  # Se indica la clase
+    __javainterfaces__ = ['com.example.MyCustomClass']  # Se indica la clase
 
     def __init__(self, message):
         super().__init__()
+        self.message = message
         self.messages = []
         
     @java_method('()Ljava/lang/String;')
