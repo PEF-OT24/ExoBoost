@@ -114,7 +114,7 @@ class TestDesignApp(MDApp):
         }
 
         # Parámetros de BLE
-        # self.ble = BluetoothManager_App()
+        self.ble = BluetoothManager_App()
 
         # -------------------------- Atributos externos --------------------------
         """
