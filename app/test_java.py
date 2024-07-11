@@ -1,27 +1,28 @@
 import os
-from jnius import autoclass, JavaClass, java_method
+from jnius import autoclass, PythonJavaClass, java_method
 
-# Establece el CLASSPATH al directorio que contiene el archivo .class
-os.environ['CLASSPATH'] = 'com/example'
+# Establecer el CLASSPATH al directorio que contiene los archivos .class
+os.environ['CLASSPATH'] = '/com/example/'
 
-# Importa la clase Java
-PythonScanCallback = autoclass('com.example.PythonScanCallback')
+# Importar la clase Java extendida
+ExtendedClass = autoclass('com.example.ExtendedClass')
 
-# Define una interfaz en Python para manejar los eventos
-class PythonScanCallbackInterface(JavaClass):
-    __javainterfaces__ = ['com.example.PythonScanCallback$Interface']
+# Definir una clase en Python que hereda de la clase Java usando PythonJavaClass
+class PythonExtendedClass(PythonJavaClass):
+    __javaclass__ = 'com/example/ExtendedClass'
 
-    @java_method('(I)V')
-    def onScanFailed(self, errorCode):
-        print(f"Scan failed with error code {errorCode}")
+    def __init__(self, message):
+        super().__init__(message)
 
-    @java_method('(ILjava/lang/String;)V')
-    def onScanResult(self, callbackType, result):
-        print(f"Scan result - Callback Type: {callbackType}, Result: {result}")
+    @java_method('()V')
+    def additionalMethod(self):
+        print("This is an additional method in the Python extended class.")
 
-# Crea una instancia de PythonScanCallback y pásala a la clase Java
-callback_instance = PythonScanCallback(PythonScanCallbackInterface())
+def main():
+    # Crear una instancia de la clase extendida de Python
+    python_obj = PythonExtendedClass('Hello from Python!')
+    python_obj.printMessage()
+    python_obj.additionalMethod()
 
-# Prueba de llamadas
-callback_instance.onScanFailed(1)
-callback_instance.onScanResult(2, "Scan Result Data")
+if __name__ == '__main__':
+    main()
