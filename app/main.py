@@ -38,6 +38,7 @@ import math
 import webbrowser
 from time import sleep
 
+# os.environ["CLASSPATH"] = ""
 class SplashScreen(Screen):
     def on_enter(self, *args):
         Clock.schedule_once(self.switch_to_main,3)
