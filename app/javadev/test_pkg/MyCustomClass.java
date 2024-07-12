@@ -1,6 +1,6 @@
-package com.example;
+package javadev.src.test_pkg;
 
-import java.util.List;
+// import java.util.List;
 
 public final class MyCustomClass {
 

@@ -1,4 +1,4 @@
-package com.example;
+package javadev.test_pkg;
 
 public class TestAndroidClass {
     // Atributo privado

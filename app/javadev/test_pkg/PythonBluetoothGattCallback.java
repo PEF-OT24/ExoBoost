@@ -1,4 +1,4 @@
-package com.example;
+package javadev.src.test_pkg;
 
 import java.net.ConnectException;
 import java.util.concurrent.CompletableFuture;
