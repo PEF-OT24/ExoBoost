@@ -26,27 +26,27 @@ class PythonScanCallbackClass:
         '''Devuelve el objeto de la clase ScanCallbackClass'''
         return self.Instance
 
-class TestScanCallback(PythonScanCallback):
-    def __init__(self):
-        super(TestScanCallback, self).__init__()
+# class TestScanCallback(PythonScanCallback):
+#     def __init__(self):
+#         super(TestScanCallback, self).__init__()
 
-    def onScanResult(self, callbackType, result):
-        # Llamar al método de la clase base
-        super(TestScanCallback, self).onScanResult(callbackType, result)
-        # Lógica adicional en Python
-        print(f"Scan result: {result}")
+#     def onScanResult(self, callbackType, result):
+#         # Llamar al método de la clase base
+#         super(TestScanCallback, self).onScanResult(callbackType, result)
+#         # Lógica adicional en Python
+#         print(f"Scan result: {result}")
 
-    def onBatchScanResults(self, results):
-        # Llamar al método de la clase base
-        super(TestScanCallback, self).onBatchScanResults(results)
-        # Lógica adicional en Python
-        print(f"Batch scan results: {results}")
+#     def onBatchScanResults(self, results):
+#         # Llamar al método de la clase base
+#         super(TestScanCallback, self).onBatchScanResults(results)
+#         # Lógica adicional en Python
+#         print(f"Batch scan results: {results}")
 
-    def onScanFailed(self, errorCode):
-        # Llamar al método de la clase base
-        super(TestScanCallback, self).onScanFailed(errorCode)
-        # Lógica adicional en Python
-        print(f"Scan failed with error code: {errorCode}")
+#     def onScanFailed(self, errorCode):
+#         # Llamar al método de la clase base
+#         super(TestScanCallback, self).onScanFailed(errorCode)
+#         # Lógica adicional en Python
+#         print(f"Scan failed with error code: {errorCode}")
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
@@ -68,7 +68,7 @@ class BluetoothManager_App:
 
         print("Creando objecto de ScanCallback")
         self.scan_callback = PythonScanCallbackClass().getInstance() # Se obtiene la instanciad del ScanCallback
-        self.class_test = TestScanCallback()
+        # self.class_test = TestScanCallback()
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
