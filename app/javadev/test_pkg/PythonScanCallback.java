@@ -9,6 +9,7 @@ public class PythonScanCallback extends ScanCallback {
     // Constructor vacío
     public PythonScanCallback() {
         super();
+        System.out.println("Clase creada en java");
     }
 
     @Override
@@ -16,7 +17,7 @@ public class PythonScanCallback extends ScanCallback {
         // Implementación personalizada del método
         System.out.println("Scan failed with error code: " + errorCode);
     }
-
+    
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
         // Implementación personalizada del método
