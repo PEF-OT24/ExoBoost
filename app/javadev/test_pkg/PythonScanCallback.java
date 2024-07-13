@@ -4,7 +4,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import java.util.List;
 
-public class CustomScanCallback extends ScanCallback {
+public class PythonScanCallback extends ScanCallback {
 
     // Constructor vacío
     public CustomScanCallback() {

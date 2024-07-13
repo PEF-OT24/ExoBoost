@@ -15,7 +15,7 @@ ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
 ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
-PythonScanCallback = autoclass('javadev.test_pkg.CustomScanCallback')
+PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback')
 
 class PythonScanCallbackClass:
     def __init__(self):
@@ -27,7 +27,7 @@ class PythonScanCallbackClass:
         return self.Instance
 
 # class ScanCallbackClass(PythonJavaClass):
-#     __javainterfaces__ = ['javadev/test_pkg/CustomScanCallback']
+#     __javainterfaces__ = ['javadev/test_pkg/PythonScanCallback')]
 #     __javaclass__ = 'javadev/test_pkg/CustomScanCallback'
 
 #     # Decoradores indicando las variables de entrada y salida 
