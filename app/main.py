@@ -18,12 +18,9 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 from kivymd.uix.label import MDLabel
 from kivy.uix.gridlayout import GridLayout as Grid
-from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
-from kivymd.uix.slider import MDSlider
-from kivy.uix.dropdown import DropDown
 
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
@@ -31,10 +28,8 @@ Clock.max_iteration = 1000  # Increase this value if necessary
 
 # Importar librerías para comunicación
 import platform
-import asyncio
 import json 
 import os
-import math
 import webbrowser
 from time import sleep
 
@@ -79,6 +74,8 @@ class TestDesignApp(MDApp):
             # Librería de BLE
             import BLE2
             from BLE2 import BluetoothManager_App
+            found = True
+        else: found = False
         
         # Diccionario de etiquetas para la sintonización
         self.limb: str = "Right leg"
@@ -115,7 +112,7 @@ class TestDesignApp(MDApp):
         }
 
         # Parámetros de BLE
-        self.ble = BluetoothManager_App()
+        if found: self.ble = BluetoothManager_App()
 
         # -------------------------- Atributos externos --------------------------
         """
@@ -256,19 +253,19 @@ class TestDesignApp(MDApp):
     #Crea lista de 5 dispositivos en el menú de bluetooth
     def search_devices(self):
         # --------- Manejo de BLE ---------------
-        print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
-        if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
+        # print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
+        # if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
 
-        # Escanea  por 5 segundos
-        print("Escaneado comenzando")
-        self.ble.start_ble_scan()
-        sleep(5)
-        print("Escaneado detenido")
-        self.ble.stop_ble_scan()
+        # # Escanea  por 5 segundos
+        # print("Escaneado comenzando")
+        # self.ble.start_ble_scan()
+        # sleep(5)
+        # print("Escaneado detenido")
+        # self.ble.stop_ble_scan()
 
-        # Se obtienen los dispositivos encontrados
-        devices = self.ble.get_found_devices()
-        print(devices)
+        # # Se obtienen los dispositivos encontrados
+        # devices = self.ble.get_found_devices()
+        # print(devices)
 
         # --------- Lógica de la lista ---------------
         items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
