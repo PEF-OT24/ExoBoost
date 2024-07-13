@@ -1,6 +1,9 @@
 from jnius import autoclass, PythonJavaClass, java_method
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
+import os
+
+os.environ['CLASSPATH'] = 'javadev'
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter')
@@ -12,24 +15,24 @@ ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
 ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
-# PythonScanCallback = autoclass('com.example.PythonScanCallback')
+PythonScanCallback = autoclass('javadev.test_pkg.CustomScanCallback')
 
-# class ScanCallbackClass(PythonJavaClass):
-#     __javainterfaces__ = ['com/example/PythonScanCallback$Interface']
-#     __javaclass__ = 'com/example/PythonScanCallback'
+class ScanCallbackClass(PythonJavaClass):
+    __javainterfaces__ = ['javadev/test_pkg/CustomScanCallback']
+    __javaclass__ = 'javadev/test_pkg/CustomScanCallback'
 
-#     # Decoradores indicando las variables de entrada y salida 
-#     @java_method('(I)V')
-#     def onScanFailed(self, errorCode):
-#         print(f"Scan failed with error code {errorCode}")
+    # Decoradores indicando las variables de entrada y salida 
+    @java_method('(I)V')
+    def onScanFailed(self, errorCode):
+        print(f"Scan failed with error code {errorCode}")
 
-#     @java_method('(ILandroid/bluetooth/le/ScanResult;)V')
-#     def onScanResult(self, callbackType, result):
-#         print(f"Scan result: {result}")
+    @java_method('(ILandroid/bluetooth/le/ScanResult;)V')
+    def onScanResult(self, callbackType, result):
+        print(f"Scan result: {result}")
 
-#     @java_method('(Ljava/util/List;)V')
-#     def onBatchScanResults(self, results):
-#         print(f"Batch scan results: {results}")
+    @java_method('(Ljava/util/List;)V')
+    def onBatchScanResults(self, results):
+        print(f"Batch scan results: {results}")
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
@@ -50,7 +53,7 @@ class BluetoothManager_App:
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
         print("Creando objecto de ScanCallback")
-        self.scan_callback = ScanCallback()
+        self.scan_callback = ScanCallbackClass()
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
