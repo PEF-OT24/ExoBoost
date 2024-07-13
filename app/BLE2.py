@@ -19,6 +19,7 @@ PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback
 
 class MyScanCallback(PythonJavaClass):
     __javaclass__ = 'javadev/test_pkg/PythonScanCallback'
+    __javaclass__ = []
     
     # @java_method('(ILandroid/bluetooth/le/ScanResult;)V')
     # def onScanResult(self, callbackType, result):
