@@ -177,7 +177,7 @@ android.permissions = INTERNET, ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, WA
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-android.add_src = com/example/PythonScanCallback.java
+android.add_src = javadev/test_pkg/PythonScanCallback.java
 
 # (list) Android AAR archives to add
 #android.add_aars =
