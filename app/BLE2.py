@@ -10,25 +10,26 @@ PythonActivity = autoclass('org.kivy.android.PythonActivity').mActivity
 BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
 ScanResult = autoclass('android.bluetooth.le.ScanResult')
 Context = autoclass('android.content.Context')
+ScanCallback = autoclass('android.bluetooth.le.ScanCallback')
 
-PythonScanCallback = autoclass('com.example.PythonScanCallback')
+# PythonScanCallback = autoclass('com.example.PythonScanCallback')
 
-class ScanCallbackClass(PythonJavaClass):
-    __javainterfaces__ = ['com/example/PythonScanCallback$Interface']
-    __javaclass__ = 'com/example/PythonScanCallback'
+# class ScanCallbackClass(PythonJavaClass):
+#     __javainterfaces__ = ['com/example/PythonScanCallback$Interface']
+#     __javaclass__ = 'com/example/PythonScanCallback'
 
-    # Decoradores indicando las variables de entrada y salida 
-    @java_method('(I)V')
-    def onScanFailed(self, errorCode):
-        print(f"Scan failed with error code {errorCode}")
+#     # Decoradores indicando las variables de entrada y salida 
+#     @java_method('(I)V')
+#     def onScanFailed(self, errorCode):
+#         print(f"Scan failed with error code {errorCode}")
 
-    @java_method('(ILandroid/bluetooth/le/ScanResult;)V')
-    def onScanResult(self, callbackType, result):
-        print(f"Scan result: {result}")
+#     @java_method('(ILandroid/bluetooth/le/ScanResult;)V')
+#     def onScanResult(self, callbackType, result):
+#         print(f"Scan result: {result}")
 
-    @java_method('(Ljava/util/List;)V')
-    def onBatchScanResults(self, results):
-        print(f"Batch scan results: {results}")
+#     @java_method('(Ljava/util/List;)V')
+#     def onBatchScanResults(self, results):
+#         print(f"Batch scan results: {results}")
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
@@ -49,7 +50,7 @@ class BluetoothManager_App:
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
         print("Creando objecto de ScanCallback")
-        self.scan_callback = ScanCallbackClass()
+        self.scan_callback = ScanCallback()
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
