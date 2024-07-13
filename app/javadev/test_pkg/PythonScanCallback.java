@@ -14,19 +14,22 @@ public class PythonScanCallback extends ScanCallback {
 
     @Override
     public void onScanFailed(int errorCode) {
-        // Implementación personalizada del método
+        // Implementación personalizada del método        
         System.out.println("Scan failed with error code: " + errorCode);
+        System.out.println("Método onScanFailed");
     }
     
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
         // Implementación personalizada del método
         System.out.println("Scan result: " + result);
+        System.out.println("Método onScanResult");
     }
-
+    
     @Override
     public void onBatchScanResults(List<ScanResult> results) {
         // Implementación personalizada del método
         System.out.println("Batch scan results: " + results);
+        System.out.println("Método onBatchScanResults");
     }
 }
