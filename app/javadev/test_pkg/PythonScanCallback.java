@@ -7,7 +7,7 @@ import java.util.List;
 public class PythonScanCallback extends ScanCallback {
 
     // Constructor vacío
-    public CustomScanCallback() {
+    public PythonScanCallback() {
         super();
     }
 
