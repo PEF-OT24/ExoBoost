@@ -1,4 +1,4 @@
-package javadev.src.test_pkg;
+package javadev.test_pkg;
 
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
