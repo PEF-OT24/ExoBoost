@@ -9,6 +9,7 @@ import java.util.List;
 public class PythonScanCallback extends ScanCallback {
     private List<BluetoothDevice> scanResults = new ArrayList<>();
     private int errorCode = -1; // Inicializamos el código de error con un valor por defecto
+    private int contador = 0;
 
     public PythonScanCallback() {
         super();
@@ -30,6 +31,8 @@ public class PythonScanCallback extends ScanCallback {
         super.onScanResult(callbackType, result);
         BluetoothDevice dispositivo = result.getDevice();
         this.scanResults.add(dispositivo);
+        this.contador += 1;
+        System.out.println("Dispositivo escaneado: (python) " + this.contador);
     }
 
     @Override
@@ -43,12 +46,12 @@ public class PythonScanCallback extends ScanCallback {
     public List<BluetoothDevice> getScanResults() {
         // Método que devuelve cada dispositivo escaneado
         System.out.println("getScanResults (python)");
-        return scanResults;
+        return this.scanResults;
     }
 
     public int getErrorCode() {
         // Método que devuelve el código de error
         System.out.println("getErrorCode (python)");
-        return errorCode;
+        return this.errorCode;
     }
 }
