@@ -17,14 +17,6 @@ public class PythonScanCallback extends ScanCallback {
     }
 
     @Override
-    public void onScanFailed(int errorCode) {
-        // Método que obtiene el código de error
-        super.onScanFailed(errorCode);
-        System.out.println("onScanFailed (python)");
-        this.errorCode = errorCode;
-    }
-
-    @Override
     public void onScanResult(int callbackType, ScanResult result) {
         // Método que obtiene los dispositivos escaneados
         System.out.println("onScanResult (python)");
@@ -36,16 +28,24 @@ public class PythonScanCallback extends ScanCallback {
     }
 
     @Override
+    public void onScanFailed(int errorCode) {
+        // Método que obtiene el código de error
+        super.onScanFailed(errorCode);
+        System.out.println("onScanFailed (python)");
+        this.errorCode = errorCode;
+    }
+
+    @Override
     public void onBatchScanResults(List<ScanResult> results) {
         // Implementación personalizada del método
         super.onBatchScanResults(results);
         System.out.println("Batch scan results: (python) " + results);
-        System.out.println("Método onBatchScanResults");
+        // System.out.println("Método onBatchScanResults");
     }
 
     public List<BluetoothDevice> getScanResults() {
         // Método que devuelve cada dispositivo escaneado
-        System.out.println("getScanResults (python)");
+        System.out.println("getScanResults (python)" + this.scanResults);
         return this.scanResults;
     }
 

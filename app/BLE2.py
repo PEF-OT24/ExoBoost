@@ -81,6 +81,7 @@ class BluetoothManager_App:
             print("Scanning for devices...")
             if self.bluetooth_adapter.isDiscovering():
                 print("Cancelling discovery")
+                self.ble_scanner.stopScan(self.python_scan_callback)
                 self.bluetooth_adapter.cancelDiscovery()
             print("Scanning between devices...")
             # self.found_devices.clear() # Limpiar los dispositivos encontrados
