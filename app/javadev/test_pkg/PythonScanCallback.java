@@ -10,7 +10,7 @@ public class PythonScanCallback extends ScanCallback {
     private List<BluetoothDevice> scanResults = new ArrayList<>();
     private List<String> nombres = new ArrayList<>();
     private int errorCode = -1; // Inicializamos el código de error con un valor por defecto
-    private int contador = 0;
+    private int contador = 1;
 
     public PythonScanCallback() {
         super();
@@ -27,10 +27,11 @@ public class PythonScanCallback extends ScanCallback {
         BluetoothDevice dispositivo = result.getDevice();
         String nombre = dispositivo.getName();
 
-        if (nombre != null) {
-            // Se agrega el dispositivo a la lista
-            this.scanResults.add(dispositivo);
+        if (nombre != null && !this.nombres.contains(nombre)) {
+            // Se agrega el dispositivo a la lista sin repetirse
             System.out.println("Dispositivo escaneado: (python) " + this.contador);
+
+            this.scanResults.add(dispositivo);
             this.contador += 1;
 
             // Se obtiene el nombre

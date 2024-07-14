@@ -260,14 +260,14 @@ class TestDesignApp(MDApp):
         self.ble.start_ble_scan()
         sleep(5)  
 
+        # Se detiene el escaneo
+        print("Escaneado detenido")
+        self.ble.stop_ble_scan()
+
         # Se obtienen los dispositivos encontrados
         devices: list = self.ble.get_found_devices()
         print("Dispositivos encontrados")
         print(devices)
-
-        # Se detiene el escaneo
-        print("Escaneado detenido")
-        self.ble.stop_ble_scan()
 
         # --------- Lógica de la lista ---------------
         # items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]

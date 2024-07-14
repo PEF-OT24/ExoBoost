@@ -75,26 +75,19 @@ class BluetoothManager_App:
         Método para iniciar la búsqueda de disposiuivos. 
         Solo funciona cuando self.ble_scanner no es None
         '''
-        if self.ble_scanner:
-            # print("Scanning for devices...")
-            # if self.bluetooth_adapter.isDiscovering():
-            #     print("Cancelling discovery")
-            #     self.ble_scanner.stopScan(self.python_scan_callback)
-            #     self.bluetooth_adapter.cancelDiscovery()
+        try:
             print("Scanning between devices...")
-            self.found_devices.clear() # Limpiar los dispositivos encontrados
             self.ble_scanner.startScan(self.python_scan_callback)
-        else: 
-            print("Error: Bluetooth no disponible")
+        except Exception as e:
+            print(f"Error: Bluetooth no disponible: {e}")
 
     def stop_ble_scan(self):
         '''Detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando'''
         if self.ble_scanner:
             print("Stopping scan")
-            print(self.bluetooth_adapter.isDiscovering()) # Se detecta si el BLE está escaneando
             self.ble_scanner.stopScan(self.python_scan_callback)
-            self.found_devices = self.python_scan_callback.getScanResults()
 
     def get_found_devices(self):
         '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''
+        self.found_devices = self.python_scan_callback.getScanResults()
         return self.found_devices
