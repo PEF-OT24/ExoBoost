@@ -3,7 +3,7 @@ from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
 
-os.environ['CLASSPATH'] = 'javadev.test_pkg'
+os.environ['CLASSPATH'] = 'javadev/test_pkg'
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 Context = autoclass('android.content.Context')
@@ -14,33 +14,15 @@ BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter') # Dispositivo
 BluetoothManager = autoclass('android.bluetooth.BluetoothManager')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice') # Dispositvos encontrados
 
-ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
-
-class PythonScanCallbackClass:
-    def __init__(self):
-        '''Constructor para generar el objeto de la clase ScanCallbackClass'''
-        self.Instance = PythonScanCallback()
-        self.results = None
-        self.error_code = None
-        
-    # getter de la instancia de la clase
-    def getInstance(self):
-        '''Devuelve el objeto de la clase ScanCallbackClass'''
-        return self.Instance
-    
-    # Métodos nuevos
-    def scanResults(self):
-        self.results = self.Instance.getScanResults()
-
-    def errorCode(self):
-        self.error_code = self.Instance.getErrorCode()
+ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
         # ----------- Métodos inicializadores -----------
-        self.request_ble_permissions()
+        self.request_ble_permissions() # Solicitar permisos
+        self.scanning: bool = False
 
         # ----------- Atributos de BLE -----------
         # Entorno de Python para Android
@@ -55,7 +37,7 @@ class BluetoothManager_App:
         else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
 
         print("Creando objecto de ScanCallback")
-        self.python_scan_callback = PythonScanCallbackClass() # Se obtiene la instanciad del ScanCallback
+        self.python_scan_callback = PythonScanCallback() # Se obtiene la instanciad del ScanCallback
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
@@ -80,7 +62,9 @@ class BluetoothManager_App:
 
     def is_bluetooth_enabled(self) -> bool:
         '''Detecta si el BLE está habilitado'''
-        return self.bluetooth_adapter.isEnabled()
+        estado = self.bluetooth_adapter.isEnabled()
+        print(estado)
+        return estado
 
     def enable_bluetooth(self):
         '''Habilita el Bluetooth si no lo esta'''
@@ -101,15 +85,16 @@ class BluetoothManager_App:
                 self.bluetooth_adapter.cancelDiscovery()
             print("Scanning between devices...")
             self.found_devices.clear() # Limpiar los dispositivos encontrados
-            self.ble_scanner.startScan(self.python_scan_callback.getInstance())
+            self.ble_scanner.startScan(self.python_scan_callback)
         else: 
             print("Error: Bluetooth no disponible")
 
     def stop_ble_scan(self):
         '''Detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando'''
         if self.ble_scanner and self.bluetooth_adapter.isDiscovering():
-            self.found_devices = self.python_scan_callback.scanResults()
-            self.ble_scanner.stopScan(self.python_scan_callback.getInstance())
+            print(self.bluetooth_adapter.isDiscovering()) # Se detecta si el BLE está escaneando
+            self.found_devices = self.python_scan_callback.getScanResults()
+            self.ble_scanner.stopScan(self.python_scan_callback)
 
     def get_found_devices(self):
         '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''

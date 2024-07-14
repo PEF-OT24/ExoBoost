@@ -43,8 +43,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PythonScanCallback extends ScanCallback {
-    private List<ScanResult> scanResults = new ArrayList<>();
-    private int errorCode = -1; // Inicializamos el código de error con un valor por defecto
+    public List<ScanResult> scanResults = new ArrayList<>();
+    public int errorCode = -1; // Inicializamos el código de error con un valor por defecto
+    
+    public PythonScanCallback() {
+        super();
+        System.out.println("Clase creada en java (python)");
+    }
 
     @Override
     public void onScanFailed(int errorCode) {
@@ -66,7 +71,7 @@ public class PythonScanCallback extends ScanCallback {
     
     public List<ScanResult> getScanResults() {
         // Método que devuelve cada dispositivo escaneado
-        System.out.println("getScanResults");
+        System.out.println("getScanResults (python)");
         return scanResults;
     }
     
