@@ -69,6 +69,14 @@ public class PythonScanCallback extends ScanCallback {
         }
     }
     
+    @Override
+    public void onBatchScanResults(List<ScanResult> results) {
+        // Implementación personalizada del método
+        super.onBatchScanResults(results);
+        System.out.println("Batch scan results: " + results);
+        System.out.println("Método onBatchScanResults");
+    }
+    
     public List<ScanResult> getScanResults() {
         // Método que devuelve cada dispositivo escaneado
         System.out.println("getScanResults (python)");

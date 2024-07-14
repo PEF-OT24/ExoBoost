@@ -3,7 +3,7 @@ from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
 
-os.environ['CLASSPATH'] = 'javadev/test_pkg'
+os.environ['CLASSPATH'] = 'javadev'
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 Context = autoclass('android.content.Context')
