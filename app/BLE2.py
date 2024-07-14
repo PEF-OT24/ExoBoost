@@ -33,10 +33,10 @@ class BluetoothManager_App:
 
         # Escaneador de BLE
         self.ble_enable = self.is_bluetooth_enabled()
-        if self.ble_enable == None: self.ble_scanner = None
-        else: self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
+        if not(self.ble_enable): self.enable_bluetooth()
 
-        print("Creando objecto de ScanCallback")
+        # Se crea el escaneador de BLE
+        self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback() # Se obtiene la instanciad del ScanCallback
 
         # ----------- Atributos lógicos -----------
@@ -67,10 +67,8 @@ class BluetoothManager_App:
         return estado
 
     def enable_bluetooth(self):
-        '''Habilita el Bluetooth si no lo esta'''
-        if not self.ble_enable:
-            self.bluetooth_adapter.enable()
-        self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
+        '''Habilita el Bluetooth'''
+        self.bluetooth_adapter.enable()
 
     def start_ble_scan(self):
         '''
@@ -84,7 +82,7 @@ class BluetoothManager_App:
             #     self.ble_scanner.stopScan(self.python_scan_callback)
             #     self.bluetooth_adapter.cancelDiscovery()
             print("Scanning between devices...")
-            # self.found_devices.clear() # Limpiar los dispositivos encontrados
+            self.found_devices.clear() # Limpiar los dispositivos encontrados
             self.ble_scanner.startScan(self.python_scan_callback)
         else: 
             print("Error: Bluetooth no disponible")

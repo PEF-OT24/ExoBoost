@@ -14,7 +14,7 @@ public class PythonScanCallback extends ScanCallback {
 
     public PythonScanCallback() {
         super();
-        System.out.println("Clase creada en java (python)");
+        System.out.println("Objeto de ScanCallback creado en java (python)");
     }
 
     @Override

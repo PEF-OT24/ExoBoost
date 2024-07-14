@@ -253,8 +253,7 @@ class TestDesignApp(MDApp):
     #Crea lista de 5 dispositivos en el menú de bluetooth
     def search_devices(self):
         # --------- Manejo de BLE ---------------
-        print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")
-        if not(self.ble.is_bluetooth_enabled()): self.ble.enable_bluetooth() # Si no está habilitado lo habilita
+        print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n") # Estado del bluetooth 
 
         # Escanea  por 5 segundos
         print("Escaneado comenzando")
