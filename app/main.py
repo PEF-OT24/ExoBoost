@@ -265,6 +265,7 @@ class TestDesignApp(MDApp):
 
         # Se obtienen los dispositivos encontrados
         devices: list = self.ble.get_found_devices()
+        print("Dispositivos encontrados")
         print(devices)
 
         # --------- Lógica de la lista ---------------
