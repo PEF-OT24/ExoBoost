@@ -259,12 +259,12 @@ class TestDesignApp(MDApp):
         # Escanea  por 5 segundos
         print("Escaneado comenzando")
         self.ble.start_ble_scan()
-        sleep(5)
+        sleep(5)  
         print("Escaneado detenido")
         self.ble.stop_ble_scan()
 
         # Se obtienen los dispositivos encontrados
-        devices = self.ble.get_found_devices()
+        devices: list = self.ble.get_found_devices()
         print(devices)
 
         # --------- Lógica de la lista ---------------
