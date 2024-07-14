@@ -7,51 +7,57 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PythonScanCallback extends ScanCallback {
-    private List<BluetoothDevice> scanResults = new ArrayList<>();
-    private int errorCode = -1; // Inicializamos el código de error con un valor por defecto
+    private final List<BluetoothDevice> scanResults = new ArrayList<>();
+    private int errorCode = -1;
     private int contador = 0;
 
     public PythonScanCallback() {
         super();
         System.out.println("Clase creada en java (python)");
-    }
+    }x|
 
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
-        // Método que obtiene los dispositivos escaneados
         System.out.println("onScanResult (python)");
-        super.onScanResult(callbackType, result);
         BluetoothDevice dispositivo = result.getDevice();
-        this.scanResults.add(dispositivo);
-        this.contador += 1;
-        System.out.println("Dispositivo escaneado: (python) " + this.contador);
+        synchronized (scanResults) {
+            if (!scanResults.contains(dispositivo)) {
+                scanResults.add(dispositivo);
+                contador += 1;
+                System.out.println("Dispositivo escaneado: (python) " + contador);
+            }
+        }
     }
 
     @Override
     public void onScanFailed(int errorCode) {
-        // Método que obtiene el código de error
-        super.onScanFailed(errorCode);
         System.out.println("onScanFailed (python)");
         this.errorCode = errorCode;
     }
 
     @Override
     public void onBatchScanResults(List<ScanResult> results) {
-        // Implementación personalizada del método
-        super.onBatchScanResults(results);
         System.out.println("Batch scan results: (python) " + results);
-        // System.out.println("Método onBatchScanResults");
+        synchronized (scanResults) {
+            for (ScanResult result : results) {
+                BluetoothDevice dispositivo = result.getDevice();
+                if (!scanResults.contains(dispositivo)) {
+                    scanResults.add(dispositivo);
+                }
+            }
+            contador = scanResults.size();
+        }
     }
 
     public List<BluetoothDevice> getScanResults() {
-        // Método que devuelve cada dispositivo escaneado
-        System.out.println("getScanResults (python)" + this.scanResults);
-        return this.scanResults;
+        System.out.println("getScanResults (python)" + scanResults);
+        synchronized (scanResults) {
+            return new ArrayList<>(scanResults);
+        }
     }
 
     public int getErrorCode() {
-        // Método que devuelve el código de error
         System.out.println("getErrorCode (python)");
-        return this.errorCode;
+        return errorCode;
     }
 }
