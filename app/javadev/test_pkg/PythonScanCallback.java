@@ -62,7 +62,7 @@ public class PythonScanCallback extends ScanCallback {
     public List<BluetoothDevice> getScanResults() {
         // Método que devuelve cada dispositivo escaneado
         System.out.println("getScanResults (python)" + this.scanResults);
-        return this.scanResults;
+        return this.nombres;
     }
 
     public int getErrorCode() {
