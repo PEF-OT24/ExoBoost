@@ -93,8 +93,8 @@ class BluetoothManager_App:
         if self.ble_scanner and self.bluetooth_adapter.isDiscovering():
             print("Stopping scan")
             print(self.bluetooth_adapter.isDiscovering()) # Se detecta si el BLE está escaneando
-            self.found_devices = self.python_scan_callback.getScanResults()
             self.ble_scanner.stopScan(self.python_scan_callback)
+            self.found_devices = self.python_scan_callback.getScanResults()
 
     def get_found_devices(self):
         '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''
