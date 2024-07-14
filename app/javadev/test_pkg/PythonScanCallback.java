@@ -19,14 +19,14 @@ public class PythonScanCallback extends ScanCallback {
     public void onScanFailed(int errorCode) {
         // Método que obtiene el código de error
         super.onScanFailed(errorCode);
-        System.out.println("onScanFailed");
+        System.out.println("onScanFailed (python)");
         this.errorCode = errorCode;
     }
 
     @Override
     public void onScanResult(int callbackType, ScanResult result) {
         // Método que obtiene los dispositivos escaneados
-        System.out.println("onScanResult");
+        System.out.println("onScanResult (python)");
         super.onScanResult(callbackType, result);
         BluetoothDevice dispositivo = result.getDevice();
         this.scanResults.add(dispositivo);
@@ -36,7 +36,7 @@ public class PythonScanCallback extends ScanCallback {
     public void onBatchScanResults(List<ScanResult> results) {
         // Implementación personalizada del método
         super.onBatchScanResults(results);
-        System.out.println("Batch scan results: " + results);
+        System.out.println("Batch scan results: (python) " + results);
         System.out.println("Método onBatchScanResults");
     }
 
@@ -48,7 +48,7 @@ public class PythonScanCallback extends ScanCallback {
 
     public int getErrorCode() {
         // Método que devuelve el código de error
-        System.out.println("getErrorCode");
+        System.out.println("getErrorCode (python)");
         return errorCode;
     }
 }
