@@ -25,19 +25,22 @@ public class PythonScanCallback extends ScanCallback {
 
         // Se obteien el dispositivo
         BluetoothDevice dispositivo = result.getDevice();
-
-        // Se agrega el dispositivo a la lista
-        this.scanResults.add(dispositivo);
-        System.out.println("Dispositivo escaneado: (python) " + this.contador);
-        this.contador += 1;
-
-        // Se obtiene el nombre
         String nombre = dispositivo.getName();
-        this.nombres.add(nombre);
 
-        // Se imprimen los datos
-        System.out.println("Nombre de dispositivo: (python) " + nombre);
-        System.out.println("------------------------");
+        if (nombre != null) {
+            // Se agrega el dispositivo a la lista
+            this.scanResults.add(dispositivo);
+            System.out.println("Dispositivo escaneado: (python) " + this.contador);
+            this.contador += 1;
+
+            // Se obtiene el nombre
+            this.nombres.add(nombre);
+
+            // Se imprimen los datos
+            System.out.println("Nombre de dispositivo: (python) " + nombre);
+            System.out.println("Dispositivos" + this.scanResults.size());
+            System.out.println("------------------------");
+        }
     }
 
     @Override
