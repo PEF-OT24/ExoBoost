@@ -309,7 +309,8 @@ class TestDesignApp(MDApp):
         # LÓGICA PARA CAMBIAR EL 
             # COLOR DE FONDO DEL BOTON
             # TEXTO DEL BOTON
-        print(self.ble.connect_disconnect(self.selected_device))
+        success = self.ble.connect_disconnect(self.selected_device)
+        print(success)
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''

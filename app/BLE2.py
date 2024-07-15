@@ -125,7 +125,7 @@ class BluetoothManager_App:
                 for device in self.found_devices:
                     if device.getName() == device_name:
                         target_device = device
-                        return True
+                        break
                     
                 # Se realiza la conexion
                 target_device.connectGatt(Context, 
@@ -133,6 +133,7 @@ class BluetoothManager_App:
                                           self.python_gatt_callback, 
                                         #   transport = BluetoothDevice.TRANSPORT_LE # Para testing
                                           )
+                return True
 
                 # Intento de conexión
             else: print("Already connected")
