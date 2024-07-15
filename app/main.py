@@ -257,8 +257,6 @@ class TestDesignApp(MDApp):
             # Se inicia el escaneo durante 5 segundos y se obtiene la lista de dispositivos
             scanning = Thread(target=self.perfom_scanning, args=(5.0,))
             scanning.start()
-
-            print(devices)
         else: 
             print("Bluetooth no disponible")
             devices = ["Dispositivo 3", "Dipositivo 2", "Dispositivo 1"]
