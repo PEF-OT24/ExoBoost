@@ -49,7 +49,7 @@ class BluetoothManager_App:
 
     def initialize_bluetooth(self):
         '''Inicializa el objeto BluetoothAdapter'''
-        bluetooth_manager = PythonActivity.getSystemService(Context.BLUETOOTH_SERVICE)
+        bluetooth_manager = self.context.getSystemService(Context.BLUETOOTH_SERVICE)
         bluetooth_adapter = bluetooth_manager.getAdapter()
         return bluetooth_adapter
     
@@ -128,9 +128,9 @@ class BluetoothManager_App:
                         break
                     
                 # Se realiza la conexion
-                status = target_device.createBond()
-                if status: print("Success")
-                target_device.connectGatt(Context, 
+                # status = target_device.createBond()
+                # if status: print("Success")
+                target_device.connectGatt(self.context.getApplicationContext(), 
                                           False, 
                                           self.python_gatt_callback, 
                                           transport = BluetoothDevice.TRANSPORT_LE # Para testing
