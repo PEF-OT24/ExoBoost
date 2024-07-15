@@ -39,7 +39,7 @@ public class PythonScanCallback extends ScanCallback {
 
             // Se imprimen los datos
             System.out.println("Nombre de dispositivo: (python) " + nombre);
-            System.out.println("Dispositivos" + this.scanResults.size());
+            System.out.println("Dispositivos (python)" + this.scanResults.size());
             System.out.println("------------------------");
         }
     }
