@@ -291,7 +291,9 @@ class TestDesignApp(MDApp):
         def stop_scanning(): 
             '''Detiene el escaneo y muestra los resultados'''
             devices = self.ble.stop_ble_scan()
-            self.show_devices(devices)
+            Clock.schedule_once(lambda: self.show_devices(devices))
+
+            
 
         '''Se ejecuta después de determinado tiempo'''
         timer_ble = Timer(time, stop_scanning)
