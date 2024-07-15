@@ -366,8 +366,11 @@ WindowManager:
                             size_hint: None, None
                             ripple_effect: False
                             ripple_color: app.colors['Cyan']
-                            on_press: self.md_bg_color = app.colors["Light Orange"]
-                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            on_press: 
+                                self.md_bg_color = app.colors["Light Orange"]
+                            on_release: 
+                                self.md_bg_color = app.colors["Cyan"]
+                                app.connect_disconnect()
                             width: root.width*0.5
                             height: root.height*0.065
                             md_bg_color: app.colors["Cyan"]
