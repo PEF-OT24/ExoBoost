@@ -255,6 +255,7 @@ class TestDesignApp(MDApp):
             print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")  
 
             # Se inicia el escaneo durante 5 segundos y se obtiene la lista de dispositivos
+            self.ble.start_ble_scan()
             scanning = Thread(target=self.perfom_scanning, args=(5.0,))
             scanning.start()
         else: 
@@ -265,12 +266,14 @@ class TestDesignApp(MDApp):
 
     def show_devices(self, devices: list):
         # --------- Lógica de la lista ---------------
+        print("show devices method")
         for dev in devices:
             btn = ButtonDevices(text=dev)
             btn.bind(on_release=self.on_device_select)
             self.device_widgets_list.add_widget(btn)
         
     def on_device_select(self, instance: ButtonDevices): 
+        print("on device select method")
         '''Método que imprime dispositivo seleccionado'''
         self.selected_device = instance.text
         print(f'{instance.text} fue presionado')
@@ -283,6 +286,7 @@ class TestDesignApp(MDApp):
                 widget.md_bg_color = self.colors["Dark Blue"]
 
     def perfom_scanning(self, time: float = 5.0):
+        print("perfom scanning method")
         '''Método para iniciar escaneo de dispositivos''' # HILO EN THREAD
         def stop_scanning(): 
             '''Detiene el escaneo y muestra los resultados'''
