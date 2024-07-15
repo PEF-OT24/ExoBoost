@@ -100,7 +100,7 @@ class BluetoothManager_App:
             self.found_devices = self.python_scan_callback.getScanResults()
 
             # Se obtienen los nombres de los dispositivos y se retornan
-            nombres = [name for name in self.found_devices.getName()]
+            nombres = [name.getName() for name in self.found_devices]
             return nombres
 
     def connect_disconnect(self, device_name: str) -> bool:
@@ -118,7 +118,7 @@ class BluetoothManager_App:
                     if device.getName() == device_name:
                         target_device = device
                         return True
-                    
+
                 # Intento de conexión
             else: print("Already connected")
         except Exception as e:
