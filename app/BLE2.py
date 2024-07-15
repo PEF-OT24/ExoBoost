@@ -1,7 +1,6 @@
 from jnius import autoclass, PythonJavaClass, java_method, JavaClass, MetaJavaClass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
-from threading import Thread, Timer, Event
 import os
 
 os.environ['CLASSPATH'] = 'javadev'
@@ -16,6 +15,8 @@ BluetoothManager = autoclass('android.bluetooth.BluetoothManager')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice') # Dispositvos encontrados
 
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
+PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
+
 ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 
 class BluetoothManager_App:
@@ -40,6 +41,7 @@ class BluetoothManager_App:
         # Se crea el escaneador de BLE
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback() # Se obtiene la instanciad del ScanCallback
+        self.python_gatt_callback = PythonBluetoothGattCallback()
 
         # ----------- Atributos lógicos -----------
         self.scanning: bool = False
@@ -52,7 +54,7 @@ class BluetoothManager_App:
         return bluetooth_adapter
     
     def resetBLE(self): self.python_scan_callback.resetScanning()
-    
+
     def request_ble_permissions(self):
         '''Solicitar permisos para el uso de Bluetooth'''
         permissions = [
@@ -107,12 +109,16 @@ class BluetoothManager_App:
 
     def connect_disconnect(self, device_name: str) -> bool:
         '''
-        Se conecta al dispositivo indicado por su nombre
+        Se conecta al dispositivo indicado por su nombre. 
+        Es necesario detener el escaneo antes de intentar conectarse llamando al método stop_ble_scan().
+
         Entrada: device_name str -> Nombre del dispositivo
         Salida: True si se conectó correctamente, False de lo contrario
         '''
+        if self.scanning: return False
+
         try: # Intenta conectarse
-            if not(self.connected) and self.found_devices:
+            if not(self.connected):
                 print("Connecting to device...")
 
                 # Se busca al dispositivo 
@@ -120,9 +126,18 @@ class BluetoothManager_App:
                     if device.getName() == device_name:
                         target_device = device
                         return True
+                    
+                # Se realiza la conexion
+                target_device.connectGatt(context = self.context, 
+                                          autoConnect = False, 
+                                          callback = self.python_gatt_callback, 
+                                        #   transport = BluetoothDevice.TRANSPORT_LE # Para testing
+                                          )
 
                 # Intento de conexión
             else: print("Already connected")
         except Exception as e:
+            # En este punto los errores pueden ser: 
+            # dispositivo no encontrado, bluetooth no correctamente inicializado, dispositivo ya conectado, nombre mal escrito.
             print(f"Error de Bluetooth: {e}")
             return False

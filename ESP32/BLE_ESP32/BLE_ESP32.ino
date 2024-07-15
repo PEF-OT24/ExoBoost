@@ -5,7 +5,7 @@
 #include <BLE2902.h>
 
 // UUIDs para el servicio y la característica BLE
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b" // Servicio de ejemplo
 #define CHARACTERISTIC_UUID "00002A3D-0000-1000-8000-00805f9b34fb"
 
 // Pin del LED incorporado
@@ -18,7 +18,7 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
 // Clase para el control de eventos de conexión y desconexión BLE
-class MyServerCallbacks: public BLEServerCallbacks {
+class ServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
       digitalWrite(LED_BUILTIN, HIGH); // Enciende el LED cuando se conecta
@@ -33,14 +33,14 @@ class MyServerCallbacks: public BLEServerCallbacks {
 void setup() {
   // Configuración del pin del LED
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW); // Asegúrate de que el LED está apagado al inicio
+  digitalWrite(LED_BUILTIN, LOW); // LED inicialmente apagado
 
   // Inicialización del dispositivo BLE
   BLEDevice::init("ESP32");
 
   // Se inicializa y crea el servidor BLE
   pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+  pServer->setCallbacks(new ServerCallbacks());
 
   // Se crea el servicio BLE
   BLEService *pService = pServer->createService(SERVICE_UUID);
@@ -69,14 +69,10 @@ void setup() {
 }
 
 void loop() {
-  // Proceso de desconexión
-  if (!deviceConnected && oldDeviceConnected) {
-      delay(500); // Espere un momento antes de reiniciar la publicidad
-      pServer->startAdvertising(); // Reiniciar advertising
-      oldDeviceConnected = deviceConnected;
-  }
-
-  if (deviceConnected && !oldDeviceConnected) {
-      oldDeviceConnected = deviceConnected;
+  // Proceso de conexión y desconexión
+  if (deviceConnected) {
+    pCharacteristic->setValue("New Value");
+    pCharacteristic->notify(); // Notificar a los clientes conectados
+    delay(1000);
   }
 }
