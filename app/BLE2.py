@@ -50,7 +50,9 @@ class BluetoothManager_App:
         bluetooth_manager = PythonActivity.getSystemService(Context.BLUETOOTH_SERVICE)
         bluetooth_adapter = bluetooth_manager.getAdapter()
         return bluetooth_adapter
-
+    
+    def resetBLE(self): self.python_scan_callback.resetScanning()
+    
     def request_ble_permissions(self):
         '''Solicitar permisos para el uso de Bluetooth'''
         permissions = [

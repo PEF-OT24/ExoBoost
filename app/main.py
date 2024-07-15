@@ -256,6 +256,7 @@ class TestDesignApp(MDApp):
             print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")  
 
             # Se inicia el escaneo durante 5 segundos y se obtiene la lista de dispositivos
+            self.ble.resetBLE() # Se reinica el escaneo
             self.ble.start_ble_scan()
             scanning = Thread(target=self.perfom_scanning, args=(5.0,))
             scanning.start()

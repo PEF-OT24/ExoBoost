@@ -71,4 +71,13 @@ public class PythonScanCallback extends ScanCallback {
         System.out.println("getErrorCode (python)");
         return this.errorCode;
     }
+
+    public void resetScanning() {
+        // Método para limpiar los datos de la clase
+        System.out.println("resetScanning (python)");
+        this.scanResults.clear();
+        this.nombres.clear();
+        this.errorCode = -1;
+        this.contador = 1;
+    }
 }
