@@ -22,17 +22,15 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("Objeto de BluetoothGattCallback creado en java (python)");
     }
 
-    // @Override
-    // public void onCharacteristicChanged(BluetoothGatt gatt,
-    // BluetoothGattCharacteristic characteristic, byte[] value) {
-    // super.onCharacteristicChanged(gatt, characteristic, value);
-    // System.out.println("onCharacteristicChanged (python)");
-    // }
+    @Override
+    public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        super.onCharacteristicChanged(gatt, characteristic);
+        System.out.println("onCharacteristicChanged (python)");
+    }
 
     @Override
-    public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, byte[] value,
-            int status) {
-        super.onCharacteristicRead(gatt, characteristic, value, status);
+    public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+        super.onCharacteristicRead(gatt, characteristic, status);
         System.out.println("onCharacteristicRead (python)");
     }
 
@@ -54,7 +52,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     }
 
     @Override
-    public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status, byte[] value) {
+    public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         super.onDescriptorRead(gatt, descriptor, status);
         System.out.println("onDescriptorRead (python)");
     }
@@ -95,11 +93,11 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("onReliableWriteCompleted (python)");
     }
 
-    // @Override
-    // public void onServicesChanged(BluetoothGatt gatt) {
-    // super.onServicesChanged(gatt);
-    // System.out.println("onServicesChanged (python)");
-    // }
+    @Override
+    public void onServicesChanged(BluetoothGatt gatt) {
+        super.onServicesChanged(gatt);
+        System.out.println("onServicesChanged (python)");
+    }
 
     @Override
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
