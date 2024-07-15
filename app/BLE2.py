@@ -128,10 +128,12 @@ class BluetoothManager_App:
                         break
                     
                 # Se realiza la conexion
+                status = target_device.createBond()
+                if status: print("Success")
                 target_device.connectGatt(Context, 
                                           False, 
                                           self.python_gatt_callback, 
-                                        #   transport = BluetoothDevice.TRANSPORT_LE # Para testing
+                                          transport = BluetoothDevice.TRANSPORT_LE # Para testing
                                           )
                 return True
 
