@@ -1,51 +1,72 @@
-// Librerías para BLE
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <ArduinoJson.h>
 
-// UUIDs para el servicio y la característica BLE
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b" // Servicio de ejemplo
-#define CHARACTERISTIC_UUID "00002A3D-0000-1000-8000-00805f9b34fb"
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b" // UUID del servicio
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8" // UUID de la característica
 
-// Pin del LED incorporado
-#define LED_BUILTIN 2
-
-// Variables para la conexión Bluetooth
 BLEServer* pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
 bool deviceConnected = false;
-bool oldDeviceConnected = false;
 
-// Clase para el control de eventos de conexión y desconexión BLE
-class ServerCallbacks: public BLEServerCallbacks {
+const int LED_PIN = 2; // LED integrado en la ESP32
+
+class MyServerCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
       deviceConnected = true;
-      digitalWrite(LED_BUILTIN, HIGH); // Enciende el LED cuando se conecta
+      digitalWrite(LED_PIN, HIGH); // Encender el LED
+      Serial.println("Device connected");
     };
 
     void onDisconnect(BLEServer* pServer) {
       deviceConnected = false;
-      digitalWrite(LED_BUILTIN, LOW); // Apaga el LED cuando se desconecta
+      digitalWrite(LED_PIN, LOW); // Apagar el LED
+      Serial.println("Device disconnected");
+    }
+};
+
+class MyCallbacks : public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic* pCharacteristic) {
+      std::string value = pCharacteristic->getValue();
+
+      if (value.length() > 0) {
+        Serial.println("Received Value: " + String(value.c_str()));
+
+        // Deserializar JSON
+        StaticJsonDocument<200> doc;
+        DeserializationError error = deserializeJson(doc, value.c_str());
+
+        if (error) {
+          Serial.print(F("deserializeJson() failed: "));
+          Serial.println(error.f_str());
+          return;
+        }
+
+        // Acceder a los valores del JSON
+        const char* key = doc["key"];
+        int number = doc["number"];
+
+        // Imprimir los valores recibidos
+        Serial.println("key: " + String(key));
+        Serial.println("number: " + String(number));
+      }
     }
 };
 
 void setup() {
-  // Configuración del pin del LED
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW); // LED inicialmente apagado
+  Serial.begin(115200);
+  pinMode(LED_PIN, OUTPUT); // Configurar el pin del LED como salida
+  digitalWrite(LED_PIN, LOW); // Asegurarse de que el LED esté apagado al inicio
 
-  // Inicialización del dispositivo BLE
-  BLEDevice::init("ESP32");
+  BLEDevice::init("ESP32_BLE_Server");
 
-  // Se inicializa y crea el servidor BLE
   pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new ServerCallbacks());
+  pServer->setCallbacks(new MyServerCallbacks());
 
-  // Se crea el servicio BLE
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Se crea la característica BLE
   pCharacteristic = pService->createCharacteristic(
                       CHARACTERISTIC_UUID,
                       BLECharacteristic::PROPERTY_READ   |
@@ -54,25 +75,21 @@ void setup() {
                       BLECharacteristic::PROPERTY_INDICATE
                     );
 
-  // Creación de un Descriptor BLE
   pCharacteristic->addDescriptor(new BLE2902());
+  pCharacteristic->setCallbacks(new MyCallbacks());
 
-  // Se inicia el servicio
+  pCharacteristic->setValue("Hello World");
   pService->start();
 
-  // Se inicia el proceso de publicidad
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);
-  BLEDevice::startAdvertising();
+  pServer->getAdvertising()->start();
+  Serial.println("Waiting for a client connection to notify...");
 }
 
 void loop() {
-  // Proceso de conexión y desconexión
   if (deviceConnected) {
     pCharacteristic->setValue("New Value");
     pCharacteristic->notify(); // Notificar a los clientes conectados
-    delay(1000);
   }
+  delay(1000); // Retardo de 1 segundo para evitar mensajes de depuración excesivos
+  Serial.println("Waiting for connection...");
 }

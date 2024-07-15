@@ -128,9 +128,9 @@ class BluetoothManager_App:
                         return True
                     
                 # Se realiza la conexion
-                target_device.connectGatt(context = self.context, 
-                                          autoConnect = False, 
-                                          callback = self.python_gatt_callback, 
+                target_device.connectGatt(Context, 
+                                          False, 
+                                          self.python_gatt_callback, 
                                         #   transport = BluetoothDevice.TRANSPORT_LE # Para testing
                                           )
 
