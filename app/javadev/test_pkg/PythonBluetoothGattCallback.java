@@ -94,9 +94,9 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     }
 
     @Override
-    public void onServicesChanged(BluetoothGatt gatt) {
-        super.onServicesChanged(gatt);
-        System.out.println("onServicesChanged (python)");
+    public void onServiceChanged(BluetoothGatt gatt) {
+        super.onServiceChanged(gatt);
+        System.out.println("onServiceChanged (python)");
     }
 
     @Override
