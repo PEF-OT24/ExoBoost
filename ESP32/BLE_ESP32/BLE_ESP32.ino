@@ -87,9 +87,8 @@ void setup() {
 
 void loop() {
   if (deviceConnected) {
-    pCharacteristic->setValue("New Value");
     pCharacteristic->notify(); // Notificar a los clientes conectados
   }
+  else{Serial.println("Not connected yet.");}
   delay(1000); // Retardo de 1 segundo para evitar mensajes de depuración excesivos
-  Serial.println("Waiting for connection...");
 }

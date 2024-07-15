@@ -46,8 +46,8 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
         super.onConnectionStateChange(gatt, status, newState);
         System.out.println("onConnectionStateChange (python)");
-        System.out.println("Status: " + status);
-        System.out.println("New state: " + newState);
+        System.out.println("Status (python):" + status);
+        System.out.println("New state (python): " + newState);
         this.connected_gatt = gatt;
     }
 
