@@ -28,8 +28,7 @@ class BluetoothManager_App:
         # ----------- Atributos -----------
         # Entorno de Python para Android
         self.context = PythonActivity
-        self.scanning: bool = False
-        self.connected: bool = False
+        self.found_devices: list[BluetoothDevice] = [] # type: ignore # Arreglo para guardar dispositivos
 
         # Manejo de BLE principal
         self.bluetooth_adapter = self.initialize_bluetooth()
@@ -43,8 +42,8 @@ class BluetoothManager_App:
         self.python_scan_callback = PythonScanCallback() # Se obtiene la instanciad del ScanCallback
 
         # ----------- Atributos lógicos -----------
-        self.found_devices = [] # Arreglo para guardar dispositivos
-        self.scanning_event = Event() # Evento para manejar
+        self.scanning: bool = False
+        self.connected: bool = False
 
     def initialize_bluetooth(self):
         '''Inicializa el objeto BluetoothAdapter'''
@@ -76,18 +75,52 @@ class BluetoothManager_App:
 
     def start_ble_scan(self):
         '''
-        Método para iniciar la búsqueda de disposiuivos. 
-        Solo funciona cuando self.ble_scanner no es None
+        Método para iniciar la búsqueda de dipositivos. 
+        Solo funciona cuando no está conectado ni escaneando
         '''
         try:
-            print("Scanning between devices...")
-            self.ble_scanner.startScan(self.python_scan_callback)
+            if not(self.scanning) and not(self.connected):
+                self.scanning = True
+                print("Scanning between devices...")
+                self.ble_scanner.startScan(self.python_scan_callback)
+            else: print("Already scanning")
         except Exception as e:
             print(f"Error: Bluetooth no disponible: {e}")
 
-    def stop_ble_scan(self):
+    def stop_ble_scan(self) -> list[str]:
         '''Detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando'''
-        if self.ble_scanner:
+        if self.ble_scanner and self.scanning:
             print("Stopping scan")
             self.ble_scanner.stopScan(self.python_scan_callback)
-            return self.python_scan_callback.getScanResults()
+            self.scanning = False
+
+            # Se obtienen los dispositivos
+            print("Getting found devices")
+            self.found_devices.clear()
+            self.found_devices = self.python_scan_callback.getScanResults()
+
+            # Se obtienen los nombres de los dispositivos y se retornan
+            nombres = [name for name in self.found_devices.getName()]
+            return nombres
+
+    def connect_disconnect(self, device_name: str) -> bool:
+        '''
+        Se conecta al dispositivo indicado por su nombre
+        Entrada: device_name str -> Nombre del dispositivo
+        Salida: True si se conectó correctamente, False de lo contrario
+        '''
+        try: # Intenta conectarse
+            if not(self.connected) and self.found_devices:
+                print("Connecting to device...")
+
+                # Se busca al dispositivo 
+                for device in self.found_devices:
+                    if device.getName() == device_name:
+                        target_device = device
+                        return True
+                    
+                # Intento de conexión
+            else: print("Already connected")
+        except Exception as e:
+            print(f"Error de Bluetooth: {e}")
+            return False

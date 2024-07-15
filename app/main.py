@@ -105,16 +105,19 @@ class TestDesignApp(MDApp):
             }
         }
 
-        # Parámetros de BLE
+        # -------------------------- Parámetros de BLE --------------------------
         if self.os_name == "Android" or self.os_name == "Linux":
             print("Importando librería de BLE")
             # Librería de BLE
             from BLE2 import BluetoothManager_App
             self.ble_found = True
         else: self.ble_found = False
-        if self.ble_found: self.ble = BluetoothManager_App()
-        self.selected_device = None
 
+        # Instancia de Bluetooth
+        if self.ble_found: self.ble = BluetoothManager_App()
+
+        # Atributos de lógica BLE
+        self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
         # -------------------------- Atributos externos --------------------------
         """
         Variables que se mandarán a través de bluetooth
@@ -248,8 +251,6 @@ class TestDesignApp(MDApp):
     #------------------------ Métodos de menú de Bluetooth ------------------------
     def search_devices(self):
         '''Busca dispositivos Bluetooth, los almacena y los muestra en el ScrollView'''
-        self.device_widgets_list.clear_widgets()  # Limpiar widgets anteriores
-        # --------- Manejo de BLE ---------------
         if self.ble_found:
             # Estado del bluetooth
             print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")  
@@ -261,11 +262,16 @@ class TestDesignApp(MDApp):
         else: 
             print("Bluetooth no disponible")
             devices = ["Dispositivo 3", "Dipositivo 2", "Dispositivo 1"]
-
+            # Se muestran los resutlados en la pantalla
             self.show_devices(devices)
 
-    def show_devices(self, devices: list):
+    def show_devices(self, devices: list[str]):
+        '''
+        Método que muestra los elementos de una lista en el ScrollView
+        Entrada: devices list[str] -> lista de dispositivos
+        '''
         # --------- Lógica de la lista ---------------
+        self.device_widgets_list.clear_widgets()  # Limpiar widgets anteriores
         print("show devices method")
         for dev in devices:
             btn = ButtonDevices(text=dev)
@@ -287,30 +293,34 @@ class TestDesignApp(MDApp):
 
     def perfom_scanning(self, time: float = 5.0):
         print("perfom scanning method")
-        '''Método para iniciar escaneo de dispositivos''' # HILO EN THREAD
+        '''Método para iniciar escaneo de dispositivos''' 
         def stop_scanning(): 
             '''Detiene el escaneo y muestra los resultados'''
             devices = self.ble.stop_ble_scan()
+            # Se actualiza el ScrollView en el main Thread
             Clock.schedule_once(lambda x: self.show_devices(devices))
-
-            
-
-        '''Se ejecuta después de determinado tiempo'''
+        # Acción que se ejecuta después de time segundos
         timer_ble = Timer(time, stop_scanning)
         timer_ble.start()
 
+    def connect_disconnect(self): 
+        '''Método para conectar/disconectar dispositivo'''
+        # LÓGICA PARA CAMBIAR EL 
+            # COLOR DE FONDO DEL BOTON
+            # TEXTO DEL BOTON
+        self.ble.connect_disconnect()
+        
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
         pass
 
-    def connect_disconnect(self): pass
     #------------------------ Métodos del menú de asistencia ------------------------
-    # ----------------------- Imprime valor del slider -----------------
+    # --------------Imprime valor del slider ----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
         print(f"Assitance Level: {value}")
 
-    #-------------------- Imprimen acciones en botones de asistencia -----------------
+    #------- Imprimen acciones en botones de asistencia -----
     # Pararse/Sentarse
     def sit_down_stand_up(self):
         print("Sit down/stand up action triggered")
