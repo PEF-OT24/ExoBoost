@@ -41,23 +41,21 @@
     size_hint_y: None
     height: dp(40)  # Altura fija para cada fila
     width: root.width
-    #width: dp(300)
-    #adjust_width: True
-    #width: device_list.width
-    #size: self.size
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
+
     #Texto dentro del boton
     font_size: "12sp"
     font_name: "Roboto"
     theme_text_color: "Custom"
     text_color: app.colors["White"]
     halign: 'left'
+    
     #Fondo del boton y efectos
     md_bg_color: app.colors["Dark Blue"]
     ripple_effect: False
     ripple_color: app.colors['Dark Blue']
     on_press: self.md_bg_color = app.colors['Light Orange']
-    on_release: self.md_bg_color = app.colors['Dark Blue']
+    # on_release: self.md_bg_color = app.colors['Dark Blue']
 
 # --------------------------------------- Ventana de PopUp de Error ----------------------------------------
 <ErrorPopup>:

@@ -1,6 +1,7 @@
 from jnius import autoclass, PythonJavaClass, java_method, JavaClass, MetaJavaClass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
+from threading import Thread, Timer, Event
 import os
 
 os.environ['CLASSPATH'] = 'javadev'
@@ -20,13 +21,15 @@ ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
+        '''Inicializa el objeto BluetoothAdapter automáticamente'''
         # ----------- Métodos inicializadores -----------
         self.request_ble_permissions() # Solicitar permisos
-        self.scanning: bool = False
 
-        # ----------- Atributos de BLE -----------
+        # ----------- Atributos -----------
         # Entorno de Python para Android
         self.context = PythonActivity
+        self.scanning: bool = False
+        self.connected: bool = False
 
         # Manejo de BLE principal
         self.bluetooth_adapter = self.initialize_bluetooth()
@@ -41,6 +44,7 @@ class BluetoothManager_App:
 
         # ----------- Atributos lógicos -----------
         self.found_devices = [] # Arreglo para guardar dispositivos
+        self.scanning_event = Event() # Evento para manejar
 
     def initialize_bluetooth(self):
         '''Inicializa el objeto BluetoothAdapter'''
@@ -86,8 +90,4 @@ class BluetoothManager_App:
         if self.ble_scanner:
             print("Stopping scan")
             self.ble_scanner.stopScan(self.python_scan_callback)
-
-    def get_found_devices(self):
-        '''Devuelve una lista de tuplas (nombre, direccion) de los dispositivos encontrados'''
-        self.found_devices = self.python_scan_callback.getScanResults()
-        return self.found_devices
+            return self.python_scan_callback.getScanResults()

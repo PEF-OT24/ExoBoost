@@ -26,7 +26,8 @@ from kivymd.uix.button import MDFlatButton
 
 Clock.max_iteration = 1000  # Increase this value if necessary
 
-# Importar librerías para comunicación
+# Importar librerías secundarias
+from threading import Thread, Timer
 import platform
 import json 
 import os
@@ -69,13 +70,6 @@ class TestDesignApp(MDApp):
         
         # Detecta el sistema operativo
         self.os_name = self.detect_os()
-        if self.os_name == "Android" or self.os_name == "Linux":
-            print("Importando librería de BLE")
-            # Librería de BLE
-            import BLE2
-            from BLE2 import BluetoothManager_App
-            found = True
-        else: found = False
         
         # Diccionario de etiquetas para la sintonización
         self.limb: str = "Right leg"
@@ -112,7 +106,14 @@ class TestDesignApp(MDApp):
         }
 
         # Parámetros de BLE
-        if found: self.ble = BluetoothManager_App()
+        if self.os_name == "Android" or self.os_name == "Linux":
+            print("Importando librería de BLE")
+            # Librería de BLE
+            from BLE2 import BluetoothManager_App
+            self.ble_found = True
+        else: self.ble_found = False
+        if self.ble_found: self.ble = BluetoothManager_App()
+        self.selected_device = None
 
         # -------------------------- Atributos externos --------------------------
         """
@@ -201,7 +202,7 @@ class TestDesignApp(MDApp):
             {"image": "images/EduardoMartinez.jpeg", "info": "Eduardo Martínez\n\nIngeniería en Mecatrónica & Diseño Automotriz"}
         ]
 
-        self.device_list: Grid = self.root.get_screen("Main Window").ids.device_list
+        self.device_widgets_list: Grid = self.root.get_screen("Main Window").ids.device_list
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
@@ -245,44 +246,58 @@ class TestDesignApp(MDApp):
         
         print(self.mode)
     #------------------------ Métodos de menú de Bluetooth ------------------------
-
-    def bluetooth_connection(self): pass
-
-    def send_params(self): raise NotImplementedError("Not implemented function")
-
-    #Crea lista de 5 dispositivos en el menú de bluetooth
     def search_devices(self):
+        '''Busca dispositivos Bluetooth, los almacena y los muestra en el ScrollView'''
+        self.device_widgets_list.clear_widgets()  # Limpiar widgets anteriores
         # --------- Manejo de BLE ---------------
-        print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n") # Estado del bluetooth 
+        if self.ble_found:
+            # Estado del bluetooth
+            print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")  
 
-        # Escanea  por 5 segundos
-        print("Escaneado comenzando")
-        self.ble.start_ble_scan()
-        sleep(5)  
+            # Se inicia el escaneo durante 5 segundos y se obtiene la lista de dispositivos
+            scanning = Thread(target=self.perfom_scanning, args=(5.0,))
+            scanning.start()
 
-        # Se detiene el escaneo
-        print("Escaneado detenido")
-        self.ble.stop_ble_scan()
+            print(devices)
+        else: 
+            print("Bluetooth no disponible")
+            devices = ["Dispositivo 3", "Dipositivo 2", "Dispositivo 1"]
 
-        # Se obtienen los dispositivos encontrados
-        devices: list = self.ble.get_found_devices()
-        print("Dispositivos encontrados")
-        print(devices)
+            self.show_devices(devices)
 
+    def show_devices(self, devices: list):
         # --------- Lógica de la lista ---------------
-        # items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"]
-        items = devices
-        self.device_list.clear_widgets()  # Limpiar widgets anteriores
-        self.displayed_items = []  # Resetear lista de elementos desplegados
-
-        for item in items:
-            btn = ButtonDevices(text=item)
+        for dev in devices:
+            btn = ButtonDevices(text=dev)
             btn.bind(on_release=self.on_device_select)
-            self.device_list.add_widget(btn)
-            self.displayed_items.append(btn)
-            
-    # Método que imprime dispositivo seleccionado
-    def on_device_select(self, instance: str): print(f'{instance.text} fue presionado')
+            self.device_widgets_list.add_widget(btn)
+        
+    def on_device_select(self, instance: ButtonDevices): 
+        '''Método que imprime dispositivo seleccionado'''
+        self.selected_device = instance.text
+        print(f'{instance.text} fue presionado')
+
+        for widget in self.device_widgets_list.children:
+            # Se cambia el color de fondo de los botones
+            if widget.text == instance.text:
+                widget.md_bg_color = self.colors["Light Orange"]
+            else: 
+                widget.md_bg_color = self.colors["Dark Blue"]
+
+    def perfom_scanning(self, time: float = 5.0):
+        '''Método para iniciar escaneo de dispositivos''' # HILO EN THREAD
+        def stop_scanning(): 
+            '''Detiene el escaneo y muestra los resultados'''
+            devices = self.ble.stop_ble_scan()
+            self.show_devices(devices)
+
+        '''Se ejecuta después de determinado tiempo'''
+        timer_ble = Timer(time, stop_scanning)
+        timer_ble.start()
+
+    def send_params(self): 
+        '''Método para enviar parámetros al dispositivo conectado'''
+        pass
 
     def connect_disconnect(self): pass
     #------------------------ Métodos del menú de asistencia ------------------------
