@@ -1,9 +1,13 @@
-from jnius import autoclass, PythonJavaClass, java_method, JavaClass, MetaJavaClass
+from jnius import autoclass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
+import uuid
 
 os.environ['CLASSPATH'] = 'javadev'
+
+# Base genérica para los UUID personalizados
+BASE_UUID = "00000000-0000-1000-8000-00805f9b34fb"
 
 # Se importan las clases de Android java con Python for Android mediante pyjnius
 Context = autoclass('android.content.Context')
@@ -13,6 +17,9 @@ BluetoothLeScanner = autoclass('android.bluetooth.le.BluetoothLeScanner')
 BluetoothAdapter = autoclass('android.bluetooth.BluetoothAdapter') # Dispositivo actual
 BluetoothManager = autoclass('android.bluetooth.BluetoothManager')
 BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice') # Dispositvos encontrados
+BluetoothGatt = autoclass('android.bluetooth.BluetoothGatt')     # GATT del dispositivo encontrado
+BluetoothGattService = autoclass('android.bluetooth.BluetoothGattService') # Clase de los servicios descubiertos
+BluetoothGattCharacteristic = autoclass('android.bluetooth.BluetoothGattCharacteristic') # Clase de las características de los servicios
 
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
 PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
@@ -44,8 +51,12 @@ class BluetoothManager_App:
         self.python_gatt_callback = PythonBluetoothGattCallback()
 
         # ----------- Atributos lógicos -----------
+        self._GATT_MAX_MTU_SIZE = 517
         self.scanning: bool = False
         self.connected: bool = False
+        self.connected_gatt: BluetoothGatt = None # type: ignore
+        self.discovered_services: list[BluetoothGattService] = [] # type: ignore
+        self.discovered_characteristics: dict[BluetoothGattCharacteristic] = {} # type: ignore
 
     def initialize_bluetooth(self):
         '''Inicializa el objeto BluetoothAdapter'''
@@ -109,12 +120,15 @@ class BluetoothManager_App:
 
     def connect_disconnect(self, device_name: str) -> bool:
         '''
-        Se conecta al dispositivo indicado por su nombre. 
-        Es necesario detener el escaneo antes de intentar conectarse llamando al método stop_ble_scan().
+        Es necesario detener el escaneo antes de realizar aciones de conexión; se llama al método stop_ble_scan().
+        Se conecta  o desconecta al dispositivo indicado por su nombre. 
+        Este método trabaja a la par con el callback self.python_gatt_callback que se encarga de la interacción con GATT
+        Cuando se establece la conexión, se guarda el GATT del dispositivo conectado para manipular en otros métodos
 
         Entrada: device_name str -> Nombre del dispositivo
-        Salida: True si se conectó correctamente, False de lo contrario
+        Salida: True si la acción se realizó correctamente, False de lo contrario
         '''
+        # Se debe detener el escaneo para poder conectarse o desconectarse
         if self.scanning: return False
 
         try: # Intenta conectarse
@@ -128,19 +142,83 @@ class BluetoothManager_App:
                         break
                     
                 # Se realiza la conexion
-                # status = target_device.createBond()
-                # if status: print("Success")
+                print("Establishing connection...")
                 target_device.connectGatt(self.context.getApplicationContext(), 
                                           False, 
                                           self.python_gatt_callback, 
                                           transport = BluetoothDevice.TRANSPORT_LE # Para testing
                                           )
-                return True
 
-                # Intento de conexión
-            else: print("Already connected")
+                # Se guarda el GATT del dispositivo conectado
+                print("Getting GATT...")
+                self.connected_gatt = target_device.getBluetoothGatt()
+
+                print("Establishing MTU...")
+                self.connected_gatt.requestMtu(self._GATT_MAX_MTU_SIZE) # Se establece el tamaño máximo de la transmisión de datos 
+
+                print("Getting device info...")
+                self.discover_services_and_characteristics()
+                self.connected = True
+            else: print("Already connected") # IMPLEMENTAR MÉTODO PARA DESCONECTARSE
+            return True
         except Exception as e:
             # En este punto los errores pueden ser: 
-            # dispositivo no encontrado, bluetooth no correctamente inicializado, dispositivo ya conectado, nombre mal escrito.
+            # dispositivo no encontrado, escaneo en proceso, bluetooth no correctamente inicializado, dispositivo ya conectado, nombre mal escrito.
             print(f"Error de Bluetooth: {e}")
             return False
+
+    def discover_services(self, wait_time: float) -> list[BluetoothGattService]: # type: ignore
+        '''Método que descubre los servicios de un dispositivo ya conectado'''
+        if not self.connected_gatt: return # Marca error si no hay un GATT conectado
+
+        # Llama al método para comenzar el descubrimiento de los servicios
+        success_flag: bool = self.connected_gatt.discoverServices() # True si se descubrieron los servicios
+        sleep(wait_time) # Espera 0.5 segundos para que se descubran los servicios
+
+        # Si no ha terminado el escaneado devuelve False
+        # LÓGICA INCORRECTA, LA BANDERA DEBE ACTUALIZARSE EN UN MÉTODO ASINCRÓNICO
+        if not success_flag: 
+            print("Failed to discover services") 
+            return
+        
+        # Se obtienen los servicios
+        print("Discovered services")
+        discovered_services = self.connected_gatt.getServices()
+
+        # Si no hay servicios, marca error
+        if not discovered_services:
+            print("No services found")
+            return
+
+        return discovered_services
+    
+    def discover_characteristics(self, service: BluetoothGattService) -> list[BluetoothGattCharacteristic]: # type: ignore
+        '''Método que descubre las características de un servicio ya descubierto'''        
+        try: 
+            # Se obtienen las características
+            characteristics: list[BluetoothGattCharacteristic] = service.getCharacteristics() # type: ignore
+            print(f"Discovered characteristics: {characteristics}")
+            return characteristics
+        except Exception as e:
+            print(f"Error al obtener las características: {e}")
+            return
+    
+    def discover_services_and_characteristics(self, wait_time: float = 0.5) -> None: # type: ignore
+        '''
+        Método que descubre los servicios y las características de un dispositivo ya conectado
+        Los resultados se guardan en self.discovered_services y self.discovered_characteristics de la clase
+        Entrada: wait_time float -> tiempo de espera en segundos para descubrir los servicios, por defalut un valor de 0.5
+        '''
+        try:
+            # Se descubren todos los servicios
+            self.discovered_services = self.discover_services(wait_time)
+
+            # Para cada servicio se descubren sus características y se guardan en el diccionario
+            for service in self.discovered_services:
+                uuid_name = str(service.getUuid())
+                self.discovered_characteristics[uuid_name] = self.discover_characteristics(service)
+        except Exception as e:
+            print(f"Error al obtener los detalles de los dispositivos: {e}")
+
+        print("Resultados de los detalles de los dispositivos")
+        print(self.discovered_characteristics)

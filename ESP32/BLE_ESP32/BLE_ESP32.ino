@@ -1,94 +1,118 @@
+#include <Arduino.h>
 #include <BLEDevice.h>
-#include <BLEServer.h>
 #include <BLEUtils.h>
-#include <BLE2902.h>
+#include <BLEServer.h>
 #include <ArduinoJson.h>
 
-#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b" // UUID del servicio
-#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8" // UUID de la característica
+// Definición del nombre del dispositivo y UUIDs para el servicio y la característica
+#define DEVICE_NAME "ESP32_BLE_Server"
+#define SERVICE_UUID "12345678-1234-1234-1234-123456789012"
+#define CHARACTERISTIC_UUID "87654321-4321-4321-4321-210987654321"
 
-BLEServer* pServer = NULL;
-BLECharacteristic* pCharacteristic = NULL;
-bool deviceConnected = false;
+// Pin del LED integrado en la ESP32
+#define LED_PIN 2
 
-const int LED_PIN = 2; // LED integrado en la ESP32
+BLEServer* pServer;
+BLEAdvertising* pAdvertising;
 
-class MyServerCallbacks : public BLEServerCallbacks {
-    void onConnect(BLEServer* pServer) {
-      deviceConnected = true;
-      digitalWrite(LED_PIN, HIGH); // Encender el LED
-      Serial.println("Device connected");
-    };
+// Clase que maneja los eventos de conexión y desconexión
+class ServerCallbacks: public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) {
+    digitalWrite(LED_PIN, HIGH);  // Enciende el LED
+    Serial.println("Cliente conectado");
+  }
 
-    void onDisconnect(BLEServer* pServer) {
-      deviceConnected = false;
-      digitalWrite(LED_PIN, LOW); // Apagar el LED
-      Serial.println("Device disconnected");
-    }
+  void onDisconnect(BLEServer* pServer) {
+    digitalWrite(LED_PIN, LOW);  // Apaga el LED
+    Serial.println("Cliente desconectado");
+    delay(0.5);
+    Serial.println("Reiniciando publicidad...");
+    pAdvertising->start();  // Reinicia la publicidad
+  }
 };
 
-class MyCallbacks : public BLECharacteristicCallbacks {
-    void onWrite(BLECharacteristic* pCharacteristic) {
-      std::string value = std::string(pCharacteristic->getValue().c_str());
+// Clase que maneja los eventos de lectura y escritura en la característica de parámetros de sintonización
+class BLECallbacks: public BLECharacteristicCallbacks {
 
-      if (value.length() > 0) {
-        Serial.println("Received Value: " + String(value.c_str()));
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica leída por el cliente");
+  }
 
-        // Deserializar JSON
-        StaticJsonDocument<200> doc;
-        DeserializationError error = deserializeJson(doc, value.c_str());
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica escrita: " + String(value.c_str()));
 
-        if (error) {
-          Serial.print(F("deserializeJson() failed: "));
-          Serial.println(error.f_str());
-          return;
-        }
-
-        // Acceder a los valores del JSON
-        const char* key = doc["key"];
-        int number = doc["number"];
-
-        // Imprimir los valores recibidos
-        Serial.println("key: " + String(key));
-        Serial.println("number: " + String(number));
-      }
+    // Procesa los datos recibidos en formato JSON
+    StaticJsonDocument<200> doc;
+    DeserializationError error = deserializeJson(doc, value);
+    
+    if (error) {
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
     }
+
+    Serial.println("Mensaje JSON recibido: ");
+    serializeJson(doc, Serial);
+
+    // Enviar notificación de éxito en formato JSON
+    // StaticJsonDocument<200> responseDoc;
+    // responseDoc["response"] = "Success";
+    // char responseBuffer[200];
+    // serializeJson(responseDoc, responseBuffer);
+    // pCharacteristic->setValue(responseBuffer);
+    // pCharacteristic->notify();
+  }
 };
 
 void setup() {
+  // Inicializa el puerto serie para la depuración
   Serial.begin(115200);
-  pinMode(LED_PIN, OUTPUT); // Configurar el pin del LED como salida
-  digitalWrite(LED_PIN, LOW); // Asegurarse de que el LED esté apagado al inicio
+  Serial.println("Iniciando el servidor BLE...");
 
-  BLEDevice::init("ESP32_BLE_Server");
+  // Inicializa el pin del LED
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);  // Asegúrate de que el LED esté apagado al inicio
 
+  // Inicializa el dispositivo BLE y el servidor
+  BLEDevice::init(DEVICE_NAME);
   pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
+  pServer->setCallbacks(new ServerCallbacks());
 
+  // Crea el servicio BLE 
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  pCharacteristic = pService->createCharacteristic(
-                      CHARACTERISTIC_UUID,
-                      BLECharacteristic::PROPERTY_READ   |
-                      BLECharacteristic::PROPERTY_WRITE  |
-                      BLECharacteristic::PROPERTY_NOTIFY |
-                      BLECharacteristic::PROPERTY_INDICATE
-                    );
+  // Crea la característica BLE para recibir datos del PI
+  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+                                         CHARACTERISTIC_UUID,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE 
+                                       );
+  pCharacteristic->setCallbacks(new BLECallbacks());
 
-  pCharacteristic->addDescriptor(new BLE2902());
-  pCharacteristic->setCallbacks(new MyCallbacks());
+  // Añade un valor inicial a la característica en formato JSON
+  StaticJsonDocument<200> doc;
+  doc["mensaje"] = "Hola, cliente!";
+  char buffer[200];
+  serializeJson(doc, buffer);
+  pCharacteristic->setValue(buffer);
 
-  pCharacteristic->setValue("Hello World");
+  // Inicia el servicio BLE
   pService->start();
 
-  pServer->getAdvertising()->start();
-  Serial.println("Waiting for a client connection to notify...");
+  // Habilita la publicidad del servidor BLE
+  pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->start();
+  
+  Serial.println("Servidor BLE iniciado y esperando conexiones...");
 }
 
 void loop() {
-  if (deviceConnected) {
-    pCharacteristic->notify(); // Notificar a los clientes conectados
-  }
-  else{Serial.println("Not connected yet.");}
-  delay(1000); // Retardo de 1 segundo para evitar mensajes de depuración excesivos
+  // El loop está vacío ya que los eventos son manejados por las clases de callbacks
+  delay(0.001);
 }

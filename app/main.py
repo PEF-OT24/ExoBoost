@@ -7,18 +7,20 @@ Config.set('graphics', 'fullscreen', '0')
 # Módulos internos
 from ColorManager import ColorManager
 
-# Importar librerías
+# Importar librerías de kivy
+from kivy.lang import Builder
+from kivy.clock import Clock
+from kivy.core.window import Window
+from kivy.uix.image import Image
+from kivy.uix.gridlayout import GridLayout as Grid
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.popup import Popup
+
+# Importar librerías de kivymd
 from kivymd.app import MDApp
 from kivymd.uix.label import MDLabel
 from kivymd.uix.textfield import MDTextField
-from kivy.uix.popup import Popup
-from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.core.window import Window
-from kivy.clock import Clock
 from kivymd.uix.label import MDLabel
-from kivy.uix.gridlayout import GridLayout as Grid
-from kivy.uix.image import Image
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 
@@ -34,32 +36,39 @@ import os
 import webbrowser
 from time import sleep
 
-# os.environ["CLASSPATH"] = ""
 class SplashScreen(Screen):
+    '''Clase para mostrar la pantalla de inicio'''
+
     def on_enter(self, *args):
+        '''Método que agenda el cambio'''
         Clock.schedule_once(self.switch_to_main,3)
+
     def switch_to_main(self, dt):
+        '''Método que realiza el cambio a la pantalla principal'''
         self.manager.current = 'Main Window'
 
-class MainWindow(Screen): pass
-class SecundaryWindow(Screen): pass
-class WindowManager(ScreenManager): pass
-class CustomLabelRoboto(MDLabel): pass # Case predefinida para los subtítulos con formato
-class CustomLabelAD(MDLabel): pass # Case predefinida para los títulos con formato
+# Clase para el manejo de pantallas
+class WindowManager(ScreenManager): pass # Administrador de pantallas
+class MainWindow(Screen): pass           # Pantalla principal
+class SecundaryWindow(Screen): pass      # Pantalla secundaria
+
+# Clases predefinidas reciclables
+# El formato específico y definido se encuentra en el archivo test.kv
+class CustomLabelRoboto(MDLabel): pass   # Case predefinida para los subtítulos con formato
+class CustomLabelAD(MDLabel): pass       # Case predefinida para los títulos con formato
 class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de texto con formato
-class InfoPopUp(Popup): pass
-class ImageTeam(Image): pass
-class LabelTeam(MDLabel): pass
-class ButtonDevices(MDFlatButton): pass
-#class CustomScroll(GridLayout): pass
+class InfoPopUp(Popup): pass             # Clase para mostrar un pop up de información
+class ImageTeam(Image): pass             # Clase para formatear las imágenes del equipo
+class LabelTeam(MDLabel): pass           # Clase para formatear los datos del equipo
+class ButtonDevices(MDFlatButton): pass  # Clase para crear botones de los dispositivos encontrados
 
 class ErrorPopup(Popup):
     '''Clase para mostrar un error genérico'''
     def __init__(self, **kwargs):
         super(ErrorPopup, self).__init__(**kwargs)
 
-class TestDesignApp(MDApp):  
-    #------------------------ Métodos de inicio ------------------------#
+class ExoBoostApp(MDApp):  
+    #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
     def __init__(self, **kwargs):
         '''Se inicilizan todos los métodos, el set up de la lógica y se definen atributos'''
         super().__init__(**kwargs)
@@ -84,24 +93,24 @@ class TestDesignApp(MDApp):
         # Límites de los parámetros PI de los motores
         self.motor_params_lims =  {
             "Right leg": {
-                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor1": {"kc": "100", "ti": "50", "sp": "99999"},
+                "motor2": {"kc": "100", "ti": "50", "sp": "99999"},
+                "motor3": {"kc": "100", "ti": "50", "sp": "99999"},
             },
             "Left leg": {
-                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor1": {"kc": "50", "ti": "100", "sp": "99999"},
+                "motor2": {"kc": "50", "ti": "100", "sp": "99999"},
+                "motor3": {"kc": "50", "ti": "100", "sp": "99999"},
             },
             "Right arm": {
-                "motor1": {"kc": "1", "ti": "1", "sp": "0"},
-                "motor2": {"kc": "1", "ti": "1", "sp": "0"},
-                "motor3": {"kc": "1", "ti": "1", "sp": "0"},
+                "motor1": {"kc": "1", "ti": "1", "sp": "99999"},
+                "motor2": {"kc": "1", "ti": "1", "sp": "99999"},
+                "motor3": {"kc": "1", "ti": "1", "sp": "99999"},
             },
             "Left arm": {
-                "motor1": {"kc": "10", "ti": "5", "sp": "0"},
-                "motor2": {"kc": "10", "ti": "5", "sp": "0"},
-                "motor3": {"kc": "10", "ti": "5", "sp": "0"},
+                "motor1": {"kc": "10", "ti": "5", "sp": "99999"},
+                "motor2": {"kc": "10", "ti": "5", "sp": "99999"},
+                "motor3": {"kc": "10", "ti": "5", "sp": "99999"},
             }
         }
 
@@ -122,28 +131,53 @@ class TestDesignApp(MDApp):
         """
         Variables que se mandarán a través de bluetooth
         """
-        # Diccionario de valores de los parámetros de los motores
+        # Diccionario de valores de los parámetros de los motores de sintonización y control
         # Todos se inicializan con un valor arbitrario
-        self.motor_parameters =  {
+        self.motor_parameters_pi =  {
             "Right leg": {
-                "motor1": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
-                "motor2": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
-                "motor3": {"kc": "100", "ti": "50", "sp": "0", "pv": "0"},
+                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
+                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
             },
             "Left leg": {
-                "motor1": {"kc": "50", "ti": "100", "sp": "0", "pv": "0"},
-                "motor2": {"kc": "50", "ti": "100", "sp": "0", "pv": "0"},
-                "motor3": {"kc": "50", "ti": "100", "sp": "0", "pv": "0"},
+                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
+                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
             },
             "Right arm": {
-                "motor1": {"kc": "1", "ti": "1", "sp": "0", "pv": "0"},
-                "motor2": {"kc": "1", "ti": "1", "sp": "0", "pv": "0"},
-                "motor3": {"kc": "1", "ti": "1", "sp": "0", "pv": "0"},
+                "motor1": {"kc": "10", "ti": "100", "sp": "0"},
+                "motor2": {"kc": "10", "ti": "100", "sp": "0"},
+                "motor3": {"kc": "10", "ti": "100", "sp": "0"},
             },
             "Left arm": {
-                "motor1": {"kc": "10", "ti": "5", "sp": "0", "pv": "0"},
-                "motor2": {"kc": "10", "ti": "5", "sp": "0", "pv": "0"},
-                "motor3": {"kc": "10", "ti": "5", "sp": "0", "pv": "0"},
+                "motor1": {"kc": "10", "ti": "500", "sp": "0"},
+                "motor2": {"kc": "10", "ti": "500", "sp": "0"},
+                "motor3": {"kc": "10", "ti": "500", "sp": "0"},
+            }
+        }
+
+        # Diccionario de valores de la variable de proceso de los motores
+        # Todos se inicializan con un valor arbitrario
+        self.motor_parameters_pv =  {
+            "Right leg": {
+                "motor1": {"pv": "0"},
+                "motor2": {"pv": "0"},
+                "motor3": {"pv": "0"},
+            },
+            "Left leg": {
+                "motor1": {"pv": "0"},
+                "motor2": {"pv": "0"},
+                "motor3": {"pv": "0"},
+            },
+            "Right arm": {
+                "motor1": {"pv": "0"},
+                "motor2": {"pv": "0"},
+                "motor3": {"pv": "0"},
+            },
+            "Left arm": {
+                "motor1": {"pv": "0"},
+                "motor2": {"pv": "0"},
+                "motor3": {"pv": "0"},
             }
         }
 
@@ -156,6 +190,7 @@ class TestDesignApp(MDApp):
         Colores disponibles:
         Cyan, Dark Blue, Light Orange, Light Gray, Black, White.
         '''
+
     def build(self):
         """Carga kivy design file"""
         if not(self.kv_loaded):
@@ -163,49 +198,55 @@ class TestDesignApp(MDApp):
             self.kv_loaded = True
 
         # Diccionario de TextFields de sintonización para accceso rápido 
-        self.param_entries: dict[dict] = {
+        self.param_pi_entries: dict[dict] = {
             "motor1": {
                 "kc": self.root.get_screen('Main Window').ids.kc_motor1,
                 "ti": self.root.get_screen('Main Window').ids.ti_motor1,
-                "sp": self.root.get_screen('Main Window').ids.sp_motor1,
-                "pv": self.root.get_screen('Main Window').ids.pv_motor1
+                "sp": self.root.get_screen('Main Window').ids.sp_motor1
             },
             "motor2": {
                 "kc": self.root.get_screen('Main Window').ids.kc_motor2,
                 "ti": self.root.get_screen('Main Window').ids.ti_motor2,
-                "sp": self.root.get_screen('Main Window').ids.sp_motor2,
-                "pv": self.root.get_screen('Main Window').ids.pv_motor2
+                "sp": self.root.get_screen('Main Window').ids.sp_motor2
             },
             "motor3": {
                 "kc": self.root.get_screen('Main Window').ids.kc_motor3,
                 "ti": self.root.get_screen('Main Window').ids.ti_motor3,
-                "sp": self.root.get_screen('Main Window').ids.sp_motor3,
-                "pv": self.root.get_screen('Main Window').ids.pv_motor3
+                "sp": self.root.get_screen('Main Window').ids.sp_motor3
             },
         }
 
+        # Diccionario de TextFields de variables de proceso para accceso rápido
+        self.param_pv_entries: dict = {
+            "motor1": self.root.get_screen('Main Window').ids.pv_motor1,
+            "motor2": self.root.get_screen('Main Window').ids.pv_motor2,
+            "motor3": self.root.get_screen('Main Window').ids.pv_motor3
+        }
+
+        # Se retorna la pantalla de inicio
         return self.root
     
     def on_start(self):
         self.root.current = "Splash Screen"
 
-        # Se lee el archivo de texto incluyendo la información del proyecto
+        # --------- Información de descripción del proyecto y equipo --------
         try:
             self.info_project = open("info_proyecto.txt", 'r', encoding='utf-8').read()
+            self.team_info = [
+                {"image": "images/TeresaHernandez.jpeg", "info": "Teresa Hernández\n\nIngeniería en Mecatrónica"},
+                {"image": "images/CarlosReyes.jpeg", "info": "Carlos Reyes\n\nIngeniería en Mecatrónica"},
+                {"image": "images/DavidVillanueva.jpeg", "info": "David Villanueva\n\nIngeniería en Mecatrónica"},
+                {"image": "images/ItzelMartinez.jpeg", "info": "Itzel Martínez\n\nIngeniería en Mecatrónica & Biomédica"},
+                {"image": "images/EduardoMartinez.jpeg", "info": "Eduardo Martínez\n\nIngeniería en Mecatrónica & Diseño Automotriz"}
+            ]
         except: 
-            # In case the file cannot be openned
-            self.info_project = "No info found"
-        
-        # --------- Información de descripción del equipo --------
-        self.team_info = [
-            {"image": "images/TeresaHernandez.jpeg", "info": "Teresa Hernández\n\nIngeniería en Mecatrónica"},
-            {"image": "images/CarlosReyes.jpeg", "info": "Carlos Reyes\n\nIngeniería en Mecatrónica"},
-            {"image": "images/DavidVillanueva.jpeg", "info": "David Villanueva\n\nIngeniería en Mecatrónica"},
-            {"image": "images/ItzelMartinez.jpeg", "info": "Itzel Martínez\n\nIngeniería en Mecatrónica & Biomédica"},
-            {"image": "images/EduardoMartinez.jpeg", "info": "Eduardo Martínez\n\nIngeniería en Mecatrónica & Diseño Automotriz"}
-        ]
+            # Información no encontrada
+            self.team_info = self.info_project = "No info found"
 
         self.device_widgets_list: Grid = self.root.get_screen("Main Window").ids.device_list
+        
+        # Se configura como la extremidad inicial la pierna derecha
+        self.limb_dropdown_clicked("Right leg")
     
     # ------------------------ Administrador de ventanas ------------------------#
     def detect_os(self) -> str:
@@ -236,7 +277,7 @@ class TestDesignApp(MDApp):
             # Pantalla completa en Android
             Window.fullscreen = True
 
-    #------------------------ Métodos generales ------------------------
+    #----------------------------------------------------- Métodos generales ----------------------------------------------------
 
     def on_tab_select(self, tab: str): 
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
@@ -248,7 +289,28 @@ class TestDesignApp(MDApp):
             self.mode = "tuning"
         
         print(self.mode)
-    #------------------------ Métodos de menú de Bluetooth ------------------------
+
+    def is_valid(self, var: str, tipo) -> bool:
+        """
+        Valida si un dato en formato de string pertenece a otro tipo de dato. 
+        Función para validación de informaicón
+
+        Entradas: var  - Dato a validar tipo string
+                  tipo - valor correspondiente a la clase para validación
+        Salida: Booleano indicando si el dato pertenece a la clase indicada
+        """
+        try:
+            if isinstance(tipo, int):
+                int(var)
+            elif isinstance(tipo, float):
+                float(var)
+            else:
+                raise TypeError("La clase de 'tipo' no está considerada")
+            return True
+        except (ValueError, TypeError):
+            return False
+        
+    #----------------------------------------------------- Métodos de menú de Bluetooth -----------------------------------------
     def search_devices(self):
         '''Busca dispositivos Bluetooth, los almacena y los muestra en el ScrollView'''
         if self.ble_found:
@@ -310,13 +372,16 @@ class TestDesignApp(MDApp):
             # COLOR DE FONDO DEL BOTON
             # TEXTO DEL BOTON
         success = self.ble.connect_disconnect(self.selected_device)
-        print(success)
+        print(f"Dispositivo conectado: {success}")
+
+        if success and self.ble.connected: # Si logra conectarse
+            pass
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
         pass
 
-    #------------------------ Métodos del menú de asistencia ------------------------
+    #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
     # --------------Imprime valor del slider ----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
@@ -335,12 +400,12 @@ class TestDesignApp(MDApp):
 
     def assitance_method(self): pass
 
-    #------------------------ Métodos del menú de sintonizción ------------------------
+    #----------------------------------------------------- Métodos del menú de sintonizción -----------------------------------------------------
     
     #Método para desplegar valores de PI en cada motor de acuerdo a la extremidad seleccionada
     def limb_dropdown_clicked(self, limb: str) -> None: 
         '''
-        Función para actualizar los datos de los motores al seleccionar otra extremidad
+        Método para actualizar en la app los datos de los motores al seleccionar otra extremidad
         Entrada: Entrada seleccionada (str)
         '''
 
@@ -354,7 +419,7 @@ class TestDesignApp(MDApp):
         self.root.get_screen('Main Window').ids.motor3_label.text = new_labels[2]
 
         # Se cambian los valores de los parámetros PI de los motores
-        new_params: dict[dict[str]]= self.motor_parameters[self.limb]
+        new_params: dict[dict[str]]= self.motor_parameters_pi[self.limb]
         # Motor 1
         self.root.get_screen('Main Window').ids.kc_motor1.text = new_params["motor1"]["kc"]
         self.root.get_screen('Main Window').ids.ti_motor1.text = new_params["motor1"]["ti"]
@@ -372,18 +437,18 @@ class TestDesignApp(MDApp):
                   motor -> número de motor {'motor1', 'motor2', 'motor3'}
                   value -> valor ingresado
         """
-        old_params: dict[dict[str]] = self.motor_parameters[self.limb]
+        old_params: dict[dict[str]] = self.motor_parameters_pi[self.limb]
 
         if self.is_valid(value, 1): # Validación de dato como int
             if param in ["kc", "ti", "sp"]:
                 max_value = self.motor_params_lims[self.limb][motor][param]
                 if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
                     # Si es válido, se actualiza el diccionario de parámetros
-                    self.motor_parameters[self.limb][motor][param] = value
+                    self.motor_parameters_pi[self.limb][motor][param] = value
                 else: # Valor no válido
-                    self.param_entries[motor][param].text = old_params[motor][param]
+                    self.param_pi_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
-            self.param_entries[motor][param].text = old_params[motor][param]
+            self.param_pi_entries[motor][param].text = old_params[motor][param]
     
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
@@ -417,29 +482,9 @@ class TestDesignApp(MDApp):
         '''Función para cerra el pop up de información'''
         self.popup.dismiss()
 
-    # --------------------------- Funciones de uso general -------------------------
 
-    def is_valid(self, var: str, tipo) -> bool:
-        """
-        Valida si un dato en formato de string pertenece a otro tipo de dato. 
-        Función para validación de informaicón
-
-        Entradas: var  - Dato a validar tipo string
-                  tipo - valor correspondiente a la clase para validación
-        Salida: Booleano indicando si el dato pertenece a la clase indicada
-        """
-        try:
-            if isinstance(tipo, int):
-                int(var)
-            elif isinstance(tipo, float):
-                float(var)
-            else:
-                raise TypeError("La clase de 'tipo' no está considerada")
-            return True
-        except (ValueError, TypeError):
-            return False
 
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
-    ExoBoostApp = TestDesignApp()
+    ExoBoostApp = ExoBoostApp()
     ExoBoostApp.run()

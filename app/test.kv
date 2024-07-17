@@ -700,8 +700,7 @@ WindowManager:
                                 CustomTextEntry:
                                     id: pv_motor1
                                     hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text("pv", "motor1", pv_motor1.text)
+                                    readonly: True
 
             # --------------------------- Parámetros PI del motor 2 ------------------------- 
                         BoxLayout: #ROW 4
@@ -751,8 +750,7 @@ WindowManager:
                                 CustomTextEntry:
                                     id: pv_motor2
                                     hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text("pv", "motor2", pv_motor2.text)
+                                    readonly: True
 
             # --------------------------- Parámetros PI del motor 3 ------------------------- 
                         BoxLayout: #ROW 5
@@ -801,8 +799,7 @@ WindowManager:
                                 CustomTextEntry:
                                     id: pv_motor3
                                     hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text("pv", "motor3", pv_motor3.text)
+                                    readonly: True
     # -------------------------- Botón info de equipo -------------------------------------------
     FloatLayout: 
         MDIconButton:

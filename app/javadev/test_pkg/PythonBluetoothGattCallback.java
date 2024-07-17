@@ -67,6 +67,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
         super.onMtuChanged(gatt, mtu, status);
         System.out.println("onMtuChanged (python)");
+        System.out.println("Mtu (python): " + mtu);
     }
 
     @Override
@@ -103,6 +104,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public void onServicesDiscovered(BluetoothGatt gatt, int status) {
         super.onServicesDiscovered(gatt, status);
         System.out.println("onServicesDiscovered (python)");
+        System.out.println("Status (python):" + status); // Si imprime un 0 es acción completada exitosamente
     }
 
     public BluetoothGatt getConnectedGatt() {
