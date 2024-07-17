@@ -20,6 +20,7 @@ BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice') # Dispositvos e
 BluetoothGatt = autoclass('android.bluetooth.BluetoothGatt')     # GATT del dispositivo encontrado
 BluetoothGattService = autoclass('android.bluetooth.BluetoothGattService') # Clase de los servicios descubiertos
 BluetoothGattCharacteristic = autoclass('android.bluetooth.BluetoothGattCharacteristic') # Clase de las características de los servicios
+UUIDClass = autoclass('java.util.UUID') 
 
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
 PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
@@ -238,7 +239,9 @@ class BluetoothManager_App:
 
             # Para cada servicio se descubren sus características y se guardan en el diccionario
             for service in self.discovered_services:
-                uuid_name = str(service.getUuid())
+                service_uuid= service.getUuid()
+                uuid_name: UUIDClass = service_uuid.toString() # type: ignore
+                print(uuid_name)
                 self.discovered_characteristics[uuid_name] = self.discover_characteristics(service)
         except Exception as e:
             print(f"Error al obtener los detalles de los dispositivos: {e}")
