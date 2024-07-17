@@ -11,7 +11,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/sysctl.h"
-#include "driverlib/uart.h"
+#include "driverlib/uart.h" 
 #include "driverlib/pwm.h"
 #include "driverlib/adc.h"
 #include "driverlib/can.h"
@@ -80,6 +80,7 @@ void setup() {
 
     IntMasterEnable();
     SendParameters();
+    set_incremental_position(1, 90, 360, true);
     //set_speed(1, 380, true);
     //set_absolute_position(1, 90, 0, true);
 }
@@ -209,10 +210,6 @@ void set_absolute_position(int8_t ID, int64_t position_ref, int64_t max_speed, b
   // Escala el valor a enviar 0.01 dps/LSB
   int32_t sp = position_ref * 100;
 
-  //if (sp > 2147483647){
-  //  return;
-  //}
-
   uint8_t byteArray_speed[2];
   uint8_t byteArray_position[4];
 
@@ -259,6 +256,63 @@ void set_absolute_position(int8_t ID, int64_t position_ref, int64_t max_speed, b
   }
 }
 
+void set_incremental_position(int8_t ID, int64_t position_inc, int64_t max_speed, bool show){ 
+  
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  tCANMsgObject Message_Rx;
+  uint8_t CAN_data_TX[8u];
+  uint8_t CAN_data_RX[8u];
+
+  // Escala el valor a enviar 0.01 dps/LSB
+  int32_t sp = position_inc * 100;
+
+  uint8_t byteArray_speed[2];
+  uint8_t byteArray_position[4];
+
+  // Split the number into 4 bytes
+  split32bits(sp, byteArray_position);
+  split16bits(max_speed, byteArray_speed);
+  
+  // Define el setpoint de la velocidad
+  CAN_data_TX[0] = 0xA8;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = byteArray_speed[1];
+  CAN_data_TX[3] = byteArray_speed[0];
+  CAN_data_TX[4] = byteArray_position[3];
+  CAN_data_TX[5] = byteArray_position[2];
+  CAN_data_TX[6] = byteArray_position[1];
+  CAN_data_TX[7] = byteArray_position[0];
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x140 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.pui8MsgData = CAN_data_TX;
+
+  // Define el mensaje para leer por CAN
+  Message_Rx.ui32MsgID = 0x240 + ID;
+  Message_Rx.ui32MsgIDMask = 0xFFFFFFFF; // Lee todos los mensajes
+  Message_Rx.ui32MsgLen = 8u;
+  Message_Rx.pui8MsgData = CAN_data_RX;
+
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
+
+  // Lee el mensaje de respuesta
+  CANMessageSet(CAN0_BASE, 2, &Message_Rx, MSG_OBJ_TYPE_RXTX_REMOTE);
+
+  // Imprime el mensaje si el usuario lo indica
+  if (show){
+    char buffer[50];
+    while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {Serial.println("waiting");}
+    sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X", 
+            CAN_data_RX[7], CAN_data_RX[6], CAN_data_RX[5], CAN_data_RX[4], 
+            CAN_data_RX[3], CAN_data_RX[2], CAN_data_RX[1], CAN_data_RX[0]);
+    Serial.println(buffer);
+  }
+}
+
 void stop_motor(int8_t ID){
   
   // Objetos para la comunicación CAN
@@ -285,8 +339,10 @@ void stop_motor(int8_t ID){
   CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
 
 }
+
 void loop() {
   // Wait for the message to be transmitted
-  stop_motor(1);
-  //set_absolute_position(1, 90, 0, true);
+  set_incremental_position(1, 90, 360, true);
+  delay(1000);
+  Serial.println("Moviendo 90 grados");
 }
