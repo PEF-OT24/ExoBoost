@@ -54,6 +54,7 @@ class BluetoothManager_App:
         self._GATT_MAX_MTU_SIZE = 517
         self.scanning: bool = False
         self.connected: bool = False
+        self.connected_device: BluetoothDevice = None # type: ignore
         self.connected_gatt: BluetoothGatt = None # type: ignore
         self.discovered_services: list[BluetoothGattService] = [] # type: ignore
         self.discovered_characteristics: dict[BluetoothGattCharacteristic] = {} # type: ignore
@@ -149,9 +150,15 @@ class BluetoothManager_App:
                                           transport = BluetoothDevice.TRANSPORT_LE # Para testing
                                           )
 
-                # Se guarda el GATT del dispositivo conectado
+                # Se espera 2 segundos para que el dispositivo se conecte
+                print("Waiting for connection...")
+                sleep(2)
+                print(f"Bond state: {target_device.getBondState()}")
+
+                # Se guarda el GATT y el dispositivo conectado
                 print("Getting GATT...")
-                self.connected_gatt = target_device.getBluetoothGatt()
+                self.connected_gatt = self.python_gatt_callback.getConnectedGatt()
+                self.connected_device = target_device
 
                 print("Establishing MTU...")
                 self.connected_gatt.requestMtu(self._GATT_MAX_MTU_SIZE) # Se establece el tamaño máximo de la transmisión de datos 
