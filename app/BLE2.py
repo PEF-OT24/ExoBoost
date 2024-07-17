@@ -178,8 +178,8 @@ class BluetoothManager_App:
         '''Método para desconectar de un dispositivo ya conectado'''
         try: 
             if self.connected:
-                self.connected_gatt.close()
                 self.connected_gatt.disconnect()
+                self.connected_gatt.close()
 
                 # Se limpian los atributos después de desconectarse
                 self.connected = False
