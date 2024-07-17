@@ -379,11 +379,13 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected:
             success = self.ble.connect(self.selected_device)
             print(f"Dispositivo conectado: {success}")
+            self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
 
         else:
             # Se realiza desconexión y se limpia el dispositivo seleccionado
             self.ble.disconnect()
             self.selected_device = None
+            self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Connect"
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
