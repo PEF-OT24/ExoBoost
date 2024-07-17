@@ -313,6 +313,7 @@ class ExoBoostApp(MDApp):
     #----------------------------------------------------- Métodos de menú de Bluetooth -----------------------------------------
     def search_devices(self):
         '''Busca dispositivos Bluetooth, los almacena y los muestra en el ScrollView'''
+        # PONER EL SPINNER PARA ESPERAR AL ESCANEO, SE PUEDE HACER EN UN THREAD SEPARADO SECUNDARIO
         if self.ble_found:
             # Estado del bluetooth
             print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")  
@@ -324,7 +325,7 @@ class ExoBoostApp(MDApp):
             scanning.start()
         else: 
             print("Bluetooth no disponible")
-            devices = ["Dispositivo 3", "Dipositivo 2", "Dispositivo 1"]
+            devices = ["Dispositivo 3", "Dispositivo 2", "Dispositivo 1"]
             # Se muestran los resutlados en la pantalla
             self.show_devices(devices)
 
@@ -369,13 +370,20 @@ class ExoBoostApp(MDApp):
     def connect_disconnect(self): 
         '''Método para conectar/disconectar dispositivo'''
         # LÓGICA PARA CAMBIAR EL 
-            # COLOR DE FONDO DEL BOTON
-            # TEXTO DEL BOTON
-        success = self.ble.connect_disconnect(self.selected_device)
-        print(f"Dispositivo conectado: {success}")
+        # COLOR DE FONDO DEL BOTON
+        # TEXTO DEL BOTON
 
-        if success and self.ble.connected: # Si logra conectarse
-            pass
+        # No hace ninguna acción si no hay un dispositivo seleccionado o si el BLE no está disponible
+        if not self.selected_device or not self.ble_found: return
+
+        if not self.ble.connected:
+            success = self.ble.connect(self.selected_device)
+            print(f"Dispositivo conectado: {success}")
+
+        else:
+            # Se realiza desconexión y se limpia el dispositivo seleccionado
+            self.ble.disconnect()
+            self.selected_device = None
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''

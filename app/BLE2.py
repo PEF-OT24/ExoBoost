@@ -119,7 +119,7 @@ class BluetoothManager_App:
             nombres = [name.getName() for name in self.found_devices]
             return nombres
 
-    def connect_disconnect(self, device_name: str) -> bool:
+    def connect(self, device_name: str) -> bool:
         '''
         Es necesario detener el escaneo antes de realizar aciones de conexión; se llama al método stop_ble_scan().
         Se conecta  o desconecta al dispositivo indicado por su nombre. 
@@ -173,6 +173,22 @@ class BluetoothManager_App:
             # dispositivo no encontrado, escaneo en proceso, bluetooth no correctamente inicializado, dispositivo ya conectado, nombre mal escrito.
             print(f"Error de Bluetooth: {e}")
             return False
+        
+    def disconnect(self):
+        '''Método para desconectar de un dispositivo ya conectado'''
+        try: 
+            if self.connected:
+                self.connected_gatt.close()
+                self.connected_gatt.disconnect()
+
+                # Se limpian los atributos después de desconectarse
+                self.connected = False
+                self.connected_gatt = None
+                self.connected_device = None
+                self.discovered_characteristics = {}
+                self.discovered_services = []
+        except Exception as e:
+            print(f"Error de Bluetooth al intentar desconectarse: {e}")
 
     def discover_services(self, wait_time: float) -> list[BluetoothGattService]: # type: ignore
         '''Método que descubre los servicios de un dispositivo ya conectado'''
