@@ -80,8 +80,11 @@ void setup() {
 
     IntMasterEnable();
     SendParameters();
-    set_incremental_position(1, 90, 360, true);
-    set_speed(1, 100, true);
+    stop_motor(1);
+    //reset_motor(1);
+    //shutdown_motor(1);
+    //set_incremental_position(1, 90, 360, true);
+    set_speed(1, 360, true);
     //set_absolute_position(1, 90, 0, true);
 }
 
@@ -152,10 +155,6 @@ void set_speed(int8_t ID, int64_t speed_ref, bool show){
 
   // Escala el valor a enviar 0.01 dps/LSB
   int32_t sp = speed_ref * 100;
-
-  //if (sp > 2147483647){
-  //  return;
-  //}
 
   uint8_t byteArray[4];
   split32bits(sp, byteArray);
@@ -333,8 +332,8 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
   CAN_data_TX[1] = 0x00;
   CAN_data_TX[2] = 0x00;
   CAN_data_TX[3] = 0x00;
-  CAN_data_TX[4] = byteArray_position[1];
-  CAN_data_TX[5] = byteArray_position[0];
+  CAN_data_TX[4] = byteArray_current[1];
+  CAN_data_TX[5] = byteArray_current[0];
   CAN_data_TX[6] = 0;
   CAN_data_TX[7] = 0;
 
@@ -420,6 +419,33 @@ void shutdown_motor(int8_t ID){
   CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
 }
 
+
+void reset_motor(int8_t ID){
+  
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x76; 
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x140 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.pui8MsgData = CAN_data_TX;
+  
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
+}
+
 void loop() {
-  // Wait for the message to be transmitted
+  // Main loop
 }
