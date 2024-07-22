@@ -36,7 +36,7 @@ class Characteristic_Info:
     def __init__(self, characteristic: BluetoothGattCharacteristic) -> None: # type: ignore
         '''Se inicializa para analizar su información'''
         self.characteristic = characteristic
-        self.properties: int = self.getProperties() # Se obtienen las properties de la característica
+        self.properties: int = characteristic.getProperties() # Se obtienen las properties de la característica
 
         # Posibles propiedades de la característica 
         self.all_properties = {
