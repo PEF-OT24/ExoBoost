@@ -253,5 +253,6 @@ class BluetoothManager_App:
             print(f"Servicio UUID: {service_uuid}")
             print(f"Características UUID's:")
             for i, car in enumerate(self.discover_characteristics[service_uuid]):
-                print(f"Característica {i}: {car.getUuid().toString()}") # Se imprime como string
+                car_uuid = car.getUuid()
+                print(f"Característica {i}: {car_uuid.toString()}") # Se imprime como string
             print("-------------")

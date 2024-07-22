@@ -26,7 +26,7 @@ class ServerCallbacks: public BLEServerCallbacks {
     digitalWrite(LED_PIN, LOW);  // Apaga el LED
     Serial.println("Cliente desconectado");
     delay(0.5);
-    Serial.println("Reiniciando publicidad...");
+    Serial.println("Reiniciando advertising...");
     pAdvertising->start();  // Reinicia la publicidad
   }
 };
