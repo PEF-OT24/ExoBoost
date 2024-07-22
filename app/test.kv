@@ -47,6 +47,7 @@
     #width: device_list.width
     #size: self.size
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
+
     #Texto dentro del boton
     font_size: "12sp"
     font_name: "Roboto"
@@ -58,7 +59,7 @@
     ripple_effect: False
     ripple_color: app.colors['Dark Blue']
     on_press: self.md_bg_color = app.colors['Light Orange']
-    on_release: self.md_bg_color = app.colors['Dark Blue']
+    # on_release: self.md_bg_color = app.colors['Dark Blue']
 
 # --------------------------------------- Ventana de PopUp de Error ----------------------------------------
 <ErrorPopup>:
@@ -365,13 +366,16 @@ WindowManager:
                         Widget:
                         MDFillRoundFlatButton:
                             id: bluetooth_connect
-                            text: 'CONNECT/DISCONNECT'
+                            text: 'Connect'
                             text_color: app.colors['White']
                             size_hint: None, None
                             ripple_effect: False
                             ripple_color: app.colors['Cyan']
-                            on_press: self.md_bg_color = app.colors["Light Orange"]
-                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            on_press: 
+                                self.md_bg_color = app.colors["Light Orange"]
+                            on_release: 
+                                self.md_bg_color = app.colors["Cyan"]
+                                app.connect_disconnect()
                             width: root.width*0.5
                             height: root.height*0.065
                             md_bg_color: app.colors["Cyan"]
@@ -701,8 +705,7 @@ WindowManager:
                                 CustomTextEntry:
                                     id: pv_motor1
                                     hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text("pv", "motor1", pv_motor1.text)
+                                    readonly: True
 
             # --------------------------- Parámetros PI del motor 2 ------------------------- 
                         BoxLayout: #ROW 4
@@ -752,8 +755,7 @@ WindowManager:
                                 CustomTextEntry:
                                     id: pv_motor2
                                     hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text("pv", "motor2", pv_motor2.text)
+                                    readonly: True
 
             # --------------------------- Parámetros PI del motor 3 ------------------------- 
                         BoxLayout: #ROW 5
@@ -802,8 +804,7 @@ WindowManager:
                                 CustomTextEntry:
                                     id: pv_motor3
                                     hint_text: "PV:"
-                                    on_text_validate:
-                                        app.on_entry_text("pv", "motor3", pv_motor3.text)
+                                    readonly: True
     # -------------------------- Botón info de equipo -------------------------------------------
     FloatLayout: 
         MDIconButton:

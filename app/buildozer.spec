@@ -13,7 +13,7 @@ package.domain = org.test
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,ttf,txt,jpeg
+source.include_exts = py,png,jpg,kv,atlas,ttf,txt,jpeg,java,class
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png
@@ -37,7 +37,7 @@ version = 0.1
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,kivymd, idna, requests, bleak, certifi, Pillow, docutils, async_timeout, typing_extensions, pyjnius
+requirements = python3,kivy,kivymd,idna,requests,bleak,certifi,Pillow,docutils,async_timeout,typing_extensions,pyjnius
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -177,7 +177,7 @@ android.permissions = INTERNET, ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, WA
 
 # (list) List of Java files to add to the android project (can be java or a
 # directory containing the files)
-#android.add_src =
+android.add_src = javadev/test_pkg/PythonScanCallback.java, javadev/test_pkg/PythonBluetoothGattCallback.java
 
 # (list) Android AAR archives to add
 #android.add_aars =

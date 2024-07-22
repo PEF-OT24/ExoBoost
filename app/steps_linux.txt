@@ -41,3 +41,22 @@ source ~/.bashrc
 
 Additional packages:
 sudo apt-get install xclip xset
+
+### --- ###
+# Steps to compile java files into .class and .jar files
+
+# Generate .java files
+# Create the necessary java files inside the directory app/javadev/packages
+# At the beginning of the file, the name of the package must be specified: 
+package javadev.test_pkg
+
+# Generate the .class files
+# Each .java file is compiled in order to generate .class file
+# Inside the directory app type
+javac -d . \javadev\test_pkg\ExtendedClass.java
+
+# This command will generate a .class file inside the same directory for simplicity
+
+# Generate .jar files
+# .class files can be packaged inside a single .jar file, containing one or more .class files
+
