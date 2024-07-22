@@ -90,7 +90,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
                                          BLECharacteristic::PROPERTY_NOTIFY |
-                                         BLECharacteristic::PROPERTY_INDICATE 
+                                         BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic->setCallbacks(new BLECallbacks());
 

@@ -401,6 +401,13 @@ class ExoBoostApp(MDApp):
     # Pararse/Sentarse
     def sit_down_stand_up(self):
         print("Sit down/stand up action triggered")
+
+        # PRUEBAS DE MANDAR DATOS
+        if not self.ble_found: return
+
+        self.ble.write_info(service_uuid="12345678-1234-1234-1234-123456789012", characteristic_uuid="87654321-4321-4321-4321-210987654321", data = " ")   
+
+
     #Caminar
     def walk(self):
         print("Walk action triggered")

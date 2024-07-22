@@ -27,6 +27,67 @@ PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCal
 
 ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 
+class Characteristic_Info:
+    '''
+    Clase que analiza la información sobre una característica dada. 
+    Entrada: characteristic BluetoothGattCharacteristic -> Característica a analizar
+    ''' 
+
+    def __init__(self, characteristic: BluetoothGattCharacteristic) -> None: # type: ignore
+        '''Se inicializa para analizar su información'''
+        self.characteristic = characteristic
+        self.properties: int = self.getProperties() # Se obtienen las properties de la característica
+
+        # Posibles propiedades de la característica 
+        self.all_properties = {
+            "BROADCAST": BluetoothGattCharacteristic.PROPERTY_BROADCAST,
+            "EXTENDED PROPS": BluetoothGattCharacteristic.PROPERTY_EXTENDED_PROPS,
+            "INDICATE": BluetoothGattCharacteristic.PROPERTY_INDICATE,
+            "NOTIFY": BluetoothGattCharacteristic.PROPERTY_NOTIFY,
+            "READ": BluetoothGattCharacteristic.PROPERTY_READ,
+            "SIGNED WRITE": BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE,
+            "WRITE": BluetoothGattCharacteristic.PROPERTY_WRITE,
+            "WRITE WITH NO RESPONSE": BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE,
+        }
+
+    def get_uuid(self) -> str: # type: ignore
+        '''
+        Método que obtiene el UUID de una característica en formato de string
+        Entrada: characteristic BluetoothGattCharacteristic -> Característica
+        Salida: str -> UUID de la característica
+        '''
+        return self.characteristic.getUuid().toString()
+    
+    def contains_property(self, property: int) -> bool: # type: ignore
+        '''Comprueba si una característica contiene una propiedad
+        Entradas: characteristic BluetoothGattCharacteristic -> Característica
+                  property int -> Propiedad a buscar
+
+        Salida: bool -> True si la característica contiene la propiedad indicada, False de lo contrario
+        '''
+        return self.properties & property
+    
+    def isBroadastable(self) -> bool: # type: ignore
+        '''Comprueba si una característica es Broadcastable'''
+        return self.contains_property(self.all_properties["BROADCAST"])
+    
+    def isIndicatable(self) -> bool: # type: ignore
+        '''Comprueba si una característica es Indicatable'''
+        return self.contains_property(self.all_properties["INDICATE"])
+    
+    def isNotifiable(self) -> bool: # type: ignore
+        '''Comprueba si una característica es Notifiable'''
+        return self.contains_property(self.all_properties["NOTIFY"])
+    
+    def isReadable(self) -> bool: # type: ignore
+        '''Comprueba si una característica es Readable'''
+        return self.contains_property(self.all_properties["READ"])
+    
+    def isWriteable(self) -> bool: # type: ignore
+        '''Comprueba si una característica es Writeable'''
+        return self.contains_property(self.all_properties["WRITE"])
+        
+
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
@@ -165,8 +226,13 @@ class BluetoothManager_App:
                 self.connected_gatt.requestMtu(self._GATT_MAX_MTU_SIZE) # Se establece el tamaño máximo de la transmisión de datos 
 
                 print("Getting device info...")
-                self.discover_services_and_characteristics()
+
+                # Se marca como conectado
                 self.connected = True
+
+                # Se descubre la información del dispositivo y se muestran los UUIDs
+                self.discover_services_and_characteristics()
+                self.show_uuids()
             else: print("Already connected") # IMPLEMENTAR MÉTODO PARA DESCONECTARSE
             return True
         except Exception as e:
@@ -217,36 +283,38 @@ class BluetoothManager_App:
         return discovered_services
     
     def discover_characteristics(self, service: BluetoothGattService) -> list[BluetoothGattCharacteristic]: # type: ignore
-        '''Método que descubre las características de un servicio ya descubierto'''        
-        try: 
-            # Se obtienen las características
-            characteristics: list[BluetoothGattCharacteristic] = service.getCharacteristics() # type: ignore
-            print(f"Discovered characteristics: {characteristics}")
-            return characteristics
-        except Exception as e:
-            print(f"Error al obtener las características: {e}")
-            return
+        '''
+        Método que descubre las características de un servicio ya descubierto
+        
+        Entrada: service BluetoothGattService -> Servicio cuyas características se descubren
+        Salida: list[BluetoothGattCharacteristic] -> Lista de las características del servicio
+        '''        
+        # Se obtienen las características
+        characteristics: list[BluetoothGattCharacteristic] = service.getCharacteristics() # type: ignore
+        print(f"Discovered characteristics: {characteristics}")
+        return characteristics
     
     def discover_services_and_characteristics(self, wait_time: float = 0.5) -> None: # type: ignore
         '''
         Método que descubre los servicios y las características de un dispositivo ya conectado
-        Los resultados se guardan en self.discovered_services y self.discovered_characteristics de la clase
+        Los resultados se guardan en self.discovered_services y self.discovered_characteristics de la clase.
+
         Entrada: wait_time float -> tiempo de espera en segundos para descubrir los servicios, por defalut un valor de 0.5
         '''
-        try:
-            # Se descubren todos los servicios
-            self.discovered_services = self.discover_services(wait_time)
+        # Se descubren todos los servicios
+        self.discovered_services = self.discover_services(wait_time)
 
-            # Para cada servicio se descubren sus características y se guardan en el diccionario
-            for service in self.discovered_services:
-                service_uuid= service.getUuid()
-                uuid_name: UUIDClass = service_uuid.toString() # type: ignore
-                print("Características del servicio (UUID): " + uuid_name)
-                self.discovered_characteristics[uuid_name] = self.discover_characteristics(service)
-        except Exception as e:
-            print(f"Error al obtener los detalles de los dispositivos: {e}")
+        # Para cada servicio se descubren sus características y se guardan en el diccionario
+        for service in self.discovered_services:
+            service_uuid= service.getUuid()
+            uuid_name: UUIDClass = service_uuid.toString() # type: ignore
+            print("Características del servicio (UUID): " + uuid_name)
+            self.discovered_characteristics[uuid_name] = self.discover_characteristics(service)
 
-        print("UUIDS de los resultados:")
+    def show_uuids(self):
+        '''Método que muestra los UUIDs de cada característica de cada servicio'''
+        # Comprueba que hay un dispositivo conectado
+        if not self.connected: raise Exception("Error al imprimir UUIDs: No hay un dispositivo conectado")
 
         # Se imprime el UUID de cada característica para cada serivicio
         for service_uuid in list(self.discovered_characteristics.keys()): 
@@ -256,3 +324,33 @@ class BluetoothManager_App:
                 car_uuid = car.getUuid()
                 print(f"Característica {i}: {car_uuid.toString()}") # Se imprime como string
             print("-------------")
+
+    def write_info(self, service_uuid: str, characteristic_uuid: str, data: str): # type: ignore
+        '''
+        Método que escribe sobre la característica indicada de un servicio del dispositivo conectado
+
+        Entradas: characteristic BluetoothGattCharacteristic -> Característica sobre la que se escribe
+                  data str -> mensaje a enviar
+        '''
+
+        # Comprueba que hay un dispositivo conectado
+        if not self.connected: raise Exception("Error al enviar información: No hay un dispositivo conectado")
+
+        try: 
+            # Identifica la característica de interés del servicio de interés con los UUID's
+            for char in self.discovered_characteristics[service_uuid]:
+                if char.getUuid().toString() == characteristic_uuid: 
+                    characteristic = char
+                    break
+
+            car_analyzer = Characteristic_Info(characteristic)
+        
+            # Se muestran las properties presentes
+            print(car_analyzer.properties)
+            print(car_analyzer.isReadable and car_analyzer.isWriteable())
+
+        except Exception as e:
+            print("Característica no encontrada")
+        # Se envia la cadena de caracteres
+        # characteristic.setValue(data.encode('utf-8'))
+        # self.connected_gatt.writeCharacteristic(characteristic)
