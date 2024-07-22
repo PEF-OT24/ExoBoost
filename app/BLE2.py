@@ -346,10 +346,10 @@ class BluetoothManager_App:
             car_analyzer = Characteristic_Info(characteristic)
         
             # Se muestran las properties presentes
-            print(car_analyzer.properties)
 
+            print(f"Properties: {car_analyzer.properties}")
+            print(f"Read property: {car_analyzer.all_properties["READ"]}")
             print(f"Readable: {car_analyzer.isReadable()}")
-            print(f"Writable: {car_analyzer.isWriteable()}")
 
         except Exception as e:
             print("Característica no encontrada")
