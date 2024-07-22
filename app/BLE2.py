@@ -347,7 +347,7 @@ class BluetoothManager_App:
         
             # Se muestran las properties presentes
             print(car_analyzer.properties)
-            print(car_analyzer.isReadable and car_analyzer.isWriteable())
+            print(car_analyzer.isReadable() and car_analyzer.isWriteable())
 
         except Exception as e:
             print("Característica no encontrada")
