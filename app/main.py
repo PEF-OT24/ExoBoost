@@ -377,7 +377,7 @@ class ExoBoostApp(MDApp):
         if not self.selected_device or not self.ble_found: return
 
         if not self.ble.connected:
-            success = self.ble.connect(self.selected_device)
+            success = self.ble.connect(self.selected_device) # SE DEBERÍA DE PONER EN OTRO THREAD
             print(f"Dispositivo conectado: {success}")
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
 

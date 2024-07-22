@@ -241,10 +241,17 @@ class BluetoothManager_App:
             for service in self.discovered_services:
                 service_uuid= service.getUuid()
                 uuid_name: UUIDClass = service_uuid.toString() # type: ignore
-                print(uuid_name)
+                print("Características del servicio (UUID): " + uuid_name)
                 self.discovered_characteristics[uuid_name] = self.discover_characteristics(service)
         except Exception as e:
             print(f"Error al obtener los detalles de los dispositivos: {e}")
 
-        print("Resultados de los detalles de los dispositivos")
-        print(self.discovered_characteristics)
+        print("UUIDS de los resultados:")
+
+        # Se imprime el UUID de cada característica para cada serivicio
+        for service_uuid in list(self.discovered_characteristics.keys()): 
+            print(f"Servicio UUID: {service_uuid}")
+            print(f"Características UUID's:")
+            for i, car in enumerate(self.discover_characteristics[service_uuid]):
+                print(f"Característica {i}: {car.getUuid().toString()}") # Se imprime como string
+            print("-------------")
