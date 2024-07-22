@@ -348,7 +348,7 @@ class BluetoothManager_App:
             # Se muestran las properties presentes
 
             print(f"Properties: {car_analyzer.properties}")
-            print(f"Read property: {car_analyzer.all_properties["READ"]}")
+            print(f"Read property: {car_analyzer.all_properties['READ']}")
             print(f"Readable: {car_analyzer.isReadable()}")
 
         except Exception as e:
