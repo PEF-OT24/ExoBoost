@@ -351,6 +351,7 @@ class BluetoothManager_App:
 
         except Exception as e:
             print("Característica no encontrada")
+            print(f"Error: {e}")
         # Se envia la cadena de caracteres
         # characteristic.setValue(data.encode('utf-8'))
         # self.connected_gatt.writeCharacteristic(characteristic)
