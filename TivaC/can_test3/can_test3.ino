@@ -86,7 +86,7 @@ void setup() {
     //set_acceleration(1,500,true);
     //set_incremental_position(1, 90, 360, true);
     //set_speed(1, 360, true);
-    //set_absolute_position(1, 90, 0, true);
+    set_absolute_position(1, 90, 0, true);
     //set_stposition(1,90,1000,0,true);
 }
 
@@ -345,7 +345,7 @@ void set_acceleration(int8_t ID, int64_t accel_ref, bool show){
   }
 }
 
-void set_absolute_position(int8_t ID, int64_t position_ref, int64_t max_speed, bool show){ // NO FUNCIONA
+void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, bool show){ // NO FUNCIONA
   
   // Objetos para la comunicación CAN
   tCANMsgObject Message_Tx;
@@ -402,7 +402,7 @@ void set_absolute_position(int8_t ID, int64_t position_ref, int64_t max_speed, b
   }
 }
 
-void set_incremental_position(int8_t ID, int64_t position_inc, int64_t max_speed, bool show){ 
+void set_incremental_position(int8_t ID, int32_t position_inc, int16_t max_speed, bool show){ 
   
   // Objetos para la comunicación CAN
   tCANMsgObject Message_Tx;
