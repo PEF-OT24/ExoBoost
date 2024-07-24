@@ -356,9 +356,11 @@ class BluetoothManager_App:
             # Se envía el mensaje
             self.connected_gatt.writeCharacteristic(characteristic)
 
-            # Se guarda la configuración de la característica
-            self.discovered_characteristics[service_uuid][index] = characteristic
+            
 
         except Exception as e:
             print("Característica no encontrada")
             print(f"Error: {e}")
+
+        # Se guarda la configuración de la característica
+        self.discovered_characteristics[service_uuid][index] = characteristic
