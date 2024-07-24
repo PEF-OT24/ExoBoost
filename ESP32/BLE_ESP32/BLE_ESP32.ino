@@ -48,22 +48,25 @@ class BLECallbacks: public BLECharacteristicCallbacks {
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, value);
     
+
+    // Valida el formato del JSON
     if (error) {
       Serial.print("Error al analizar JSON: ");
       Serial.println(error.c_str());
       return;
     }
-
-    Serial.println("Mensaje JSON recibido: ");
-    serializeJson(doc, Serial);
+    else{
+      Serial.println("Mensaje JSON recibido: ");
+      serializeJson(doc, Serial);
+    }
 
     // Enviar notificación de éxito en formato JSON
     // StaticJsonDocument<200> responseDoc;
     // responseDoc["response"] = "Success";
     // char responseBuffer[200];
     // serializeJson(responseDoc, responseBuffer);
-    // pCharacteristic->setValue(responseBuffer);
-    // pCharacteristic->notify();
+    pCharacteristic->setValue("Write response");
+    pCharacteristic->notify();
   }
 };
 
