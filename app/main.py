@@ -32,9 +32,10 @@ Clock.max_iteration = 1000  # Increase this value if necessary
 from threading import Thread, Timer
 import platform
 import json 
-import os
+import uuid
 import webbrowser
 from time import sleep
+from UUIDManager import UUIDManager
 
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
@@ -66,6 +67,15 @@ class ErrorPopup(Popup):
     '''Clase para mostrar un error genérico'''
     def __init__(self, **kwargs):
         super(ErrorPopup, self).__init__(**kwargs)
+
+
+class JsonManager:
+    '''Clase para manejar los archivos json para mandar por BLE'''
+    def __init__(self):
+        pass
+    
+    @staticmethod
+    def json(): pass
 
 class ExoBoostApp(MDApp):  
     #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
@@ -127,10 +137,20 @@ class ExoBoostApp(MDApp):
 
         # Atributos de lógica BLE
         self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
+
+        # -------- Manejo de los UUID según la ESP32 ---------
+        self.uuid_manager = UUIDManager()
+        # Nombres de los servicios para manejo interno
+        names = ["Parameters", "Commands", "Process"]
+        values = [0x0001, 0x0002, 0x0003]
+        # Se generan los UUIDs para los servicios
+        self.uuid_manager.generate_uuids_services(names, values)
+
+        # Se genera una característica por servicio
+        self.uuid_manager.generate_uuids_chars(names[0], ["PI"], [0x000a])
+        self.uuid_manager.generate_uuids_chars(names[1], ["PV"], [0x000b])
+        self.uuid_manager.generate_uuids_chars(names[2], ["Mode"], [0x000c])
         # -------------------------- Atributos externos --------------------------
-        """
-        Variables que se mandarán a través de bluetooth
-        """
         # Diccionario de valores de los parámetros de los motores de sintonización y control
         # Todos se inicializan con un valor arbitrario
         self.motor_parameters_pi =  {
@@ -405,12 +425,18 @@ class ExoBoostApp(MDApp):
         # PRUEBAS DE MANDAR DATOS
         if not self.ble_found: return
 
-        self.ble.write_info(service_uuid="12345678-1234-1234-1234-123456789012", characteristic_uuid="87654321-4321-4321-4321-210987654321", data = "PRUEBA")   
+        # Se definen los UUIDs y los datos a mandar
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
+        test_file = {"motor1": "90"}
 
+        # Se mandan los datos
+        self.ble.write_json(service_uuid, char_uuid, test_file)   
 
     #Caminar
     def walk(self):
         print("Walk action triggered")
+
     #Detenerse
     def stop(self):
         print("Stop action triggered")

@@ -4,10 +4,19 @@
 #include <BLEServer.h>
 #include <ArduinoJson.h>
 
-// Definición del nombre del dispositivo y UUIDs para el servicio y la característica
+// Definición del nombre del dispositivo
 #define DEVICE_NAME "ESP32_BLE_Server"
-#define SERVICE_UUID "12345678-1234-1234-1234-123456789012"
-#define CHARACTERISTIC_UUID "87654321-4321-4321-4321-210987654321"
+
+// Definición de servicios y sus características
+#define SERVICE_UUID_PARAMS "00000001-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_PI| "0000000a-0000-1000-8000-00805f9b34fa"
+
+// Estos no se usan 
+#define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"
+
+#define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa"
 
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
@@ -37,7 +46,7 @@ class BLECallbacks: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
     Serial.println("Característica leída por el cliente");
-  }
+  } // fin de onRead
 
   void onWrite(BLECharacteristic *pCharacteristic) {
     // Método que recibe un nuevo valor de la característica
@@ -45,9 +54,11 @@ class BLECallbacks: public BLECharacteristicCallbacks {
     Serial.println("Característica escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<200> doc;
-    DeserializationError error = deserializeJson(doc, value);
-    
+    StaticJsonDocument<200> jsonrec;
+    DeserializationError error = deserializeJson(jsonrec, value);
+
+    Serial.println("Mensaje recibido: ");
+    serializeJson(jsonrec, Serial);
 
     // Valida el formato del JSON
     if (error) {
@@ -55,19 +66,24 @@ class BLECallbacks: public BLECharacteristicCallbacks {
       Serial.println(error.c_str());
       return;
     }
+    
+    // Recibe el valor y se comprueba que no haya errores. 
+    String testvalue = jsonrec["motor1"];
+    if (testvalue != "null") {
+      Serial.println("Información no recibida")
+    }
     else{
-      Serial.println("Mensaje JSON recibido: ");
-      serializeJson(doc, Serial);
+      Serial.println(testvalue);
     }
 
     // Enviar notificación de éxito en formato JSON
-    // StaticJsonDocument<200> responseDoc;
-    // responseDoc["response"] = "Success";
-    // char responseBuffer[200];
-    // serializeJson(responseDoc, responseBuffer);
+    StaticJsonDocument<200> jsonrep;
+    jsonrep["response"] = "Success";
+    char responseBuffer[200];
+    serializeJson(jsonrep, responseBuffer);
     pCharacteristic->setValue("Write response");
     pCharacteristic->notify();
-  }
+  } // fin de onWrite
 };
 
 void setup() {
@@ -85,11 +101,11 @@ void setup() {
   pServer->setCallbacks(new ServerCallbacks());
 
   // Crea el servicio BLE 
-  BLEService *pService = pServer->createService(SERVICE_UUID);
+  BLEService *pService = pServer->createService(SERVICE_UUID_PARAMS);
 
   // Crea la característica BLE para recibir datos del PI
   BLECharacteristic *pCharacteristic = pService->createCharacteristic(
-                                         CHARACTERISTIC_UUID,
+                                         CHARACTERISTIC_UUID_PI,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
                                          BLECharacteristic::PROPERTY_NOTIFY |

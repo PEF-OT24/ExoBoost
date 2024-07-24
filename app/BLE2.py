@@ -3,6 +3,7 @@ from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
 import uuid
+import json 
 
 os.environ['CLASSPATH'] = 'javadev'
 
@@ -325,7 +326,7 @@ class BluetoothManager_App:
                 print(f"Característica {i}: {car_uuid.toString()}") # Se imprime como string
             print("-------------")
 
-    def write_info(self, service_uuid: str, characteristic_uuid: str, data: str): # type: ignore
+    def write(self, service_uuid: str, characteristic_uuid: str, data: str): # type: ignore
         '''
         Método que escribe sobre la característica indicada de un servicio del dispositivo conectado
 
@@ -364,3 +365,16 @@ class BluetoothManager_App:
         except Exception as e:
             print("Característica no encontrada")
             print(f"Error: {e}")
+    
+    def write_json(self, service_uuid: str, characteristic_uuid: str, data): 
+        '''Método que convierte el archivo JSON en un string y llama al método write()'''
+
+        # Marca error si el archivo no es un diccionario
+        if not isinstance(data, dict): raise Exception("El archivo JSON no es un diccionario")
+
+        # Se llama al método write()
+        self.write(service_uuid, characteristic_uuid, json.dumps(data))
+
+    def read(self, service_uuid: str, characteristic_uuid: str): pass # type: ignore 
+
+    
