@@ -68,15 +68,6 @@ class ErrorPopup(Popup):
     def __init__(self, **kwargs):
         super(ErrorPopup, self).__init__(**kwargs)
 
-
-class JsonManager:
-    '''Clase para manejar los archivos json para mandar por BLE'''
-    def __init__(self):
-        pass
-    
-    @staticmethod
-    def json(): pass
-
 class ExoBoostApp(MDApp):  
     #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
     def __init__(self, **kwargs):
@@ -137,6 +128,7 @@ class ExoBoostApp(MDApp):
 
         # Atributos de lógica BLE
         self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
+        self.connection_successful: bool = False # Almacena si la conexión fue exitosa
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager()
@@ -389,6 +381,10 @@ class ExoBoostApp(MDApp):
 
     def connect_disconnect(self): 
         '''Método para conectar/disconectar dispositivo'''
+
+        def perform_connection():
+            '''Método para realizar la conexión'''
+            self.connection_successful = self.ble.connect(self.selected_device)
         # LÓGICA PARA CAMBIAR EL 
         # COLOR DE FONDO DEL BOTON
         # TEXTO DEL BOTON
@@ -397,8 +393,10 @@ class ExoBoostApp(MDApp):
         if not self.selected_device or not self.ble_found: return
 
         if not self.ble.connected:
-            success = self.ble.connect(self.selected_device) # SE DEBERÍA DE PONER EN OTRO THREAD
-            print(f"Dispositivo conectado: {success}")
+            t = Thread(target=perform_connection)
+            t.start()
+            # self.connection_successful = self.ble.connect(self.selected_device) # SE DEBERÍA DE PONER EN OTRO THREAD
+            print(f"Dispositivo conectado: {self.connection_successful}")
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
 
         else:
