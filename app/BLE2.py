@@ -187,7 +187,7 @@ class BluetoothManager_App:
         Es necesario detener el escaneo antes de realizar aciones de conexión; se llama al método stop_ble_scan().
         Se conecta  o desconecta al dispositivo indicado por su nombre. 
         Este método trabaja a la par con el callback self.python_gatt_callback que se encarga de la interacción con GATT
-        Cuando se establece la conexión, se guarda el GATT del dispositivo conectado para manipular en otros métodos
+        Cuando se establece la conexión, se guarda el GATT del dispositivo conectado para manipular en otros métodos.
 
         Entrada: device_name str -> Nombre del dispositivo
         Salida: True si la acción se realizó correctamente, False de lo contrario
@@ -285,7 +285,8 @@ class BluetoothManager_App:
     
     def discover_characteristics(self, service: BluetoothGattService) -> list[BluetoothGattCharacteristic]: # type: ignore
         '''
-        Método que descubre las características de un servicio ya descubierto
+        Método que descubre las características de un servicio ya descubierto. El procedimiento toma algo de tiempo, por lo que se recomienda
+        que se llame en un hilo separado.
         
         Entrada: service BluetoothGattService -> Servicio cuyas características se descubren
         Salida: list[BluetoothGattCharacteristic] -> Lista de las características del servicio
