@@ -353,14 +353,14 @@ class BluetoothManager_App:
             characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) # Write request (espera respuesta de confirmación)
             characteristic.setValue(data) # Se establece el mensaje como String
             
-            # Se envía el mensaje
+            # Se escribe la característica
             self.connected_gatt.writeCharacteristic(characteristic)
 
-            
+            # Se guarda la configuración de la característica
+            print(self.discovered_characteristics[service_uuid])
+            for el in self.discovered_characteristics[service_uuid]: print(el)
+            # self.discovered_characteristics[service_uuid][index] = characteristic
 
         except Exception as e:
             print("Característica no encontrada")
             print(f"Error: {e}")
-
-        # Se guarda la configuración de la característica
-        self.discovered_characteristics[service_uuid][index] = characteristic
