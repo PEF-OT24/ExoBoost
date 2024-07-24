@@ -358,11 +358,6 @@ class BluetoothManager_App:
             self.connected_gatt.writeCharacteristic(characteristic)
 
             # Se guarda la configuración de la característica en la lista original 
-            print("Intento de guardar característica en la lista original")
-            print(self.discovered_characteristics[service_uuid])
-            for i, el in enumerate(self.discovered_characteristics[service_uuid]): print(f"index: {i}, el: {el}")
-            print(index)
-            print(characteristic)
             self.discovered_characteristics[service_uuid][index] = characteristic
 
         except Exception as e:
