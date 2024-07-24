@@ -293,7 +293,7 @@ class BluetoothManager_App:
         # Se obtienen las características
         characteristics: list[BluetoothGattCharacteristic] = service.getCharacteristics() # type: ignore
         print(f"Discovered characteristics: {characteristics}")
-        return characteristics
+        return list(characteristics) # Se devuelve en formato de lista 
     
     def discover_services_and_characteristics(self, wait_time: float = 0.5) -> None: # type: ignore
         '''
