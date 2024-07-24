@@ -338,22 +338,27 @@ class BluetoothManager_App:
 
         try: 
             # Identifica la característica de interés del servicio de interés con los UUID's
-            for char in self.discovered_characteristics[service_uuid]:
+            for i, char in enumerate(self.discovered_characteristics[service_uuid]):
                 if char.getUuid().toString() == characteristic_uuid: 
                     characteristic = char
+                    index = i
                     break
 
             car_analyzer = Characteristic_Info(characteristic)
         
-            # Se muestran las properties presentes
+            # Continúa si se puede acceder a la característica
+            if not (car_analyzer.isWriteable() and car_analyzer.isReadable()): raise Exception("Característica no accesible")
 
-            print(f"Properties: {car_analyzer.properties}")
-            print(f"Read property: {car_analyzer.all_properties['READ']}")
-            print(f"Readable: {car_analyzer.isReadable()}")
+            # Se configura el envío del mensaje
+            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) # Write request (espera respuesta de confirmación)
+            characteristic.setValue(data) # Se establece el mensaje como String
+            
+            # Se envía el mensaje
+            self.connected_gatt.writeCharacteristic(characteristic)
+
+            # Se guarda la configuración de la característica
+            self.discovered_characteristics[service_uuid][index] = characteristic
 
         except Exception as e:
             print("Característica no encontrada")
             print(f"Error: {e}")
-        # Se envia la cadena de caracteres
-        # characteristic.setValue(data.encode('utf-8'))
-        # self.connected_gatt.writeCharacteristic(characteristic)
