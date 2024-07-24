@@ -65,7 +65,7 @@ class Characteristic_Info:
 
         Salida: bool -> True si la característica contiene la propiedad indicada, False de lo contrario
         '''
-        return self.properties & property
+        return True if self.properties & property == property else False
     
     def isBroadastable(self) -> bool: # type: ignore
         '''Comprueba si una característica es Broadcastable'''
