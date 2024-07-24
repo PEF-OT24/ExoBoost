@@ -68,13 +68,42 @@ class BLECallbacks: public BLECharacteristicCallbacks {
     }
     
     // Recibe el valor y se comprueba que no haya errores. 
-    String testvalue = jsonrec["motor1"];
-    if (testvalue != "null") {
-      Serial.println(testvalue);
+    StaticJsonDocument<200> motor1_params = jsonrec["motor1"];
+    StaticJsonDocument<200> motor2_params = jsonrec["motor2"];
+    StaticJsonDocument<200> motor3_params = jsonrec["motor3"];
+
+    if (motor1_params == "null" or motor2_params == "null" or motor3_params == "null") {
+      Serial.println("Error al mandar los parámetros.");
+      return;
     }
-    else{
-      Serial.println("Información no recibida");
-    }
+
+    String motor1_kc = motor1_params["kc"];
+    String motor1_ti = motor1_params["ti"];
+    String motor1_sp = motor1_params["sp"];
+    
+    String motor2_kc = motor2_params["kc"];
+    String motor2_ti = motor2_params["ti"];
+    String motor2_sp = motor2_params["sp"];
+     
+    String motor3_kc = motor3_params["kc"];
+    String motor3_ti = motor3_params["ti"];
+    String motor3_sp = motor3_params["sp"];
+    
+    // Impresión de datos
+    Serial.println("------------------------------");
+    Serial.println("motor 1 - kc: " + motor1_kc);
+    Serial.println("motor 1 - ti: " + motor1_ti);
+    Serial.println("motor 1 - sp: " + motor1_sp);
+
+    Serial.println("------------------------------");
+    Serial.println("motor 2 - kc: " + motor2_kc);
+    Serial.println("motor 2 - ti: " + motor2_ti);
+    Serial.println("motor 2 - sp: " + motor2_sp);
+
+    Serial.println("------------------------------");
+    Serial.println("motor 3 - kc: " + motor3_kc);
+    Serial.println("motor 3 - ti: " + motor3_ti);
+    Serial.println("motor 3 - sp: " + motor3_sp);
 
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;

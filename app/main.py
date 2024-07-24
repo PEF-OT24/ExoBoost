@@ -82,7 +82,7 @@ class ExoBoostApp(MDApp):
         self.os_name = self.detect_os()
         
         # Diccionario de etiquetas para la sintonización
-        self.limb: str = "Right leg"
+        self.selected_limb: str = "Right leg"
         self.motors_labels: dict[str] = {
             "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
             "Left leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
@@ -410,7 +410,7 @@ class ExoBoostApp(MDApp):
         pass
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
-    # --------------Imprime valor del slider ----------------
+    # ---------------- Imprime valor del slider ----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
         print(f"Assitance Level: {value}")
@@ -420,16 +420,18 @@ class ExoBoostApp(MDApp):
     def sit_down_stand_up(self):
         print("Sit down/stand up action triggered")
 
-        # PRUEBAS DE MANDAR DATOS
+        # PRUEBAS DE MANDAR DATOS, MOVER DESPUÉS A UN BOTÓN DE SUBMIT
+        # Acción de submit parámetros
         if not self.ble_found: return
 
-        # Se definen los UUIDs y los datos a mandar
+        json_data = self.motor_parameters_pi[self.selected_limb]
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
         service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
         char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
-        test_file = {"motor1": "90"}
 
         # Se mandan los datos
-        self.ble.write_json(service_uuid, char_uuid, test_file)   
+        self.ble.write_json(service_uuid, char_uuid, json_data)   
 
     #Caminar
     def walk(self):
@@ -451,16 +453,16 @@ class ExoBoostApp(MDApp):
         '''
 
         # Se obtiene la selección
-        self.limb = limb
+        self.selected_limb = limb
 
         # Se cambian las etiquetas de los motores
-        new_labels: list[str] = self.motors_labels[self.limb]
+        new_labels: list[str] = self.motors_labels[self.selected_limb]
         self.root.get_screen('Main Window').ids.motor1_label.text = new_labels[0]
         self.root.get_screen('Main Window').ids.motor2_label.text = new_labels[1]
         self.root.get_screen('Main Window').ids.motor3_label.text = new_labels[2]
 
         # Se cambian los valores de los parámetros PI de los motores
-        new_params: dict[dict[str]]= self.motor_parameters_pi[self.limb]
+        new_params: dict[dict[str]]= self.motor_parameters_pi[self.selected_limb]
         # Motor 1
         self.root.get_screen('Main Window').ids.kc_motor1.text = new_params["motor1"]["kc"]
         self.root.get_screen('Main Window').ids.ti_motor1.text = new_params["motor1"]["ti"]
@@ -478,14 +480,14 @@ class ExoBoostApp(MDApp):
                   motor -> número de motor {'motor1', 'motor2', 'motor3'}
                   value -> valor ingresado
         """
-        old_params: dict[dict[str]] = self.motor_parameters_pi[self.limb]
+        old_params: dict[dict[str]] = self.motor_parameters_pi[self.selected_limb]
 
         if self.is_valid(value, 1): # Validación de dato como int
             if param in ["kc", "ti", "sp"]:
-                max_value = self.motor_params_lims[self.limb][motor][param]
+                max_value = self.motor_params_lims[self.selected_limb][motor][param]
                 if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
                     # Si es válido, se actualiza el diccionario de parámetros
-                    self.motor_parameters_pi[self.limb][motor][param] = value
+                    self.motor_parameters_pi[self.selected_limb][motor][param] = value
                 else: # Valor no válido
                     self.param_pi_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
