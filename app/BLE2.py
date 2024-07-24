@@ -253,8 +253,8 @@ class BluetoothManager_App:
                 self.connected = False
                 self.connected_gatt = None
                 self.connected_device = None
-                self.discovered_characteristics = {}
-                self.discovered_services = []
+                self.discovered_characteristics: dict = {}
+                self.discovered_services: list = []
         except Exception as e:
             print(f"Error de Bluetooth al intentar desconectarse: {e}")
 
@@ -357,10 +357,13 @@ class BluetoothManager_App:
             # Se escribe la característica
             self.connected_gatt.writeCharacteristic(characteristic)
 
-            # Se guarda la configuración de la característica
+            # Se guarda la configuración de la característica en la lista original 
+            print("Intento de guardar característica en la lista original")
             print(self.discovered_characteristics[service_uuid])
-            for el in self.discovered_characteristics[service_uuid]: print(el)
-            # self.discovered_characteristics[service_uuid][index] = characteristic
+            for i, el in enumerate(self.discovered_characteristics[service_uuid]): print(f"index: {i}, el: {el}")
+            print(index)
+            print(characteristic)
+            self.discovered_characteristics[service_uuid][index] = characteristic
 
         except Exception as e:
             print("Característica no encontrada")

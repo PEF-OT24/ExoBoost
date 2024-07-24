@@ -9,7 +9,7 @@
 
 // Definición de servicios y sus características
 #define SERVICE_UUID_PARAMS "00000001-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PI| "0000000a-0000-1000-8000-00805f9b34fa"
+#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"
 
 // Estos no se usan 
 #define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
@@ -70,10 +70,10 @@ class BLECallbacks: public BLECharacteristicCallbacks {
     // Recibe el valor y se comprueba que no haya errores. 
     String testvalue = jsonrec["motor1"];
     if (testvalue != "null") {
-      Serial.println("Información no recibida")
+      Serial.println(testvalue);
     }
     else{
-      Serial.println(testvalue);
+      Serial.println("Información no recibida");
     }
 
     // Enviar notificación de éxito en formato JSON
@@ -125,7 +125,7 @@ void setup() {
 
   // Habilita la publicidad del servidor BLE
   pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->addServiceUUID(SERVICE_UUID_PARAMS);
   pAdvertising->start();
   
   Serial.println("Servidor BLE iniciado y esperando conexiones...");
