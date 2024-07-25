@@ -86,7 +86,7 @@ void setup() {
     //set_acceleration(1,500,true);
     //set_incremental_position(1, 90, 360, true);
     //set_speed(1, 360, true);
-    set_absolute_position(1, 90, 0, true);
+    //set_absolute_position(1, 90, 1000, true);
     //set_stposition(1,90,1000,0,true);
 }
 
@@ -122,7 +122,7 @@ void CAN0IntHandler(void) {
         CANIntClear(CAN0_BASE, 1);
         // Handle the received message
         sMsgObjectRx.pui8MsgData = CANBUSReceive;
-        CANMessageGet(CAN0_BASE, 2, &sMsgObjectRx, false);
+        CANMessageGet(CAN0_BASE, 1, &sMsgObjectRx, false);
     }
 }
 
@@ -166,8 +166,8 @@ void SendParameters(){
   uint8_t CANBUSSend_PIDvalues[8u];
 
   // Define PID parameter values
-  CANBUSSend_PIDvalues[0] = 0x32; 
-  CANBUSSend_PIDvalues[1] = 0x00;
+  CANBUSSend_PIDvalues[0] = 0x64; 
+  CANBUSSend_PIDvalues[1] = 0x32;
   CANBUSSend_PIDvalues[2] = 0x64;
   CANBUSSend_PIDvalues[3] = 0x32;
   CANBUSSend_PIDvalues[4] = 0x64;
@@ -286,8 +286,8 @@ void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, b
   // Define el setpoint de la velocidad
   CAN_data_TX[0] = 0xA4;
   CAN_data_TX[1] = 0x00;
-  CAN_data_TX[2] = 0;
-  CAN_data_TX[3] = 0;
+  CAN_data_TX[2] = byteArray_speed[1];
+  CAN_data_TX[3] = byteArray_speed[0];
   CAN_data_TX[4] = byteArray_position[3];
   CAN_data_TX[5] = byteArray_position[2];
   CAN_data_TX[6] = byteArray_position[1];
@@ -437,10 +437,11 @@ void reset_motor(int8_t ID){
   CAN_data_TX[7] = 0x00;
 
   // Se envía el mensaje
-  send_cmd(ID, CAN_data_TX, false);
+  send_cmd(ID, CAN_data_TX, true);
 }
 
 void loop() {
   //set_stposition(1,90,5000,1,true);
-  set_torque(1,1,true);
+
+  
 }
