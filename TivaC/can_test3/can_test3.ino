@@ -420,7 +420,7 @@ void stop_motor(int8_t ID){
   CAN_data_TX[7] = 0x00;
 
   // Se envía el mensaje
-  send_cmd(ID, CAN_data_TX, show);
+  send_cmd(ID, CAN_data_TX, false);
 }
 
 void shutdown_motor(int8_t ID){
@@ -440,7 +440,7 @@ void shutdown_motor(int8_t ID){
   CAN_data_TX[7] = 0x00;
 
   // Se envía el mensaje
-  send_cmd(ID, CAN_data_TX, show);
+  send_cmd(ID, CAN_data_TX, false);
 }
 
 
@@ -461,7 +461,7 @@ void reset_motor(int8_t ID){
   CAN_data_TX[7] = 0x00;
 
   // Se envía el mensaje
-  send_cmd(ID, CAN_data_TX, show);
+  send_cmd(ID, CAN_data_TX, false);
 }
 
 void loop() {
