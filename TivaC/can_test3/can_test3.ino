@@ -184,10 +184,7 @@ void SendParameters(){
 
 void ReadParameters(int8_t ID, bool show){
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
   
   // Define el setpoint de la velocidad
   CAN_data_TX[0] = 0x30;
@@ -206,7 +203,6 @@ void ReadParameters(int8_t ID, bool show){
 void set_speed(int8_t ID, int64_t speed_ref, bool show){
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
   uint8_t CAN_data_TX[8u];
 
   // Escala el valor a enviar 0.01 dps/LSB
@@ -231,10 +227,7 @@ void set_speed(int8_t ID, int64_t speed_ref, bool show){
 void read_acceleration(int8_t ID, bool show){
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
   
   // Define el setpoint de la velocidad
   CAN_data_TX[0] = 0x42;
@@ -253,10 +246,7 @@ void read_acceleration(int8_t ID, bool show){
 void set_acceleration(int8_t ID, int64_t accel_ref, bool show){
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
 
   // Escala el valor a enviar 0.01 dps/LSB
   int32_t sp = accel_ref * 100;
@@ -281,10 +271,7 @@ void set_acceleration(int8_t ID, int64_t accel_ref, bool show){
 void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, bool show){ // NO FUNCIONA
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
 
   // Escala el valor a enviar 0.01 dps/LSB
   int32_t sp = position_ref * 100;
@@ -313,10 +300,7 @@ void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, b
 void set_incremental_position(int8_t ID, int32_t position_inc, int16_t max_speed, bool show){ 
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
 
   // Escala el valor a enviar 0.01 dps/LSB
   int32_t sp = position_inc * 100;
@@ -345,10 +329,7 @@ void set_incremental_position(int8_t ID, int32_t position_inc, int16_t max_speed
 void set_stposition(int8_t ID, int16_t position_inc, int16_t max_speed, int8_t direction, bool show){ 
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
 
   // Escala el valor a enviar 0.01 dps/LSB
   int32_t sp = position_inc * 100;
@@ -377,8 +358,6 @@ void set_stposition(int8_t ID, int16_t position_inc, int16_t max_speed, int8_t d
 void set_torque(int8_t ID, int64_t current_torque, bool show){ 
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-  tCANMsgObject Message_Rx;
   uint8_t CAN_data_TX[8u];
   uint8_t CAN_data_RX[8u];
 
@@ -406,7 +385,6 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
 void stop_motor(int8_t ID){
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
   uint8_t CAN_data_TX[8u];
 
   // Reset del motor
@@ -426,7 +404,6 @@ void stop_motor(int8_t ID){
 void shutdown_motor(int8_t ID){
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
   uint8_t CAN_data_TX[8u];
 
   // Reset del motor
@@ -447,7 +424,6 @@ void shutdown_motor(int8_t ID){
 void reset_motor(int8_t ID){
   
   // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
   uint8_t CAN_data_TX[8u];
 
   // Reset del motor
