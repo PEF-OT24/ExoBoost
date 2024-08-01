@@ -314,8 +314,9 @@ WindowManager:
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0.5,'center_y':0.5}
                             height: root.height*0.065
+                            width: root.width*0.5
                         Widget:
-                # Aquí va un spinner se agregará después cuando funcione el método de conexión
+                # Spinner que gira mientras se buscan dispositivos
                     MDSpinner:
                         id: loading_spinner
                         size_hint: None, None
@@ -330,9 +331,6 @@ WindowManager:
                         size_hint_x: None
                         adaptative_width: True
                         width: root.width*0.4
-                        #width: dp(300)
-                        #width: device_list.width
-                        #width: self.width 
                         height: self.height
                         do_scroll_y: True
                         scroll_type: ['bars','content']
@@ -346,19 +344,23 @@ WindowManager:
                             id: device_list
                             cols: 1
                             size_hint_y: None
-                            #pos: self.pos
-                            #halign: 'center'
                             pos_hint: {'center_x':0.5}
                             height: self.minimum_height
-                            #padding: dp(20)
-                            #width: self.minimum_width
-                            #width: root.width*0.5
                             width: devices_scroll.width
                             on_children:
                                 self.height = self.minimum_height
-                                #self.width = self.minimum_width
-                    Widget:
-                        height: '10dp'
+                    
+                    #Label para describir estado de conexión Bluetooth
+                    MDLabel:
+                        id: bt_state
+                        text: "Connection State"
+                        font_name: "Roboto" # Roboto para texto y subtítulos
+                        font_size: "15sp" 
+                        halign: "center"
+                        pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
+                        theme_text_color: "Custom"
+                        text_color: app.colors["Cyan"]
+
             #-------------------- Botón para conectarse/desconectarse a un dispositivo ----------------------------
                     BoxLayout:
                         size_hint_y: None
@@ -673,6 +675,12 @@ WindowManager:
                                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                                     theme_icon_color: "Custom"
                                     icon_color: app.colors['White']
+                                    
+                                    on_press: 
+                                        self.md_bg_color = app.colors['Light Orange']
+                                        app.send_params()
+                                    on_release: self.md_bg_color = app.colors['Cyan']
+
                                     md_bg_color: app.colors['Cyan']
                         
             # --------------------------- Parámetros PI del motor 1 ------------------------- 

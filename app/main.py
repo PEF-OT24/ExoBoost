@@ -380,22 +380,27 @@ class ExoBoostApp(MDApp):
 
     def connect_disconnect(self): 
         '''Método para conectar/disconectar dispositivo'''
-        # LÓGICA PARA CAMBIAR EL 
-        # COLOR DE FONDO DEL BOTON
-        # TEXTO DEL BOTON
         # No hace ninguna acción si no hay un dispositivo seleccionado o si el BLE no está disponible
         if not self.selected_device or not self.ble_found: return
 
         if not self.ble.connected:
             success = self.ble.connect(self.selected_device) # SE DEBERÍA DE PONER EN OTRO THREAD
             print(f"Dispositivo conectado: {success}")
+            # Se cambia el texto del boton
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
+            # Se cambia el texto del label y se muestra a que dispositivo se conectó
+            self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {success}"
+            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
         else:
             # Se realiza desconexión y se limpia el dispositivo seleccionado
             self.ble.disconnect()
             self.selected_device = None
+            # Se cambia el texto del boton
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Connect"
+            # Se ambia el texto del label
+            self.root.get_screen('Main Window').ids.bt_state.text = "Disconnected"
+            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
@@ -438,6 +443,7 @@ class ExoBoostApp(MDApp):
 
         # Se obtiene la selección
         self.limb = limb
+        print(f"Selected limb: {self.limb}")
 
         # Se cambian las etiquetas de los motores
         new_labels: list[str] = self.motors_labels[self.limb]
@@ -472,10 +478,17 @@ class ExoBoostApp(MDApp):
                 if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
                     # Si es válido, se actualiza el diccionario de parámetros
                     self.motor_parameters_pi[self.limb][motor][param] = value
+                    print(f"Parametro {param} de {motor} actualizado a {value}")
                 else: # Valor no válido
                     self.param_pi_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
             self.param_pi_entries[motor][param].text = old_params[motor][param]
+    
+    def send_params(self) -> None: 
+        '''
+        Método para enviar los parámetros de PI actualizados
+        '''
+        print("New parameters sent")
     
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
