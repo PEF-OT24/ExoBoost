@@ -375,5 +375,3 @@ class BluetoothManager_App:
         self.write(service_uuid, characteristic_uuid, json.dumps(data))
 
     def read(self, service_uuid: str, characteristic_uuid: str): pass # type: ignore 
-
-    
