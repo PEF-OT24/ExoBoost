@@ -424,7 +424,9 @@ class ExoBoostApp(MDApp):
         # Acción de submit parámetros
         if not self.ble_found: return
 
+        # Se define la información a mandar
         json_data = self.motor_parameters_pi[self.selected_limb]
+        json_data["limb"] = self.selected_limb
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
         service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string

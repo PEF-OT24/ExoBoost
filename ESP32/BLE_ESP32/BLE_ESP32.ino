@@ -21,8 +21,24 @@
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
 
+// Declara variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
+
+String selected_limb; // Articulación seleccionada actual 
+String state; // Estado del proceso actual
+// Declara variables para los parámetros
+String motor1_kc;
+String motor1_ti;
+String motor2_kc;
+String motor2_ti;
+String motor3_kc;
+String motor3_ti;
+
+// Declara variables para la variable de proceso
+String motor1_sp;
+String motor2_sp;
+String motor3_sp;
 
 // Clase que maneja los eventos de conexión y desconexión
 class ServerCallbacks: public BLEServerCallbacks {
@@ -40,9 +56,8 @@ class ServerCallbacks: public BLEServerCallbacks {
   }
 };
 
-// Clase que maneja los eventos de lectura y escritura en la característica de parámetros de sintonización
-class BLECallbacks: public BLECharacteristicCallbacks {
-
+// Clase callback que maneja los datos escritos en la característica de parámetros PI
+class BLECallback_PI: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
     Serial.println("Característica leída por el cliente");
@@ -71,25 +86,24 @@ class BLECallbacks: public BLECharacteristicCallbacks {
     StaticJsonDocument<200> motor1_params = jsonrec["motor1"];
     StaticJsonDocument<200> motor2_params = jsonrec["motor2"];
     StaticJsonDocument<200> motor3_params = jsonrec["motor3"];
+    selected_limb = String((const char*)jsonrec["limb"]);
 
-    if (motor1_params == "null" or motor2_params == "null" or motor3_params == "null") {
+    if (motor1_params == "null" or motor2_params == "null" or motor3_params == "null" or selected_limb == "null") {
       Serial.println("Error al mandar los parámetros.");
       return;
     }
 
-    String motor1_kc = motor1_params["kc"];
-    String motor1_ti = motor1_params["ti"];
-    String motor1_sp = motor1_params["sp"];
+    motor1_kc = String(motor1_params["kc"]);
+    motor1_ti = String(motor1_params["ti"]);
+  
+    motor2_kc = String(motor2_params["kc"]);
+    motor2_ti = String(motor2_params["ti"]);
     
-    String motor2_kc = motor2_params["kc"];
-    String motor2_ti = motor2_params["ti"];
-    String motor2_sp = motor2_params["sp"];
-     
-    String motor3_kc = motor3_params["kc"];
-    String motor3_ti = motor3_params["ti"];
-    String motor3_sp = motor3_params["sp"];
-    
+    motor3_kc = String(motor3_params["kc"]);
+    motor3_ti = String(motor3_params["ti"]);
+
     // Impresión de datos
+    Serial.println("\nExtremidad seleccionada: " + selected_limb);
     Serial.println("------------------------------");
     Serial.println("motor 1 - kc: " + motor1_kc);
     Serial.println("motor 1 - ti: " + motor1_ti);
@@ -115,6 +129,100 @@ class BLECallbacks: public BLECharacteristicCallbacks {
   } // fin de onWrite
 };
 
+// Clase de Callback para manejar la información de la característica de la variable de proceso 
+class BLECallback_PV : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica leída por el cliente");
+  } // fin de onRead
+
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica escrita: " + String(value.c_str()));
+
+    // Procesa los datos recibidos en formato JSON
+    StaticJsonDocument<200> jsonrec;
+    DeserializationError error = deserializeJson(jsonrec, value);
+
+    Serial.println("Mensaje recibido: ");
+    serializeJson(jsonrec, Serial);
+
+    // Valida el formato del JSON
+    if (error) {
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+
+    // Recibe el valor y se comprueba que no haya errores. 
+    motor1_sp = String(jsonrec["motor1"]);
+    motor2_sp = String(jsonrec["motor2"]);
+    motor3_sp = String(jsonrec["motor3"]);
+    selected_limb = String(jsonrec["limb"]);
+
+    // Se comprueba que no haya errores
+    if (motor1_sp == "null" or motor2_sp == "null" or motor3_sp == "null" or selected_limb == "null") {
+      Serial.println("Error al mandar los parámetros.");
+      return;
+    }
+
+    // Enviar notificación de éxito en formato JSON
+    StaticJsonDocument<200> jsonrep;
+    jsonrep["response"] = "Success";
+    char responseBuffer[200];
+    serializeJson(jsonrep, responseBuffer);
+    pCharacteristic->setValue("Write response");
+    pCharacteristic->notify();
+  }
+};
+
+// Clase de Callback para manejar la información de la característica de la variable del estado 
+class BLECallback_MODE : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica leída por el cliente");
+  } // fin de onRead
+
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica escrita: " + String(value.c_str()));
+
+    // Procesa los datos recibidos en formato JSON
+    StaticJsonDocument<200> jsonrec;
+    DeserializationError error = deserializeJson(jsonrec, value);
+
+    Serial.println("Mensaje recibido: ");
+    serializeJson(jsonrec, Serial);
+
+    // Valida el formato del JSON
+    if (error) {
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+
+    // Recibe el valor y se comprueba que no haya errores. 
+    state = String(jsonrec["state"]);
+    selected_limb = String(jsonrec["limb"]);
+
+    // Se comprueba que no haya errores
+    if (state == "null" or selected_limb == "null") {
+      Serial.println("Error al mandar los parámetros.");
+      return;
+    }
+
+    // Enviar notificación de éxito en formato JSON
+    StaticJsonDocument<200> jsonrep;
+    jsonrep["response"] = "Success";
+    char responseBuffer[200];
+    serializeJson(jsonrep, responseBuffer);
+    pCharacteristic->setValue("Write response");
+    pCharacteristic->notify();
+  }
+};
+
 void setup() {
   // Inicializa el puerto serie para la depuración
   Serial.begin(115200);
@@ -129,32 +237,61 @@ void setup() {
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
 
-  // Crea el servicio BLE 
-  BLEService *pService = pServer->createService(SERVICE_UUID_PARAMS);
-
+  // Crea el servicio de envío de parámetros de PI
+  BLEService *pService_PI = pServer->createService(SERVICE_UUID_PARAMS);
   // Crea la característica BLE para recibir datos del PI
-  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+  BLECharacteristic *pCharacteristic_PI = pService_PI->createCharacteristic(
                                          CHARACTERISTIC_UUID_PI,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
                                          BLECharacteristic::PROPERTY_NOTIFY |
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
-  pCharacteristic->setCallbacks(new BLECallbacks());
+  pCharacteristic_PI->setCallbacks(new BLECallback_PI());
 
-  // Añade un valor inicial a la característica en formato JSON
+  // Crea el servicio de envío de parámetros de PV
+  BLEService *pService_PV = pServer->createService(SERVICE_UUID_PROCESS);
+  // Crea la característica BLE para recibir datos de la PV
+  BLECharacteristic *pCharacteristic_PV = pService_PV->createCharacteristic(
+                                         CHARACTERISTIC_UUID_PV,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_PV->setCallbacks(new BLECallback_PV());
+
+  // Crea el servicio de envío de valor del estado
+  BLEService *pService_MODE = pServer->createService(SERVICE_UUID_COMMAND);
+  // Crea la característica BLE para recibir datos de la PV
+  BLECharacteristic *pCharacteristic_MODE = pService_MODE->createCharacteristic(
+                                         CHARACTERISTIC_UUID_MODE,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_MODE->setCallbacks(new BLECallback_MODE());
+
+  // Inicialización de las características
   StaticJsonDocument<200> doc;
   doc["mensaje"] = "Hola, cliente!";
   char buffer[200];
   serializeJson(doc, buffer);
-  pCharacteristic->setValue(buffer);
+  pCharacteristic_PI->setValue(buffer);
+  pCharacteristic_PV->setValue(buffer);
+  pCharacteristic_MODE->setValue(buffer);
 
   // Inicia el servicio BLE
-  pService->start();
+  pService_PI->start();
+  pService_PV->start();
+  pService_MODE->start();
 
   // Habilita la publicidad del servidor BLE
   pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID_PARAMS);
+  pAdvertising->addServiceUUID(SERVICE_UUID_PROCESS);
+  pAdvertising->addServiceUUID(SERVICE_UUID_COMMAND);
   pAdvertising->start();
   
   Serial.println("Servidor BLE iniciado y esperando conexiones...");
