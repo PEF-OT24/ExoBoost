@@ -253,6 +253,7 @@ class ExoBoostApp(MDApp):
             ]
         except: 
             # Información no encontrada
+            print("Información no encontrada")
             self.team_info = self.info_project = "No info found"
 
         self.device_widgets_list: Grid = self.root.get_screen("Main Window").ids.device_list
@@ -425,7 +426,21 @@ class ExoBoostApp(MDApp):
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
-        pass
+        # PRUEBAS DE MANDAR DATOS, MOVER DESPUÉS A UN BOTÓN DE SUBMIT
+        # Acción de submit parámetros
+        print("función de enviar parámetros")
+        if not self.ble_found: return
+
+        # Se define la información a mandar
+        json_data = self.motor_parameters_pi[self.selected_limb]
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
+
+        # Se mandan los datos
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
     # ---------------- Imprime valor del slider ----------------
@@ -438,20 +453,7 @@ class ExoBoostApp(MDApp):
     def sit_down_stand_up(self):
         print("Sit down/stand up action triggered")
 
-        # PRUEBAS DE MANDAR DATOS, MOVER DESPUÉS A UN BOTÓN DE SUBMIT
-        # Acción de submit parámetros
-        if not self.ble_found: return
-
-        # Se define la información a mandar
-        json_data = self.motor_parameters_pi[self.selected_limb]
-        json_data["limb"] = self.selected_limb
-
-        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
-        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
-        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
-
-        # Se mandan los datos
-        self.ble.write_json(service_uuid, char_uuid, json_data)   
+  
 
     #Caminar
     def walk(self):
@@ -512,12 +514,6 @@ class ExoBoostApp(MDApp):
                     self.param_pi_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
             self.param_pi_entries[motor][param].text = old_params[motor][param]
-    
-    def send_params(self) -> None: 
-        '''
-        Método para enviar los parámetros de PI actualizados
-        '''
-        print("New parameters sent")
     
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
