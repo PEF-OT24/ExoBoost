@@ -68,7 +68,7 @@ class ErrorPopup(Popup):
     def __init__(self, **kwargs):
         super(ErrorPopup, self).__init__(**kwargs)
 
-class ExoBoostApp(MDApp):  
+class ExoBoostApp(MDApp):
     #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
     def __init__(self, **kwargs):
         '''Se inicilizan todos los métodos, el set up de la lógica y se definen atributos'''
@@ -325,11 +325,14 @@ class ExoBoostApp(MDApp):
     #----------------------------------------------------- Métodos de menú de Bluetooth -----------------------------------------
     def search_devices(self):
         '''Busca dispositivos Bluetooth, los almacena y los muestra en el ScrollView'''
-        # PONER EL SPINNER PARA ESPERAR AL ESCANEO, SE PUEDE HACER EN UN THREAD SEPARADO SECUNDARIO
         if self.ble_found:
             # Estado del bluetooth
             print(f"Bluetooth habilitado: {self.ble.is_bluetooth_enabled()}\n")  
-
+            
+            # Aqui se activa el spinner
+            self.root.get_screen("Main Window").ids.loading_spinner.active = True
+            
+            # Lógica de escaneo
             # Se inicia el escaneo durante 5 segundos y se obtiene la lista de dispositivos
             self.ble.resetBLE() # Se reinica el escaneo
             self.ble.start_ble_scan()
@@ -337,7 +340,9 @@ class ExoBoostApp(MDApp):
             scanning.start()
         else: 
             print("Bluetooth no disponible")
-            devices = ["Dispositivo 3", "Dispositivo 2", "Dispositivo 1"]
+            # Aqui el spinner se desactiva
+            self.root.get_screen("Main Window").ids.loading_spinner.active = False
+            devices = ["Dispositivo 1", "Dispositivo 2", "Dispositivo 3", "Dispositivo 4", "Dispositivo 5"] 
             # Se muestran los resutlados en la pantalla
             self.show_devices(devices)
 
@@ -346,6 +351,9 @@ class ExoBoostApp(MDApp):
         Método que muestra los elementos de una lista en el ScrollView
         Entrada: devices list[str] -> lista de dispositivos
         '''
+        # Aqui el spinner tmb se desactiva
+        self.root.get_screen("Main Window").ids.loading_spinner.active = False
+        
         # --------- Lógica de la lista ---------------
         self.device_widgets_list.clear_widgets()  # Limpiar widgets anteriores
         print("show devices method")
@@ -368,16 +376,19 @@ class ExoBoostApp(MDApp):
                 widget.md_bg_color = self.colors["Dark Blue"]
 
     def perfom_scanning(self, time: float = 5.0):
+        self.is_scanning = True
         print("perfom scanning method")
         '''Método para iniciar escaneo de dispositivos''' 
         def stop_scanning(): 
             '''Detiene el escaneo y muestra los resultados'''
+            self.root.get_screen("Main Window").ids.loading_spinner.active = False
             devices = self.ble.stop_ble_scan()
             # Se actualiza el ScrollView en el main Thread
             Clock.schedule_once(lambda x: self.show_devices(devices))
         # Acción que se ejecuta después de time segundos
         timer_ble = Timer(time, stop_scanning)
         timer_ble.start()
+
 
     def connect_disconnect(self): 
         '''Método para conectar/disconectar dispositivo'''
@@ -398,12 +409,19 @@ class ExoBoostApp(MDApp):
             # self.connection_successful = self.ble.connect(self.selected_device) # SE DEBERÍA DE PONER EN OTRO THREAD
             print(f"Dispositivo conectado: {self.connection_successful}")
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
+            # Se cambia el texto del label y se muestra a que dispositivo se conectó
+            self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.connection_successful}"
+            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
         else:
             # Se realiza desconexión y se limpia el dispositivo seleccionado
             self.ble.disconnect()
             self.selected_device = None
+            # Se cambia el texto del boton
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Connect"
+            # Se ambia el texto del label
+            self.root.get_screen('Main Window').ids.bt_state.text = "Disconnected"
+            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
@@ -494,6 +512,12 @@ class ExoBoostApp(MDApp):
                     self.param_pi_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
             self.param_pi_entries[motor][param].text = old_params[motor][param]
+    
+    def send_params(self) -> None: 
+        '''
+        Método para enviar los parámetros de PI actualizados
+        '''
+        print("New parameters sent")
     
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):

@@ -1,4 +1,4 @@
-# ExoBoost
+# ExoBoost 🦿
 
 _Este proyecto tiene el propósito de generar un exoesqueleto de asistencia motriz a usuarios con movilidad limitada._
 
@@ -84,8 +84,12 @@ Usamos [SemVer](http://semver.org/) para el versionado. Para todas las versiones
 
 _Menciona a todos aquellos que ayudaron a levantar el proyecto desde sus inicios_
 
-* **Andrés Villanueva** - *Trabajo Inicial* - [villanuevand](https://github.com/villanuevand)
-* **Fulanito Detal** - *Documentación* - [fulanitodetal](#fulanito-de-tal)
+* **Carlos Reyes** - *IMT* - [reyesgithub](#reyesgithub)
+* **David Villanueva** - *IMT* - [villagithub](#villahithub)
+* **Eduardo Martinez** - *IDA / IMT* - [lalogithub](#lalogithub)
+* **Itzel Martinez** - *IBI / IMT* - [itzelgithub](#itzelgithub)
+* **Teresa Hernandez** - *IMT* - [teregithub](#teregithub)
+
 
 También puedes mirar la lista de todos los [contribuyentes](https://github.com/your/project/contributors) quíenes han participado en este proyecto. 
 
@@ -104,4 +108,3 @@ Este proyecto está bajo la Licencia (Tu Licencia) - mira el archivo [LICENSE.md
 
 
 ---
-⌨️ con ❤️ por [Villanuevand](https://github.com/Villanuevand) 😊

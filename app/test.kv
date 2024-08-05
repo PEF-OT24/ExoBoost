@@ -38,9 +38,14 @@
 # Clase para dar formato a dispositivos desplegados y que funcionen como botones
 <ButtonDevices>:
     text: ""
-    size_hint_y: None
-    height: dp(40)  # Altura fija para cada fila
-    width: root.width
+    #size_hint_y: None
+    size_hint_x: None
+    #height: dp(200)  # Altura fija para cada fila
+    #width: root.width
+    width: dp(200)
+    #adjust_width: True
+    #width: device_list.width
+    #size: self.size
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
 
     #Texto dentro del boton
@@ -48,8 +53,7 @@
     font_name: "Roboto"
     theme_text_color: "Custom"
     text_color: app.colors["White"]
-    halign: 'left'
-    
+    #halign: 'left'
     #Fondo del boton y efectos
     md_bg_color: app.colors["Dark Blue"]
     ripple_effect: False
@@ -310,50 +314,53 @@ WindowManager:
                             md_bg_color: app.colors["Cyan"]
                             pos_hint: {'center_x':0.5,'center_y':0.5}
                             height: root.height*0.065
+                            width: root.width*0.5
                         Widget:
-                # Aquí va un spinner se agregará después cuando funcione el método de conexión
-                    # MDSpinner:
-                    #     id: loading_spinner
-                    #     size_hint: None, None
-                    #     size: dp(46), dp(46)
-                    #     color: app.colors['Light Orange']
-                    #     pos_hint: {'center_x':0.5,'center_y':0.5}
-                    #     active: True
+                # Spinner que gira mientras se buscan dispositivos
+                    MDSpinner:
+                        id: loading_spinner
+                        size_hint: None, None
+                        size: dp(46), dp(46)
+                        color: app.colors['Light Orange']
+                        pos_hint: {'center_x':0.5,'center_y':0.5}
+                        active: False
             # ------------------ Menu con dispositivos disponibles ------------------------
                     ScrollView:
                         id: devices_scroll
                         pos_hint: {'center_x':0.5}
                         size_hint_x: None
                         adaptative_width: True
-                        width: root.width*0.6
-                        #width: root.width*0.5
-                        #width: device_list.width
+                        width: root.width*0.4
                         height: self.height
                         do_scroll_y: True
+                        scroll_type: ['bars','content']
                         bar_margin: 3
                         bar_width: 5
                         bar_color: app.colors['Light Orange']
                         bar_inactive_color: app.colors['Light Orange']
                         effect_cls: "DampedScrollEffect"
-                        scroll_type: ['bars','content']
                         
                         GridLayout:
                             id: device_list
                             cols: 1
                             size_hint_y: None
-                            #pos: self.pos
-                            #halign: 'center'
                             pos_hint: {'center_x':0.5}
                             height: self.minimum_height
-                            #padding: dp(20)
-                            #width: self.minimum_width
-                            #width: root.width*0.5
                             width: devices_scroll.width
                             on_children:
                                 self.height = self.minimum_height
-                                #self.width = self.minimum_width
-                    Widget:
-                        height: '10dp'
+                    
+                    #Label para describir estado de conexión Bluetooth
+                    MDLabel:
+                        id: bt_state
+                        text: "Connection State"
+                        font_name: "Roboto" # Roboto para texto y subtítulos
+                        font_size: "15sp" 
+                        halign: "center"
+                        pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
+                        theme_text_color: "Custom"
+                        text_color: app.colors["Cyan"]
+
             #-------------------- Botón para conectarse/desconectarse a un dispositivo ----------------------------
                     BoxLayout:
                         size_hint_y: None
@@ -608,7 +615,7 @@ WindowManager:
                     GridLayout: # Distribución principal del menú como GridLayout de 5 filas
                         rows: 5
                         cols: 1
-                        padding: dp(10), dp(10)
+                        padding: dp(10)
                         spacing: dp(5)
 
             # ---------------------------------- Título del Menú -------------------------------------------- 
@@ -626,30 +633,55 @@ WindowManager:
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
             # ----------------------- Menú desplegable para la selección de la articulación ------------
+                        
                         BoxLayout: 
                             orientation: "vertical"
                             size_hint: None, None
-                            size: (root.width*0.95, dp(50))
+                            #size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            
+                            GridLayout: 
+                                rows: 1
+                                cols: 3
+                                #padding: dp(10), dp(10)
+                                spacing: dp(10)
+                            
+                                BoxLayout:
+                                    orientation: "vertical"
+                                    size_hint: None, None
+                                Spinner:
+                                    id: limb_dropdown
+                                    text: "Right Leg"
+                                    values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
+                                    
+                                    # Personalización
+                                    size_hint: None, None
+                                    size: (dp(200), dp(45))
+                                    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
+                                    sync_height: True
 
-                            Spinner:
-                                id: limb_dropdown
-                                text: "Right Leg"
-                                values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
-                                
-                                # Personalización
-                                size_hint: None, None
-                                size: (dp(200), dp(45))
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
-                                sync_height: True
+                                    # Definición de colores
+                                    background_color: app.colors["Dark Blue"]
+                                    color: app.colors["Cyan"]
+                                    
+                                    # Acciones
+                                    on_text: app.limb_dropdown_clicked(limb_dropdown.text)
+                                    option_cls: Factory.sp #Formato personalizado al inicio
+                                # BoxLayout:
+                                #     orientation: "vertical"
+                                MDIconButton:
+                                    id: upload_pid
+                                    icon: "upload-multiple"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    theme_icon_color: "Custom"
+                                    icon_color: app.colors['White']
+                                    
+                                    on_press: 
+                                        self.md_bg_color = app.colors['Light Orange']
+                                        app.send_params()
+                                    on_release: self.md_bg_color = app.colors['Cyan']
 
-                                # Definición de colores
-                                background_color: app.colors["Dark Blue"]
-                                color: app.colors["Cyan"]
-                                
-                                # Acciones
-                                on_text: app.limb_dropdown_clicked(limb_dropdown.text)
-                                option_cls: Factory.sp #Formato personalizado al inicio
+                                    md_bg_color: app.colors['Cyan']
                         
             # --------------------------- Parámetros PI del motor 1 ------------------------- 
                         BoxLayout: #ROW 3 

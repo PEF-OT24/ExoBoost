@@ -39,6 +39,14 @@ class ColorManager():
                 "color": "FFFFFF",
                 "transparency": "255"
             },
+            "Red": {
+                "color": "FF0000",
+                "transparency": "255"
+            },
+            "Green": {
+                "color": "50C878",
+                "transparency": "255"
+            },
         }
 
         # Creates a list of available colors names
