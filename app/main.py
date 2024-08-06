@@ -390,30 +390,27 @@ class ExoBoostApp(MDApp):
         timer_ble = Timer(time, stop_scanning)
         timer_ble.start()
 
-
     def connect_disconnect(self): 
         '''Método para conectar/disconectar dispositivo'''
 
         def perform_connection():
             '''Método para realizar la conexión'''
             self.connection_successful = self.ble.connect(self.selected_device)
-        # LÓGICA PARA CAMBIAR EL 
-        # COLOR DE FONDO DEL BOTON
-        # TEXTO DEL BOTON
 
         # No hace ninguna acción si no hay un dispositivo seleccionado o si el BLE no está disponible
         if not self.selected_device or not self.ble_found: return
 
+        # Cuando no está conectado, se conecta
         if not self.ble.connected:
             t = Thread(target=perform_connection)
             t.start()
-            # self.connection_successful = self.ble.connect(self.selected_device) # SE DEBERÍA DE PONER EN OTRO THREAD
             print(f"Dispositivo conectado: {self.connection_successful}")
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
             # Se cambia el texto del label y se muestra a que dispositivo se conectó
-            self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.connection_successful}"
+            self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
+        # Cuando está conectado, se desconecta
         else:
             # Se realiza desconexión y se limpia el dispositivo seleccionado
             self.ble.disconnect()
@@ -426,12 +423,12 @@ class ExoBoostApp(MDApp):
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
-        # PRUEBAS DE MANDAR DATOS, MOVER DESPUÉS A UN BOTÓN DE SUBMIT
+        
         # Acción de submit parámetros
         print("función de enviar parámetros")
         if not self.ble_found: return
 
-        # Se define la información a mandar
+        # Se define la información a mandar con la limb
         json_data = self.motor_parameters_pi[self.selected_limb]
         json_data["limb"] = self.selected_limb
 
@@ -451,9 +448,22 @@ class ExoBoostApp(MDApp):
     #------- Imprimen acciones en botones de asistencia -----
     # Pararse/Sentarse
     def sit_down_stand_up(self):
-        print("Sit down/stand up action triggered")
+        '''Método para enviar el estado de sentarse/pararse'''
+        
+        # Acción de submit parámetros
+        print("Acción de sentado/parado")
+        if not self.ble_found: return
 
-  
+        # Se define la información a mandar con la limb
+        json_data = {"state": "sit_down_stand_up"}
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
+
+        # Se mandan los datos
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #Caminar
     def walk(self):

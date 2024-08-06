@@ -30,15 +30,18 @@ String state; // Estado del proceso actual
 // Declara variables para los parámetros
 String motor1_kc;
 String motor1_ti;
+String motor1_sp;
 String motor2_kc;
 String motor2_ti;
+String motor2_sp;
 String motor3_kc;
 String motor3_ti;
+String motor3_sp;
 
 // Declara variables para la variable de proceso
-String motor1_sp;
-String motor2_sp;
-String motor3_sp;
+String motor1_pv;
+String motor2_pv;
+String motor3_pv;
 
 // Clase que maneja los eventos de conexión y desconexión
 class ServerCallbacks: public BLEServerCallbacks {
@@ -95,12 +98,15 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
 
     motor1_kc = String(motor1_params["kc"]);
     motor1_ti = String(motor1_params["ti"]);
+    motor1_sp = String(motor1_params["sp"]);
   
     motor2_kc = String(motor2_params["kc"]);
     motor2_ti = String(motor2_params["ti"]);
+    motor2_sp = String(motor1_params["sp"]);
     
     motor3_kc = String(motor3_params["kc"]);
     motor3_ti = String(motor3_params["ti"]);
+    motor3_sp = String(motor1_params["sp"]);
 
     // Impresión de datos
     Serial.println("\nExtremidad seleccionada: " + selected_limb);
@@ -156,16 +162,23 @@ class BLECallback_PV : public BLECharacteristicCallbacks {
     }
 
     // Recibe el valor y se comprueba que no haya errores. 
-    motor1_sp = String(jsonrec["motor1"]);
-    motor2_sp = String(jsonrec["motor2"]);
-    motor3_sp = String(jsonrec["motor3"]);
+    motor1_pv = String(jsonrec["motor1"]);
+    motor2_pv = String(jsonrec["motor2"]);
+    motor3_pv = String(jsonrec["motor3"]);
     selected_limb = String(jsonrec["limb"]);
 
     // Se comprueba que no haya errores
-    if (motor1_sp == "null" or motor2_sp == "null" or motor3_sp == "null" or selected_limb == "null") {
+    if (motor1_pv == "null" or motor2_pv == "null" or motor3_pv == "null" or selected_limb == "null") {
       Serial.println("Error al mandar los parámetros.");
       return;
     }
+
+    // Impresión de datos
+    Serial.println("\nExtremidad seleccionada: " + selected_limb);
+    Serial.println("------------------------------");
+    Serial.println("motor 1 - pv: " + motor1_pv);
+    Serial.println("motor 2 - pv: " + motor2_pv);
+    Serial.println("motor 3 - pv: " + motor3_pv);
 
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;
@@ -212,6 +225,11 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
       Serial.println("Error al mandar los parámetros.");
       return;
     }
+
+    // Impresión de datos
+    Serial.println("------------------------------");
+    Serial.println("\nExtremidad seleccionada: " + selected_limb);
+    Serial.println("State: " + state);
 
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;
