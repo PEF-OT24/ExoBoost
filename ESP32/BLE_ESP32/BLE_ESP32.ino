@@ -321,7 +321,7 @@ void setup() {
   pCharacteristic_PI->setCallbacks(new BLECallback_PI());
   // Crea la característica BLE para recibir el nivel de asistencia del slider
   BLECharacteristic *pCharacteristic_LEVEL = pService_PARAMS->createCharacteristic(
-                                         CHARACTERISTIC_UUID_PI,
+                                         CHARACTERISTIC_UUID_LEVEL,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
                                          BLECharacteristic::PROPERTY_NOTIFY |

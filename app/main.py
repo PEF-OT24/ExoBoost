@@ -428,13 +428,12 @@ class ExoBoostApp(MDApp):
 
     def send_params(self): 
         '''Método para enviar parámetros al dispositivo conectado'''
-        
         # Acción de submit parámetros
         print("Método para enviar parámetros")
         if not self.ble_found: return
 
         # Se define la información a mandar con la limb
-        json_data = self.motor_parameters_pi[self.selected_limb]
+        json_data: dict = self.motor_parameters_pi[self.selected_limb]
         json_data["limb"] = self.selected_limb
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
@@ -442,6 +441,7 @@ class ExoBoostApp(MDApp):
         char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
 
         # Se mandan los datos
+        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
@@ -463,6 +463,7 @@ class ExoBoostApp(MDApp):
         char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["LEVEL"]) # Se convierte a string
 
         # Se mandan los datos
+        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #------- Imprimen acciones en botones de asistencia -----
@@ -483,6 +484,7 @@ class ExoBoostApp(MDApp):
         char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
 
         # Se mandan los datos
+        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #Caminar
@@ -502,6 +504,7 @@ class ExoBoostApp(MDApp):
         char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
 
         # Se mandan los datos
+        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #Detenerse
@@ -521,6 +524,7 @@ class ExoBoostApp(MDApp):
         char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
 
         # Se mandan los datos
+        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     def assitance_method(self): pass
