@@ -12,7 +12,7 @@ _Este proyecto se llevó a cabo desde Junio hasta Diciembre de 2024 como parte d
 
 _Seguir las instrucciones dentro de [App_Compilation.md](linkdelarchivo) para configurar Windows y Linux, compilar la aplicación y generar el archivo .apk_
 
-## Construido con 
+## Construido con ⚙️
 
 _Menciona las herramientas que utilizaste para crear tu proyecto_
 
