@@ -27,7 +27,6 @@ void setup() {
 void loop() {
   I2CMasterDataPut(I2C0_BASE, 'A');
 
-  I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
-  I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
+  I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_SINGLE_SEND);
   SysCtlDelay(2000000); 
 }
