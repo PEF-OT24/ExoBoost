@@ -75,9 +75,12 @@ if __name__ == '__main__':
     # Se generan los UUIDs
     uuid_manager.generate_uuids_services(names, values)
 
-    # Se genera una característica por servicio
-    uuid_manager.generate_uuids_chars(names[0], ["P", "I", "D"], [0x000a, 0x000d, 0x000e])
+    # --- Servicio de Parameters ---
+    uuid_manager.generate_uuids_chars(names[0], ["PI"], [0x000a])
+    uuid_manager.generate_uuids_chars(names[0], ["LEVEL"], [0x000d])
+    # --- Servicio de Process ---
     uuid_manager.generate_uuids_chars(names[1], ["PV"], [0x000b])
+    # --- Servicio de Commands ---
     uuid_manager.generate_uuids_chars(names[2], ["Mode"], [0x000c])
 
     print("Servicios")

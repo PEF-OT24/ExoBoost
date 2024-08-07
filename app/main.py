@@ -133,15 +133,20 @@ class ExoBoostApp(MDApp):
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager()
         # Nombres de los servicios para manejo interno
-        names = ["Parameters", "Commands", "Process"]
+        names = ["Parameters", "Process", "Commands"]
         values = [0x0001, 0x0002, 0x0003]
         # Se generan los UUIDs para los servicios
         self.uuid_manager.generate_uuids_services(names, values)
 
-        # Se genera una característica por servicio
+        # Se generan las carcacterísticas para los servicios
+        # --- Servicio de Parameters ---
         self.uuid_manager.generate_uuids_chars(names[0], ["PI"], [0x000a])
+        self.uuid_manager.generate_uuids_chars(names[0], ["LEVEL"], [0x000d])
+        # --- Servicio de Process ---
         self.uuid_manager.generate_uuids_chars(names[1], ["PV"], [0x000b])
+        # --- Servicio de Commands ---
         self.uuid_manager.generate_uuids_chars(names[2], ["Mode"], [0x000c])
+
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
         # Todos se inicializan con un valor arbitrario
@@ -425,7 +430,7 @@ class ExoBoostApp(MDApp):
         '''Método para enviar parámetros al dispositivo conectado'''
         
         # Acción de submit parámetros
-        print("función de enviar parámetros")
+        print("Método para enviar parámetros")
         if not self.ble_found: return
 
         # Se define la información a mandar con la limb
@@ -444,6 +449,21 @@ class ExoBoostApp(MDApp):
     def on_slider_value(self, value):
         '''Handle the slider value change'''
         print(f"Assitance Level: {value}")
+        print(type(value))
+
+        # Acción de submit parámetros
+        print("Acción de sentado/parado")
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data = {"asistance_level": str(value)}
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["LEVEL"]) # Se convierte a string
+
+        # Se mandan los datos
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #------- Imprimen acciones en botones de asistencia -----
     # Pararse/Sentarse
@@ -467,16 +487,45 @@ class ExoBoostApp(MDApp):
 
     #Caminar
     def walk(self):
-        print("Walk action triggered")
+        '''Método para enviar el estado de caminar'''
+        
+        # Acción de submit parámetros
+        print("Acción de caminar")
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data = {"state": "walk"}
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
+
+        # Se mandan los datos
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #Detenerse
     def stop(self):
-        print("Stop action triggered")
+        '''Método para enviar el estado de detenerse'''
+        
+        # Acción de submit parámetros
+        print("Acción de detenerse")
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data = {"state": "stop"}
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
+
+        # Se mandan los datos
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     def assitance_method(self): pass
 
     #----------------------------------------------------- Métodos del menú de sintonizción -----------------------------------------------------
-    
     #Método para desplegar valores de PI en cada motor de acuerdo a la extremidad seleccionada
     def limb_dropdown_clicked(self, limb: str) -> None: 
         '''

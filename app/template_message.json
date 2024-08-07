@@ -6,6 +6,8 @@
         "motor 3": {"kc": 100.0, "ti": 50.1}
     },
 
+    "asistance_level": {"asistance_level": 10}, 
+
     "info_PV": {
         "limb": "Right Leg", 
         "motor 1": 80.2, 
