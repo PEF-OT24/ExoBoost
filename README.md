@@ -1,110 +1,40 @@
 # ExoBoost 🦿
 
-_Este proyecto tiene el propósito de generar un exoesqueleto de asistencia motriz a usuarios con movilidad limitada._
+_Este proyecto se llevó a cabo desde Junio hasta Diciembre de 2024 como parte de un proyecto de evaluación final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz. Tiene el propósito de generar un exoesqueleto de asistencia motriz con articulación en cadera, rodilla y tobillo para usuarios con movilidad limitada._
 
 
-## Comenzando 🚀
+## Requerimientos ✅
 
-_Estas instrucciones te permitirán obtener una copia del proyecto en funcionamiento en tu máquina local para propósitos de desarrollo y pruebas._
+* Windows 11
+* Ubuntu 22.04
 
-Mira **Deployment** para conocer como desplegar el proyecto.
+## App Móvil 📱
 
+_Seguir las instrucciones dentro de [App_Compilation.md](linkdelarchivo) para configurar Windows y Linux, compilar la aplicación y generar el archivo .apk_
 
-### Pre-requisitos 📋
-
-_Que cosas necesitas para instalar el software y como instalarlas_
-
-```
-Da un ejemplo
-```
-
-### Instalación 🔧
-
-_Una serie de ejemplos paso a paso que te dice lo que debes ejecutar para tener un entorno de desarrollo ejecutandose_
-
-_Dí cómo será ese paso_
-
-```
-Da un ejemplo
-```
-
-_Y repite_
-
-```
-hasta finalizar
-```
-
-_Finaliza con un ejemplo de cómo obtener datos del sistema o como usarlos para una pequeña demo_
-
-## Ejecutando las pruebas ⚙️
-
-_Explica como ejecutar las pruebas automatizadas para este sistema_
-
-### Analice las pruebas end-to-end 🔩😊😶‍🌫️🍕
-
-_Explica que verifican estas pruebas y por qué_
-
-```
-Da un ejemplo
-```
-
-### Y las pruebas de estilo de codificación ⌨️
-
-_Explica que verifican estas pruebas y por qué_
-
-```
-Da un ejemplo
-```
-
-## Despliegue 📦
-
-_Agrega notas adicionales sobre como hacer deploy_
-
-## Construido con 🛠️
+## Construido con 
 
 _Menciona las herramientas que utilizaste para crear tu proyecto_
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - El framework web usado
-* [Maven](https://maven.apache.org/) - Manejador de dependencias
-* [ROME](https://rometools.github.io/rome/) - Usado para generar RSS
-
-## Contribuyendo 🖇️
-
-Por favor lee el [CONTRIBUTING.md](https://gist.github.com/villanuevand/xxxxxx) para detalles de nuestro código de conducta, y el proceso para enviarnos pull requests.
+* [KivyMD](http://www.dropwizard.io/1.0.2/docs/) - Framework usado para la app móvil
+* [Android Developer Tools](https://maven.apache.org/) - Herramientas de Android para el desarrollo de servicio BLE
+* [Buildozer](https://rometools.github.io/rome/) - Usado para generar apk
+* [Energia IDE](linkenergiaide) - Usado para programación de Tiva C
+* [Arduino IDE](linkdownload) - Usado para generar server BLE desde tarjeta ESP32
 
 ## Wiki 📖
 
 Puedes encontrar mucho más de cómo utilizar este proyecto en nuestra [Wiki](https://github.com/tu/proyecto/wiki)
 
-## Versionado 📌
-
-Usamos [SemVer](http://semver.org/) para el versionado. Para todas las versiones disponibles, mira los [tags en este repositorio](https://github.com/tu/proyecto/tags).
-
 ## Autores ✒️
 
 _Menciona a todos aquellos que ayudaron a levantar el proyecto desde sus inicios_
 
-* **Carlos Reyes** - *IMT* - [reyesgithub](#reyesgithub)
-* **David Villanueva** - *IMT* - [villagithub](#villahithub)
+* **Carlos Reyes** - *IMT* - [reyesgithub](#https://github.com/carlosreyesb)
+* **David Villanueva** - *IMT* - [villagithub](#https://github.com/david-villanueva-02)
 * **Eduardo Martinez** - *IDA / IMT* - [lalogithub](#lalogithub)
 * **Itzel Martinez** - *IBI / IMT* - [itzelgithub](#itzelgithub)
-* **Teresa Hernandez** - *IMT* - [teregithub](#teregithub)
-
-
-También puedes mirar la lista de todos los [contribuyentes](https://github.com/your/project/contributors) quíenes han participado en este proyecto. 
-
-## Licencia 📄
-
-Este proyecto está bajo la Licencia (Tu Licencia) - mira el archivo [LICENSE.md](LICENSE.md) para detalles
-
-## Expresiones de Gratitud 🎁
-
-* Comenta a otros sobre este proyecto 📢
-* Invita una cerveza 🍺 o un café ☕ a alguien del equipo. 
-* Da las gracias públicamente 🤓.
-* Dona con cripto a esta dirección: `0xf253fc233333078436d111175e5a76a649890000`
-* etc.
-
+* **Teresa Hernandez** - *IMT* - [teregithub](#https://github.com/Teresa-hdz)
 
 
 ---
