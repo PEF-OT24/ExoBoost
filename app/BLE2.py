@@ -3,6 +3,7 @@ from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
 import uuid
+import json 
 
 os.environ['CLASSPATH'] = 'javadev'
 
@@ -65,7 +66,7 @@ class Characteristic_Info:
 
         Salida: bool -> True si la característica contiene la propiedad indicada, False de lo contrario
         '''
-        return self.properties & property
+        return True if self.properties & property == property else False
     
     def isBroadastable(self) -> bool: # type: ignore
         '''Comprueba si una característica es Broadcastable'''
@@ -186,7 +187,7 @@ class BluetoothManager_App:
         Es necesario detener el escaneo antes de realizar aciones de conexión; se llama al método stop_ble_scan().
         Se conecta  o desconecta al dispositivo indicado por su nombre. 
         Este método trabaja a la par con el callback self.python_gatt_callback que se encarga de la interacción con GATT
-        Cuando se establece la conexión, se guarda el GATT del dispositivo conectado para manipular en otros métodos
+        Cuando se establece la conexión, se guarda el GATT del dispositivo conectado para manipular en otros métodos.
 
         Entrada: device_name str -> Nombre del dispositivo
         Salida: True si la acción se realizó correctamente, False de lo contrario
@@ -252,8 +253,8 @@ class BluetoothManager_App:
                 self.connected = False
                 self.connected_gatt = None
                 self.connected_device = None
-                self.discovered_characteristics = {}
-                self.discovered_services = []
+                self.discovered_characteristics: dict = {}
+                self.discovered_services: list = []
         except Exception as e:
             print(f"Error de Bluetooth al intentar desconectarse: {e}")
 
@@ -284,7 +285,8 @@ class BluetoothManager_App:
     
     def discover_characteristics(self, service: BluetoothGattService) -> list[BluetoothGattCharacteristic]: # type: ignore
         '''
-        Método que descubre las características de un servicio ya descubierto
+        Método que descubre las características de un servicio ya descubierto. El procedimiento toma algo de tiempo, por lo que se recomienda
+        que se llame en un hilo separado.
         
         Entrada: service BluetoothGattService -> Servicio cuyas características se descubren
         Salida: list[BluetoothGattCharacteristic] -> Lista de las características del servicio
@@ -292,7 +294,7 @@ class BluetoothManager_App:
         # Se obtienen las características
         characteristics: list[BluetoothGattCharacteristic] = service.getCharacteristics() # type: ignore
         print(f"Discovered characteristics: {characteristics}")
-        return characteristics
+        return list(characteristics) # Se devuelve en formato de lista 
     
     def discover_services_and_characteristics(self, wait_time: float = 0.5) -> None: # type: ignore
         '''
@@ -325,7 +327,7 @@ class BluetoothManager_App:
                 print(f"Característica {i}: {car_uuid.toString()}") # Se imprime como string
             print("-------------")
 
-    def write_info(self, service_uuid: str, characteristic_uuid: str, data: str): # type: ignore
+    def write(self, service_uuid: str, characteristic_uuid: str, data: str): # type: ignore
         '''
         Método que escribe sobre la característica indicada de un servicio del dispositivo conectado
 
@@ -338,22 +340,38 @@ class BluetoothManager_App:
 
         try: 
             # Identifica la característica de interés del servicio de interés con los UUID's
-            for char in self.discovered_characteristics[service_uuid]:
+            for i, char in enumerate(self.discovered_characteristics[service_uuid]):
                 if char.getUuid().toString() == characteristic_uuid: 
                     characteristic = char
+                    index = i
                     break
 
             car_analyzer = Characteristic_Info(characteristic)
         
-            # Se muestran las properties presentes
+            # Continúa si se puede acceder a la característica
+            if not (car_analyzer.isWriteable() and car_analyzer.isReadable()): raise Exception("Característica no accesible")
 
-            print(f"Properties: {car_analyzer.properties}")
-            print(f"Read property: {car_analyzer.all_properties['READ']}")
-            print(f"Readable: {car_analyzer.isReadable()}")
+            # Se configura el envío del mensaje
+            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) # Write request (espera respuesta de confirmación)
+            characteristic.setValue(data) # Se establece el mensaje como String
+            
+            # Se escribe la característica
+            self.connected_gatt.writeCharacteristic(characteristic)
+
+            # Se guarda la configuración de la característica en la lista original 
+            self.discovered_characteristics[service_uuid][index] = characteristic
 
         except Exception as e:
             print("Característica no encontrada")
             print(f"Error: {e}")
-        # Se envia la cadena de caracteres
-        # characteristic.setValue(data.encode('utf-8'))
-        # self.connected_gatt.writeCharacteristic(characteristic)
+    
+    def write_json(self, service_uuid: str, characteristic_uuid: str, data): 
+        '''Método que convierte el archivo JSON en un string y llama al método write()'''
+
+        # Marca error si el archivo no es un diccionario
+        if not isinstance(data, dict): raise Exception("El archivo JSON no es un diccionario")
+
+        # Se llama al método write()
+        self.write(service_uuid, characteristic_uuid, json.dumps(data))
+
+    def read(self, service_uuid: str, characteristic_uuid: str): pass # type: ignore 

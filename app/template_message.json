@@ -1,14 +1,22 @@
 {
-    "data": {
+    "data_PI": {
         "limb": "Right Leg", 
-        "motor 2": {"P": 100.0, "I": 50.1},
-        "motor 1": {"P": 100.0, "I": 50.1},
-        "motor 3": {"P": 100.0, "I": 50.1}
+        "motor 2": {"kc": 100.0, "ti": 50.1},
+        "motor 1": {"kc": 100.0, "ti": 50.1},
+        "motor 3": {"kc": 100.0, "ti": 50.1}
     },
 
-    "info": {
+    "asistance_level": {"asistance_level": 10}, 
+
+    "info_PV": {
+        "limb": "Right Leg", 
         "motor 1": 80.2, 
         "motor 2": 105.5, 
         "motor 3": 90.0
+    },
+
+    "State": {
+        "limb": "Right Leg", 
+        "state": 1
     }
 }

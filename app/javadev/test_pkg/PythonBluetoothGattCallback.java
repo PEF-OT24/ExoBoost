@@ -40,6 +40,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
             int status) {
         super.onCharacteristicWrite(gatt, characteristic, status);
         System.out.println("onCharacteristicWrite (python)");
+        System.out.println("Status (python):" + status); // Muestra el status de la escritura
     }
 
     @Override
