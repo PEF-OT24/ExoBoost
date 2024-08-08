@@ -125,6 +125,7 @@ class ExoBoostApp(MDApp):
 
         # Instancia de Bluetooth
         if self.ble_found: self.ble = BluetoothManager_App()
+        else: self.ble = None
 
         # Atributos de lógica BLE
         self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
