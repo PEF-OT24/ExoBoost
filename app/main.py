@@ -174,27 +174,27 @@ class ExoBoostApp(MDApp):
         }
 
         # Diccionario de valores de la variable de proceso de los motores
-        # Todos se inicializan con un valor arbitrario
+        # Todos se inicializan con un valor arbitrario en 0
         self.motor_parameters_pv =  {
             "Right leg": {
-                "motor1": {"pv": "0"},
-                "motor2": {"pv": "0"},
-                "motor3": {"pv": "0"},
+                "motor1": "0",
+                "motor2": "0",
+                "motor3": "0",
             },
             "Left leg": {
-                "motor1": {"pv": "0"},
-                "motor2": {"pv": "0"},
-                "motor3": {"pv": "0"},
+                "motor1": "0",
+                "motor2": "0",
+                "motor3": "0",
             },
             "Right arm": {
-                "motor1": {"pv": "0"},
-                "motor2": {"pv": "0"},
-                "motor3": {"pv": "0"},
+                "motor1": "0",
+                "motor2": "0",
+                "motor3": "0",
             },
             "Left arm": {
-                "motor1": {"pv": "0"},
-                "motor2": {"pv": "0"},
-                "motor3": {"pv": "0"},
+                "motor1": "0",
+                "motor2": "0",
+                "motor3": "0",
             }
         }
 
