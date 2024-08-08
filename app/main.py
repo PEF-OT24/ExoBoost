@@ -129,6 +129,11 @@ class ExoBoostApp(MDApp):
         # Atributos de lógica BLE
         self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
         self.connection_successful: bool = False # Almacena si la conexión fue exitosa
+        self.reading: bool = False # Almacena si la lectura de datos se encuentra activa
+
+        # Se inicializa el hilo secundario de la lectura de datos
+        self.read_thread = Thread(target=self.read_cycle, args=(1000,))
+        self.read_thread.start()
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager()
@@ -301,10 +306,12 @@ class ExoBoostApp(MDApp):
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
         if tab == "Assistance mode": 
             self.mode = "assistance"
+            self.reading = True
         elif tab == "Bluetooth settings": 
             self.mode = "bluetooth"
         elif tab == "Tuning mode": 
             self.mode = "tuning"
+            self.reading = True
         
         print(self.mode)
 
@@ -529,7 +536,7 @@ class ExoBoostApp(MDApp):
     #Método para desplegar valores de PI en cada motor de acuerdo a la extremidad seleccionada
     def limb_dropdown_clicked(self, limb: str) -> None: 
         '''
-        Método para actualizar en la app los datos de los motores al seleccionar otra extremidad
+        Método para actualizar en la app los parámetros de los motores al seleccionar otra extremidad
         Entrada: Entrada seleccionada (str)
         '''
 
@@ -544,15 +551,19 @@ class ExoBoostApp(MDApp):
 
         # Se cambian los valores de los parámetros PI de los motores
         new_params: dict[dict[str]]= self.motor_parameters_pi[self.selected_limb]
+        process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
         # Motor 1
         self.root.get_screen('Main Window').ids.kc_motor1.text = new_params["motor1"]["kc"]
         self.root.get_screen('Main Window').ids.ti_motor1.text = new_params["motor1"]["ti"]
+        self.root.get_screen('Main Window').ids.pv_motor1.text = process_params["motor1"]
         # Motor 2
         self.root.get_screen('Main Window').ids.kc_motor2.text = new_params["motor2"]["kc"]
         self.root.get_screen('Main Window').ids.ti_motor2.text = new_params["motor2"]["ti"]
+        self.root.get_screen('Main Window').ids.pv_motor2.text = process_params["motor2"]
         # Motor 3
         self.root.get_screen('Main Window').ids.kc_motor3.text = new_params["motor3"]["kc"]
         self.root.get_screen('Main Window').ids.ti_motor3.text = new_params["motor3"]["ti"]
+        self.root.get_screen('Main Window').ids.pv_motor3.text = process_params["motor3"]
 
     def on_entry_text(self, param: str, motor: str, value: str) -> None: 
         """
@@ -573,7 +584,58 @@ class ExoBoostApp(MDApp):
                     self.param_pi_entries[motor][param].text = old_params[motor][param]
         else: # Tipo no válido
             self.param_pi_entries[motor][param].text = old_params[motor][param]
-    
+
+    def read_cycle(self, time: int):  
+        '''Método asincrónico que leerá los datos de los motores perdiódicamente
+        Entrada: time interval int -> Periodo de lectura de datos en ms'''
+        # Comprueba que el dispositivo BLE exista
+        if not self.ble: 
+            print("Dispositivo BLE no encontrado, terminando operación")
+            return
+
+        while True:
+            if self.ble.connected and self.reading:
+                # Se realiza la lectura si está conectado y en lectura activa
+                json_dict = self.ble.read_json() 
+
+                ''' Estructura deseada del json
+                json_dict = {
+                    "limb": "Rigth leg",
+                    "motor1": "0",
+                    "motor2": "0",
+                    "motor3": "0"
+                }
+                '''
+
+                # Se obtienen los valores del diccionario
+                try: 
+                    limb_read = json_dict["limb"]            
+                    motor1pv_read = json_dict["motor1"]            
+                    motor2pv_read = json_dict["motor2"]            
+                    motor3pv_read = json_dict["motor3"]       
+                except Exception as e:
+                    print("Error al leer los datos")
+                    print(e)  
+
+                # Se guardan los valores en el diccionario
+                self.motor_parameters_pv[limb_read]["motor1"] = motor1pv_read
+                self.motor_parameters_pv[limb_read]["motor2"] = motor2pv_read
+                self.motor_parameters_pv[limb_read]["motor3"] = motor3pv_read
+
+                # Se muestran en pantalla los parámetros
+                if self.selected_limb == limb_read:
+                    Clock.schedule_once(self.update_process_variable)
+                
+                # Se espera el tiempo indicado para la siguiente lectura
+            sleep(float(time/1000))
+
+    def update_process_variable(self):
+        '''Método para actualizar la variable de proceso en la app'''
+        process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
+        self.root.get_screen('Main Window').ids.pv_motor1.text = process_params["motor1"]
+        self.root.get_screen('Main Window').ids.pv_motor2.text = process_params["motor2"]
+        self.root.get_screen('Main Window').ids.pv_motor3.text = process_params["motor3"]
+
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
         self.popup = InfoPopUp()
