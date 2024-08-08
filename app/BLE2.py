@@ -327,16 +327,19 @@ class BluetoothManager_App:
                 print(f"Característica {i}: {car_uuid.toString()}") # Se imprime como string
             print("-------------")
 
-    def write(self, service_uuid: str, characteristic_uuid: str, data: str): # type: ignore
+    def write(self, service_uuid: str, characteristic_uuid: str, data: str) -> None: # type: ignore
         '''
         Método que escribe sobre la característica indicada de un servicio del dispositivo conectado
 
-        Entradas: characteristic BluetoothGattCharacteristic -> Característica sobre la que se escribe
+        Entradas: service_uuid str -> UUID del servicio de la característica
+                  characteristic_uuid str -> UUID de la característica sobre la que se escribe
                   data str -> mensaje a enviar
         '''
 
         # Comprueba que hay un dispositivo conectado
-        if not self.connected: raise Exception("Error al enviar información: No hay un dispositivo conectado")
+        if not self.connected: 
+            print("Dispositivo no conectado")
+            return
 
         try: 
             # Identifica la característica de interés del servicio de interés con los UUID's
@@ -366,12 +369,66 @@ class BluetoothManager_App:
             print(f"Error: {e}")
     
     def write_json(self, service_uuid: str, characteristic_uuid: str, data): 
-        '''Método que convierte el archivo JSON en un string y llama al método write()'''
+        '''Método que convierte el archivo JSON en un string y llama al método write()
+        Entradas: service_uuid str -> UUID del servicio de la característica
+                  characteristic_uuid str -> UUID de la característica
+                  data str -> mensaje a enviar
+        '''
 
         # Marca error si el archivo no es un diccionario
-        if not isinstance(data, dict): raise Exception("El archivo JSON no es un diccionario")
+        if not isinstance(data, dict):  
+            print("El archivo JSON no es un diccionario")
+            return
 
         # Se llama al método write()
         self.write(service_uuid, characteristic_uuid, json.dumps(data))
 
-    def read(self, service_uuid: str, characteristic_uuid: str): pass # type: ignore 
+    def read(self, service_uuid: str, characteristic_uuid: str) -> str:  # type: ignore 
+        '''Método que lee el valor de una característica de un servicio específicos.
+        Entradas: service_uuid str -> UUID del servicio de la característica a leer 
+                  characteristic_uuid str -> UUID de la característica a leer
+                  data str -> mensaje a enviar
+        '''
+        
+        if not self.connected: 
+            print("Error al leer: No hay un dispositivo conectado")
+            return
+        
+        try: 
+            # Identifica la característica de interés del servicio de interés con los UUID's
+            for i, char in enumerate(self.discovered_characteristics[service_uuid]):
+                if char.getUuid().toString() == characteristic_uuid: 
+                    characteristic = char
+                    index = i
+                    break
+
+            car_analyzer = Characteristic_Info(characteristic)
+        
+            # Continúa si se puede acceder a la característica
+            if not (car_analyzer.isWriteable() and car_analyzer.isReadable()): raise Exception("Característica no accesible")
+
+            # Se configura la lectura del mensaje
+            self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
+            valor = str(characteristic.getValue()) # Se obtiene el valor de la característica convertido a string
+
+            return valor
+
+        except Exception as e:
+            print("Característica no encontrada")
+            print(f"Error: {e}")
+
+            return
+
+    def read_json(self, service_uuid: str, characteristic_uuid: str) -> dict: 
+        '''Método que convierte el un string en un archivo JSON y llama al método read()
+        Entradas: service_uuid str -> UUID del servicio de la característica
+                  characteristic_uuid str -> UUID de la característica
+                  data str -> mensaje a enviar
+        '''
+        # Se llama al método write()
+        valor = self.read(service_uuid, characteristic_uuid)
+        dict_json = json.loads(valor)
+
+        if dict_json == None: return
+
+        return dict_json # Devuelve el diccionario JSON leído

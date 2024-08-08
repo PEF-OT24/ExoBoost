@@ -32,6 +32,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         super.onCharacteristicRead(gatt, characteristic, status);
         System.out.println("onCharacteristicRead (python)");
+        System.out.println("Status (python):" + status); // Muestra el estatus de la lectura
     }
 
     @Override

@@ -359,8 +359,16 @@ void setup() {
   char buffer[200];
   serializeJson(doc, buffer);
   pCharacteristic_PI->setValue(buffer);
-  pCharacteristic_PV->setValue(buffer);
   pCharacteristic_MODE->setValue(buffer);
+  
+  StaticJsonDocument<200> values_doc;
+  char values_buffer[200];
+  values_doc["limb"] = "Right leg";
+  values_doc["motor1"] = "100";
+  values_doc["motor2"] = "100";
+  values_doc["motor3"] = "100";
+  serializeJson(values_doc, values_buffer);
+  pCharacteristic_PV->setValue(values_buffer);
 
   // Inicia el servicio BLE
   pService_PARAMS->start();
