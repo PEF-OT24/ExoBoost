@@ -1,15 +1,16 @@
-#include <Wire.h>
+// ESP8266 (u otra ESP32) como slave. Hay que adaptar el código para comunicarse con la TivaC
+
+#include "Wire.h"
 
 #define I2C_DEV_ADDR 0x55
 
 uint32_t i = 0;
 
 void onRequest() {
-  char message[32];
-  snprintf(message, sizeof(message), "%lu Packets.", i++);
-  Wire.write((uint8_t*)message, strlen(message));  // Send data as bytes
+  Wire.print(i++);
+  Wire.print(" Packets.");
   Serial.println("onRequest");
-  Serial.println(message);
+  Serial.println();
 }
 
 void onReceive(int len) {
@@ -23,11 +24,18 @@ void onReceive(int len) {
 void setup() {
   Serial.begin(115200);
   Serial.setDebugOutput(true);
-  Wire.begin((uint8_t)I2C_DEV_ADDR);
   Wire.onReceive(onReceive);
   Wire.onRequest(onRequest);
+  Wire.begin((uint8_t)I2C_DEV_ADDR);
+
+/*#if CONFIG_IDF_TARGET_ESP32
+  char message[64];
+  snprintf(message, 64, "%lu Packets.", i++);
+  Wire.slaveWrite((uint8_t *)message, strlen(message));
+  Serial.print('Printing config %lu', i);
+#endif*/
 }
 
 void loop() {
-  // No need for anything in the loop
+  
 }
