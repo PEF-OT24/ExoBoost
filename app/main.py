@@ -150,7 +150,7 @@ class ExoBoostApp(MDApp):
         # --- Servicio de Process ---
         self.uuid_manager.generate_uuids_chars(names[1], ["PV"], [0x000b])
         # --- Servicio de Commands ---
-        self.uuid_manager.generate_uuids_chars(names[2], ["Mode"], [0x000c])
+        self.uuid_manager.generate_uuids_chars(names[2], ["MODE"], [0x000c])
 
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
