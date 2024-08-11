@@ -400,13 +400,14 @@ class BluetoothManager_App:
             for i, char in enumerate(self.discovered_characteristics[service_uuid]):
                 if char.getUuid().toString() == characteristic_uuid: 
                     characteristic = char
+                    print(f"Característica encontrada: {characteristic_uuid}")
                     index = i
                     break
 
             car_analyzer = Characteristic_Info(characteristic)
         
             # Continúa si se puede acceder a la característica
-            if not (car_analyzer.isWriteable() and car_analyzer.isReadable()): raise Exception("Característica no accesible")
+            if not car_analyzer.isReadable(): raise Exception("Característica no accesible")
 
             # Se configura la lectura del mensaje
             status: bool = self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica

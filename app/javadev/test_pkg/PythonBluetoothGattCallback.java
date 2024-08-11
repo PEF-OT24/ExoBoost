@@ -1,6 +1,7 @@
 package javadev.test_pkg;
 
 import java.net.ConnectException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -16,6 +17,7 @@ import android.bluetooth.BluetoothProfile;
 public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     public BluetoothGatt connected_gatt = null;
+    public String converted_string = ""; // Se inicializa la variable de lectura de caracteristicas
 
     public PythonBluetoothGattCallback() {
         super();
@@ -34,6 +36,11 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("onCharacteristicRead (python)");
         System.out.println("Status (python):" + status); // Muestra el estatus de la lectura
         System.out.println("Valor leído (python): " + characteristic.getValue());
+
+        // Impresión del valor leído a string
+        this.converted_string = bytesToString(characteristic.getValue());
+        System.out.println("Valor interpretado (python): " + converted_string);
+        this.converted_string = ""; // Se reinica el valor
     }
 
     @Override
@@ -110,7 +117,14 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("Status (python):" + status); // Si imprime un 0 es acción completada exitosamente
     }
 
-    public BluetoothGatt getConnectedGatt() {
+    public BluetoothGatt getConnectedGatt() { // Método para obtener el objeto gatt
         return this.connected_gatt;
+    }
+
+    public String bytesToString(byte[] bytes) { // Método para convertir un array de bytes a una cadena de texto
+        if (bytes == null) {
+            return null;
+        }
+        return new String(bytes, StandardCharsets.UTF_8); // Puedes cambiar la codificación si es necesario
     }
 }
