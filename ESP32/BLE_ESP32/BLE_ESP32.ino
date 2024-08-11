@@ -370,6 +370,12 @@ void setup() {
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
 
+  // Se muestra el valor inicial
+  Serial.println("----------------");
+  Serial.print("Valor inicial: ");
+  Serial.println(values_buffer);
+  Serial.println("----------------");
+
   // Inicia el servicio BLE
   pService_PARAMS->start();
   pService_PV->start();

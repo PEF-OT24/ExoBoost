@@ -230,7 +230,7 @@ class BluetoothManager_App:
 
                 # Se descubre la información del dispositivo y se muestran los UUIDs
                 self.discover_services_and_characteristics()
-                
+
                 # Se marca como conectado
                 self.connected = True
 
@@ -409,8 +409,9 @@ class BluetoothManager_App:
             if not (car_analyzer.isWriteable() and car_analyzer.isReadable()): raise Exception("Característica no accesible")
 
             # Se configura la lectura del mensaje
-            self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
-            valor = str(characteristic.getValue()) # Se obtiene el valor de la característica convertido a string
+            status: bool = self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
+            print(f"Status: {status}")
+            valor = characteristic.getValue() # Se obtiene el valor de la característica convertido a string
             print("Valor leído: ", valor)
             return valor
 
