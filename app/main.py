@@ -646,9 +646,9 @@ class ExoBoostApp(MDApp):
     def update_process_variable(self, *args):
         '''Método para actualizar la variable de proceso en la app'''
         process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
-        self.root.get_screen('Main Window').ids.pv_motor1.text = process_params["motor1"]
-        self.root.get_screen('Main Window').ids.pv_motor2.text = process_params["motor2"]
-        self.root.get_screen('Main Window').ids.pv_motor3.text = process_params["motor3"]
+        self.root.get_screen('Main Window').ids.sp_motor1.text = process_params["motor1"]
+        self.root.get_screen('Main Window').ids.sp_motor2.text = process_params["motor2"]
+        self.root.get_screen('Main Window').ids.sp_motor3.text = process_params["motor3"]
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
