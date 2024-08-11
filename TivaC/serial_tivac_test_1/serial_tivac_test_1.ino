@@ -37,6 +37,9 @@ uint32_t i2c_status;
 uint32_t rec_data = 1;
 volatile int dataCounter = 0;       // Counter for the number of bytes received
 
+#define UART5_RX_PIN GPIO_PIN_4
+#define UART5_TX_PIN GPIO_PIN_5
+
 tCANMsgObject sMsgObjectRx;
 tCANMsgObject sMsgObjectTx_PIDvalues;
 tCANMsgObject sMsgObjectTx_Control;
@@ -45,7 +48,7 @@ tCANMsgObject sMsgObjectTx_Stop;
 int i = 0;
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     // -------- Habilitar periféricos -------- 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -60,11 +63,6 @@ void setup() {
     ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_PROCESSOR, 0);
     ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH0);
     ADCSequenceEnable(ADC0_BASE, 0);
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_UART0)) {Serial.print("Esperando UART");}
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-    UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {Serial.print("Esperando CAN0");}
@@ -93,30 +91,36 @@ void setup() {
     
     memset(receivedData, 0, BUFFER_SIZE);
 
-    Serial.println("Módulo inicializado");
+    // Configura el reloj del UART5
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART5);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOE);
+  
+    // Configura los pines UART5 para RX y TX
+    GPIOPinConfigure(GPIO_PE4_U5RX);
+    GPIOPinConfigure(GPIO_PE5_U5TX);
+    GPIOPinTypeUART(GPIO_PORTE_BASE, UART5_RX_PIN | UART5_TX_PIN);
+  
+    // Configura el UART5
+    UARTConfigSetExpClk(UART5_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+    
+    // Mensaje de depuración en el monitor serial
+    Serial.println("Tiva C inicializado.");
+    Serial.println("Configurando UART5...");
 }
 
 void loop() {
-    // Check if there is data available from the master
-    if (I2CSlaveStatus(I2C0_BASE) & I2C_SLAVE_ACT_RREQ) {
-        // Read the received byte
-        char receivedByte = I2CSlaveDataGet(I2C0_BASE);
-
-        // Store the received byte in the buffer
-        if (dataIndex < BUFFER_SIZE - 1) {
-            receivedData[dataIndex++] = receivedByte;
-        }
-
-        // If end of string (null character), reset index and print the message
-        if (receivedByte == '\0' || dataIndex >= BUFFER_SIZE - 1) {
-            Serial.print("Received: ");
-            Serial.println(receivedData);
-            dataIndex = 0;  // Reset buffer index
-            memset(receivedData, 0, BUFFER_SIZE);  // Clear buffer
-        }
-    } else {
-        // No data received, print a waiting message
-        Serial.println("No data received");
-        SysCtlDelay(SysCtlClockGet() / 10);  // Small delay for clarity in output
-    }
+  // Verifica si hay datos disponibles en el UART5
+  if (UARTCharsAvail(UART5_BASE)) {
+    // Lee un carácter del UART5
+    char receivedChar = UARTCharGet(UART5_BASE);
+    
+    // Imprime el carácter recibido en el monitor serial
+    Serial.print(receivedChar);
+    
+    // Mensaje de depuración en el monitor serial
+    Serial.println("Caracter recibido.");
+  }
+  
+  // Espera 100 ms antes de la siguiente iteración
+  delay(100);
 }
