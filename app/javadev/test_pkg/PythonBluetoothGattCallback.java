@@ -122,7 +122,8 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("Status (python):" + status); // Si imprime un 0 es acción completada exitosamente
     }
 
-    // Métodos personalizados de la clase de callback
+    // -------------------- Métodos personalizados de la clase de callback
+    // --------------------
     public BluetoothGatt getConnectedGatt() { // Método para obtener el objeto gatt
         return this.connected_gatt;
     }
@@ -149,9 +150,12 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     public boolean isReady_to_read() {
         // Método para obtener el estado para una lectura lista
-        boolean ready = this.ready_to_read;
+        System.out.println("Listo para lectura (python): " + this.ready_to_read);
+        return this.ready_to_read;
+    }
+
+    public void characteristicRead() {
+        // Método para reinicar la lectura
         this.ready_to_read = false;
-        System.out.println("Listo para lectura (python): " + ready);
-        return ready;
     }
 }

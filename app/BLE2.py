@@ -416,6 +416,7 @@ class BluetoothManager_App:
             # Espera hasta que la característica se pueda leer
             ready: bool = self.python_gatt_callback.isReady_to_read() 
             while not(ready): ready = self.python_gatt_callback.isReady_to_read()
+            self.python_gatt_callback.characteristicRead()
 
             valor = self.python_gatt_callback.getCharValue() # Se obtiene el valor de la característica convertido a string
             print("Valor recibido en python: ", valor)
