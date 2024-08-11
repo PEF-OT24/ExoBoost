@@ -146,8 +146,7 @@ class ExoBoostApp(MDApp):
 
         # Se generan las carcacterísticas para los servicios
         # --- Servicio de Parameters ---
-        self.uuid_manager.generate_uuids_chars(names[0], ["PI"], [0x000a])
-        self.uuid_manager.generate_uuids_chars(names[0], ["LEVEL"], [0x000d])
+        self.uuid_manager.generate_uuids_chars(names[0], ["PI", "LEVEL"], [0x000a, 0x000d])
         # --- Servicio de Process ---
         self.uuid_manager.generate_uuids_chars(names[1], ["PV"], [0x000b])
         # --- Servicio de Commands ---
