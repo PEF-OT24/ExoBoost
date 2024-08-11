@@ -106,11 +106,11 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
   
     motor2_kc = String(motor2_params["kc"]);
     motor2_ti = String(motor2_params["ti"]);
-    motor2_sp = String(motor1_params["sp"]);
+    motor2_sp = String(motor2_params["sp"]);
     
     motor3_kc = String(motor3_params["kc"]);
     motor3_ti = String(motor3_params["ti"]);
-    motor3_sp = String(motor1_params["sp"]);
+    motor3_sp = String(motor3_params["sp"]);
 
     // Impresión de datos
     Serial.println("\nExtremidad seleccionada: " + selected_limb);
@@ -280,9 +280,9 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
     }
 
     // Impresión de datos
-    Serial.println("------------------------------");
     Serial.println("\nExtremidad seleccionada: " + selected_limb);
     Serial.println("State: " + state);
+    Serial.println("------------------------------");
 
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;

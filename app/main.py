@@ -600,7 +600,10 @@ class ExoBoostApp(MDApp):
         while True:
             if self.ble.connected and self.reading:
                 # Se realiza la lectura si está conectado y en lectura activa
-                json_dict = self.ble.read_json() 
+                print("Intento de lectura...")
+                service_uuid = str(self.uuid_manager.uuids_services["Process"]) # Se convierte a string
+                char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) # Se convierte a string
+                json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
                 ''' Estructura deseada del json
                 json_dict = {
