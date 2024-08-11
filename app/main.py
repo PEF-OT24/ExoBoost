@@ -597,6 +597,7 @@ class ExoBoostApp(MDApp):
             print("Dispositivo BLE no encontrado, terminando operación")
             return
 
+        sleep(2) # Espera un momento antes de comenzar la lectura
         while True:
             if self.ble.connected and self.reading:
                 # Se realiza la lectura si está conectado y en lectura activa

@@ -228,11 +228,12 @@ class BluetoothManager_App:
 
                 print("Getting device info...")
 
+                # Se descubre la información del dispositivo y se muestran los UUIDs
+                self.discover_services_and_characteristics()
+                
                 # Se marca como conectado
                 self.connected = True
 
-                # Se descubre la información del dispositivo y se muestran los UUIDs
-                self.discover_services_and_characteristics()
                 self.show_uuids()
             else: print("Already connected") # IMPLEMENTAR MÉTODO PARA DESCONECTARSE
             return True
