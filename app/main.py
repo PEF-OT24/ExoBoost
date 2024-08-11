@@ -134,7 +134,6 @@ class ExoBoostApp(MDApp):
 
         # Se inicializa el hilo secundario de la lectura de datos
         self.read_thread = Thread(target=self.read_cycle, args=(1000,))
-        self.read_thread.start()
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager()
@@ -422,6 +421,9 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
+            # Comienza la lectura de datos
+            self.read_thread.start()
+
         # Cuando está conectado, se desconecta
         else:
             # Se realiza desconexión y se limpia el dispositivo seleccionado
@@ -592,6 +594,9 @@ class ExoBoostApp(MDApp):
     def read_cycle(self, time: int):  
         '''Método asincrónico que leerá los datos de los motores perdiódicamente
         Entrada: time interval int -> Periodo de lectura de datos en ms'''
+
+        print("read cycle method")
+
         # Comprueba que el dispositivo BLE exista
         if not self.ble: 
             print("Dispositivo BLE no encontrado, terminando operación")
@@ -599,9 +604,10 @@ class ExoBoostApp(MDApp):
 
         sleep(2) # Espera un momento antes de comenzar la lectura
         while True:
+            print("Intento de lectura...")
             if self.ble.connected and self.reading:
+                print("Leyendo...")
                 # Se realiza la lectura si está conectado y en lectura activa
-                print("Intento de lectura...")
                 service_uuid = str(self.uuid_manager.uuids_services["Process"]) # Se convierte a string
                 char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) # Se convierte a string
                 json_dict = self.ble.read_json(service_uuid, char_uuid) 
