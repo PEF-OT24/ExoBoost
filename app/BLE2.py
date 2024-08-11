@@ -412,7 +412,7 @@ class BluetoothManager_App:
             # Se configura la lectura del mensaje
             status: bool = self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
             print(f"Status: {status}")
-            valor = characteristic.getValue() # Se obtiene el valor de la característica convertido a string
+            valor = self.python_gatt_callback.getCharValue() # Se obtiene el valor de la característica convertido a string
             print("Valor leído: ", valor)
             return valor
 

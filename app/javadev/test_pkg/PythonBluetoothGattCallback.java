@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import android.bluetooth.BluetoothGatt;
@@ -17,7 +18,10 @@ import android.bluetooth.BluetoothProfile;
 public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     public BluetoothGatt connected_gatt = null;
-    public String converted_string = ""; // Se inicializa la variable de lectura de caracteristicas
+    public String final_value = ""; // Se inicializa la variable de lectura de caracteristicas
+
+    private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
+                                                                            // según sus UUIDs
 
     public PythonBluetoothGattCallback() {
         super();
@@ -35,12 +39,10 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         super.onCharacteristicRead(gatt, characteristic, status);
         System.out.println("onCharacteristicRead (python)");
         System.out.println("Status (python):" + status); // Muestra el estatus de la lectura
-        System.out.println("Valor leído (python): " + characteristic.getValue());
 
         // Impresión del valor leído a string
-        this.converted_string = bytesToString(characteristic.getValue());
-        System.out.println("Valor interpretado (python): " + converted_string);
-        this.converted_string = ""; // Se reinica el valor
+        this.final_value = bytesToString(characteristic.getValue());
+        System.out.println("Valor interpretado (python): " + final_value);
     }
 
     @Override
@@ -126,5 +128,17 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
             return null;
         }
         return new String(bytes, StandardCharsets.UTF_8); // Puedes cambiar la codificación si es necesario
+    }
+
+    public void putValue(String outerKey, String innerKey, String value) {
+        // Método para añadir o modificar elementos en el diccionario
+        this.read_values.computeIfAbsent(outerKey, k -> new HashMap<>()).put(innerKey, value);
+    }
+
+    public String getCharValue() {
+        // Obtiene el valor de la característica leída
+        String retornar = this.final_value;
+        this.final_value = "";
+        return retornar;
     }
 }
