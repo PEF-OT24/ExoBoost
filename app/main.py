@@ -608,9 +608,9 @@ class ExoBoostApp(MDApp):
                 ''' Estructura deseada del json
                 json_dict = {
                     "limb": "Rigth leg",
-                    "motor1": "0",
-                    "motor2": "0",
-                    "motor3": "0"
+                    "motor1": "100",
+                    "motor2": "100",
+                    "motor3": "100"
                 }
                 '''
 

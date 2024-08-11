@@ -410,7 +410,7 @@ class BluetoothManager_App:
             # Se configura la lectura del mensaje
             self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
             valor = str(characteristic.getValue()) # Se obtiene el valor de la característica convertido a string
-
+            print("Valor leído: ", valor)
             return valor
 
         except Exception as e:
