@@ -643,7 +643,7 @@ class ExoBoostApp(MDApp):
                 # Se espera el tiempo indicado para la siguiente lectura
             sleep(float(time/1000))
 
-    def update_process_variable(self):
+    def update_process_variable(self, *args):
         '''Método para actualizar la variable de proceso en la app'''
         process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
         self.root.get_screen('Main Window').ids.pv_motor1.text = process_params["motor1"]

@@ -19,6 +19,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     public BluetoothGatt connected_gatt = null;
     public String final_value = ""; // Se inicializa la variable de lectura de caracteristicas
+    public boolean ready_to_read = false;
 
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
@@ -43,6 +44,8 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         // Impresión del valor leído a string
         this.final_value = bytesToString(characteristic.getValue());
         System.out.println("Valor interpretado (python): " + final_value);
+
+        this.ready_to_read = true; // Actualiza el estado de listo para lectura
     }
 
     @Override
@@ -119,6 +122,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("Status (python):" + status); // Si imprime un 0 es acción completada exitosamente
     }
 
+    // Métodos personalizados de la clase de callback
     public BluetoothGatt getConnectedGatt() { // Método para obtener el objeto gatt
         return this.connected_gatt;
     }
@@ -140,5 +144,10 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         String retornar = this.final_value;
         this.final_value = "";
         return retornar;
+    }
+
+    public boolean isReady_to_read() {
+        // Método para obtener el estado para una lectura lista
+        return this.ready_to_read;
     }
 }
