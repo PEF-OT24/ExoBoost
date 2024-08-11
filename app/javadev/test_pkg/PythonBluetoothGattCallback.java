@@ -143,11 +143,15 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         // Obtiene el valor de la característica leída
         String retornar = this.final_value;
         this.final_value = "";
+        System.out.println("Valor pasado a python (python): " + retornar);
         return retornar;
     }
 
     public boolean isReady_to_read() {
         // Método para obtener el estado para una lectura lista
-        return this.ready_to_read;
+        boolean ready = this.ready_to_read;
+        this.ready_to_read = false;
+        System.out.println("Listo para lectura (python): " + ready);
+        return ready;
     }
 }

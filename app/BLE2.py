@@ -411,14 +411,14 @@ class BluetoothManager_App:
 
             # Se configura la lectura del mensaje
             status: bool = self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
-            print(f"Status: {status}")
+            print(f"Característica leída: {status}")
 
             # Espera hasta que la característica se pueda leer
             ready: bool = self.python_gatt_callback.isReady_to_read() 
             while not(ready): ready = self.python_gatt_callback.isReady_to_read()
 
             valor = self.python_gatt_callback.getCharValue() # Se obtiene el valor de la característica convertido a string
-            print("Valor leído: ", valor)
+            print("Valor recibido en python: ", valor)
             return valor
 
         except Exception as e:
@@ -435,8 +435,7 @@ class BluetoothManager_App:
         '''
         # Se llama al método write()
         valor = self.read(service_uuid, characteristic_uuid)
+        print(f"Raw string: {valor}")
         dict_json = json.loads(valor)
-
-        if dict_json == None: return
 
         return dict_json # Devuelve el diccionario JSON leído
