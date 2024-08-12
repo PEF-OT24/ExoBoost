@@ -407,6 +407,10 @@ class ExoBoostApp(MDApp):
         def perform_connection():
             '''Método para realizar la conexión'''
             self.connection_successful = self.ble.connect(self.selected_device)
+            Clock.schedule_once(update_label)
+
+        def update_label(*args):
+            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
         # No hace ninguna acción si no hay un dispositivo seleccionado o si el BLE no está disponible
         if not self.selected_device or not self.ble_found: return
@@ -419,7 +423,7 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
             # Se cambia el texto del label y se muestra a que dispositivo se conectó
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
-            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
+            # self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
             # Comienza la lectura de datos
             self.read_thread.start()
