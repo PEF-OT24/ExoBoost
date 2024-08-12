@@ -81,7 +81,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("onConnectionStateChange (python)");
         System.out.println("Status (python):" + status);
         System.out.println("New state (python): " + newState);
-        if (status == 2) { // Se conectó
+        if (newState == 2) { // Se conectó
             this.connected_gatt = gatt;
             System.out.println("Conectado (python)");
 
@@ -101,7 +101,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
                 }
             }
 
-        } else if (status == 0) { // Se desconectó
+        } else if (newState == 0) { // Se desconectó
             this.connected_gatt = null;
             System.out.println("Desconectado (python)");
         }
