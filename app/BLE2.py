@@ -414,6 +414,7 @@ class BluetoothManager_App:
             print(f"Característica leída: {status}")
 
             # Espera hasta que la característica se pueda leer
+            self.connected_gatt.show_info = True # Se establece que se pueda ver el debug
             ready: bool = self.python_gatt_callback.isReady_to_read() 
             while not(ready): ready = self.python_gatt_callback.isReady_to_read()
             self.python_gatt_callback.characteristicRead()

@@ -26,6 +26,9 @@
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
 
+// Declara variables de las características
+BLECharacteristic *pCharacteristic_PV;
+
 String selected_limb; // Articulación seleccionada actual 
 String state; // Estado del proceso actual
 
@@ -46,6 +49,8 @@ String level; // Nivel de asistencia del slider
 String motor1_pv;
 String motor2_pv;
 String motor3_pv;
+
+int temporal = 100;
 
 // Clase que maneja los eventos de conexión y desconexión
 class ServerCallbacks: public BLEServerCallbacks {
@@ -332,7 +337,7 @@ void setup() {
   // Crea el servicio de envío de parámetros de PV
   BLEService *pService_PV = pServer->createService(SERVICE_UUID_PROCESS);
   // Crea la característica BLE para recibir datos de la PV
-  BLECharacteristic *pCharacteristic_PV = pService_PV->createCharacteristic(
+  pCharacteristic_PV = pService_PV->createCharacteristic(
                                          CHARACTERISTIC_UUID_PV,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
@@ -393,5 +398,18 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(0.001);
+  delay(1000);
+  temporal ++;
+
+  // AUMENTAR EL VALOR PARA VER SI SE LEE CORRECTAMENTE
+  StaticJsonDocument<200> values_doc;
+  char values_buffer[200];
+  values_doc["limb"] = "Right leg";
+  values_doc["motor1"] = String(temporal);
+  values_doc["motor2"] = String(temporal);
+  values_doc["motor3"] = String(temporal);
+  serializeJson(values_doc, values_buffer);
+  pCharacteristic_PV->setValue(values_buffer);
+
+  // Serial.println(pCharacteristic_PV->getValue());
 }

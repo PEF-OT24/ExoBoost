@@ -20,6 +20,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public BluetoothGatt connected_gatt = null;
     public String final_value = ""; // Se inicializa la variable de lectura de caracteristicas
     public boolean ready_to_read = false;
+    public boolean show_info = true;
 
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
@@ -150,7 +151,10 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     public boolean isReady_to_read() {
         // Método para obtener el estado para una lectura lista
-        System.out.println("Listo para lectura (python): " + this.ready_to_read);
+        if (this.show_info) {
+            System.out.println("Listo para lectura (python): " + this.ready_to_read);
+        }
+        this.show_info = false;
         return this.ready_to_read;
     }
 
