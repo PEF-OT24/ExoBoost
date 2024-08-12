@@ -309,8 +309,8 @@ class BluetoothManager_App:
 
         # Para cada servicio se descubren sus características y se guardan en el diccionario
         for service in self.discovered_services:
-            service_uuid= service.getUuid()
-            uuid_name: UUIDClass = service_uuid.toString() # type: ignore
+            service_uuid = service.getUuid()
+            uuid_name = service_uuid.toString() # type: ignore
             print("Características del servicio (UUID): " + uuid_name)
             self.discovered_characteristics[uuid_name] = self.discover_characteristics(service)
 
@@ -360,6 +360,7 @@ class BluetoothManager_App:
             characteristic.setValue(data) # Se establece el mensaje como String
             
             # Se escribe la característica
+            self.python_gatt_callback.CharToWrite(service_uuid, characteristic_uuid)
             self.connected_gatt.writeCharacteristic(characteristic)
 
             # Se guarda la configuración de la característica en la lista original 
@@ -410,6 +411,7 @@ class BluetoothManager_App:
             if not car_analyzer.isReadable(): raise Exception("Característica no accesible")
 
             # Se configura la lectura del mensaje
+            self.python_gatt_callback.CharToRead(service_uuid, characteristic_uuid)
             status: bool = self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
             print(f"Característica leída: {status}")
 
@@ -419,7 +421,7 @@ class BluetoothManager_App:
             while not(ready): ready = self.python_gatt_callback.isReady_to_read()
             self.python_gatt_callback.characteristicRead()
 
-            valor = self.python_gatt_callback.getCharValue() # Se obtiene el valor de la característica convertido a string
+            valor = self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string
             print("Valor recibido en python: ", valor)
             return valor
 

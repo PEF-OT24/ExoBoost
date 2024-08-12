@@ -1,5 +1,6 @@
 package javadev.test_pkg;
 
+// Importar clases necesarias de java
 import java.net.ConnectException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
@@ -8,19 +9,29 @@ import java.util.concurrent.ExecutionException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
+import java.util.ArrayList;
 
+// Importar clasese necesarias de android
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothGattService;
 
 public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     public BluetoothGatt connected_gatt = null;
-    public String final_value = ""; // Se inicializa la variable de lectura de caracteristicas
     public boolean ready_to_read = false;
     public boolean show_info = true;
+
+    // Atributos para guardar el UUID del servicio y la característica a leer y
+    // escribir
+    public String serviceToRead = "";
+    public String characteristicToRead = "";
+    public String serviceToWrite = "";
+    public String characteristicToWrite = "";
 
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
@@ -39,12 +50,14 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     @Override
     public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
         super.onCharacteristicRead(gatt, characteristic, status);
+
         System.out.println("onCharacteristicRead (python)");
         System.out.println("Status (python):" + status); // Muestra el estatus de la lectura
 
-        // Impresión del valor leído a string
-        this.final_value = bytesToString(characteristic.getValue());
-        System.out.println("Valor interpretado (python): " + final_value);
+        // Se guarda el valor leído
+        String read_value = bytesToString(characteristic.getValue());
+        this.putValue(this.serviceToRead, this.characteristicToRead, read_value);
+        System.out.println("Valor interpretado (python): " + read_value);
 
         this.ready_to_read = true; // Actualiza el estado de listo para lectura
     }
@@ -56,6 +69,10 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         super.onCharacteristicWrite(gatt, characteristic, status);
         System.out.println("onCharacteristicWrite (python)");
         System.out.println("Status (python):" + status); // Muestra el status de la escritura
+
+        // Se guarda el valor escrito
+        String read_value = bytesToString(characteristic.getValue());
+        this.putValue(this.serviceToWrite, this.characteristicToWrite, read_value);
     }
 
     @Override
@@ -64,7 +81,30 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("onConnectionStateChange (python)");
         System.out.println("Status (python):" + status);
         System.out.println("New state (python): " + newState);
-        this.connected_gatt = gatt;
+        if (status == 2) { // Se conectó
+            this.connected_gatt = gatt;
+            System.out.println("Conectado (python)");
+
+            // Se descubren los servicios
+            this.connected_gatt.discoverServices();
+            List<BluetoothGattService> services = this.connected_gatt.getServices();
+
+            // Se recorren los elementos para establecer valores iniciales
+            for (BluetoothGattService servicio : services) {
+                String UUID_servicio = servicio.getUuid().toString();
+                // Para cada servicio se descubren características
+                List<BluetoothGattCharacteristic> characteristics = servicio.getCharacteristics();
+                for (BluetoothGattCharacteristic characteristic : characteristics) {
+                    String UUID_caracteristica = characteristic.getUuid().toString();
+                    // Se inicializan los valores como un "null"
+                    this.putValue(UUID_servicio, UUID_caracteristica, "null");
+                }
+            }
+
+        } else if (status == 0) { // Se desconectó
+            this.connected_gatt = null;
+            System.out.println("Desconectado (python)");
+        }
     }
 
     @Override
@@ -123,8 +163,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         System.out.println("Status (python):" + status); // Si imprime un 0 es acción completada exitosamente
     }
 
-    // -------------------- Métodos personalizados de la clase de callback
-    // --------------------
+    // ------------ Métodos personalizados de la clase de callback ------------
     public BluetoothGatt getConnectedGatt() { // Método para obtener el objeto gatt
         return this.connected_gatt;
     }
@@ -141,12 +180,13 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         this.read_values.computeIfAbsent(outerKey, k -> new HashMap<>()).put(innerKey, value);
     }
 
-    public String getCharValue() {
-        // Obtiene el valor de la característica leída
-        String retornar = this.final_value;
-        this.final_value = "";
-        System.out.println("Valor pasado a python (python): " + retornar);
-        return retornar;
+    public String getValue(String outerKey, String innerKey) {
+        // Método para obtener el valor de una característica específica
+        Map<String, String> innerMap = this.read_values.get(outerKey);
+        if (innerMap != null) {
+            return innerMap.get(innerKey);
+        }
+        return "null"; // Retorna null si la clave externa o interna no existe
     }
 
     public boolean isReady_to_read() {
@@ -161,5 +201,17 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public void characteristicRead() {
         // Método para reinicar la lectura
         this.ready_to_read = false;
+    }
+
+    public void CharToRead(String serviceUUID, String characteristicUUID) {
+        // Método para definir el UUID del servicio a leer
+        this.serviceToRead = serviceUUID;
+        this.characteristicToRead = characteristicUUID;
+    }
+
+    public void CharToWrite(String serviceUUID, String characteristicUUID) {
+        // Método para definir el UUID del servicio a leer
+        this.serviceToWrite = serviceUUID;
+        this.characteristicToWrite = characteristicUUID;
     }
 }
