@@ -592,7 +592,8 @@ class ExoBoostApp(MDApp):
             self.param_pi_entries[motor][param].text = old_params[motor][param]
 
     def read_cycle(self, time: int):  
-        '''Método asincrónico que leerá los datos de los motores perdiódicamente
+        # MEJORA: INDICAR QUÉ CARACTERÍSTICA SE QUIERE LEER ANTES DE HACER EL REQUEST. 
+        '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
         Entrada: time interval int -> Periodo de lectura de datos en ms'''
 
         print("read cycle method")
