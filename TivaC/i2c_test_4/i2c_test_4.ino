@@ -29,11 +29,7 @@ uint8_t CANBUSReceive[8u];
 uint8_t inByte = 0;
 bool doControlFlag = 0;
 
-uint32_t i2c_status;
-uint32_t rec_data = 1;
 #define SLAVE_ADDRESS 0x55 // Define the I2C slave address
-volatile uint8_t receivedData[999];  // Array to store received data
-volatile int dataCounter = 0;       // Counter for the number of bytes received
 
 tCANMsgObject sMsgObjectRx;
 tCANMsgObject sMsgObjectTx_PIDvalues;
@@ -42,6 +38,11 @@ tCANMsgObject sMsgObjectTx_Stop;
 
 int i = 0;
 int recData; 
+
+// Buffer para almacenar datos recibidos
+#define BUFFER_SIZE 256
+uint8_t receivedData[BUFFER_SIZE];
+volatile uint32_t dataIndex  = 0;
 
 void setup() {
     Serial.begin(9600);
@@ -110,7 +111,6 @@ void loop() {
 // Manejador de interrupciones I2C
 void onReceiveI2C(void) {
   uint32_t estado = I2CSlaveStatus(I2C0_BASE);
-  bool int_estado = I2CSlaveIntStatus(I2C0_BASE, false);
 
   //Serial.print("S: ");
   //Serial.println(estado);
@@ -126,11 +126,20 @@ void onReceiveI2C(void) {
   */
 
   // Se lee un byte de la información recibida
-  recData = I2CSlaveDataGet(I2C0_BASE);
-  Serial.print(recData);
-
-  if (recData == '\n' or recData == '\0' or recData == 'X'){ // detecta fin del mensaje
-    I2CSlaveIntClear(I2C0_BASE); // Reiniciar la bandera cuando terminó la lectura
-    Serial.println("");
+  if (dataIndex < BUFFER_SIZE) {
+      recData = I2CSlaveDataGet(I2C0_BASE);
+      receivedData[dataIndex] = recData;
+      dataIndex++;
+  }
+  
+  // Byte de parada
+  if (recData == '\n' || recData == '\0' || recData == 'X'){ // detecta fin del mensaje
+      Serial.print("Mensaje: ");
+      for (uint8_t i = 0; i < dataIndex; i++) {
+          Serial.print((char)receivedData[i]); // Mostrar los datos recibidos como caracteres
+      }
+      Serial.println("");
+      dataIndex = 0;
+      I2CSlaveIntClear(I2C0_BASE); // Reiniciar la bandera cuando terminó la lectura
   }
 }

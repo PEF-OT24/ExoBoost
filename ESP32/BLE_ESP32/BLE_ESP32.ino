@@ -3,6 +3,7 @@
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <ArduinoJson.h>
+#include "Wire.h"
 
 // Definición del nombre del dispositivo
 #define DEVICE_NAME "ESP32_BLE_Server"
@@ -22,6 +23,7 @@
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
 
+// -------------------------------- Variables para BLE --------------------------------
 // Declara variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
@@ -49,6 +51,12 @@ String level; // Nivel de asistencia del slider
 String motor1_pv;
 String motor2_pv;
 String motor3_pv;
+
+// -------------------------------- Variables para I2C --------------------------------
+#define SLAVE_ADDRESS 0x55 // Dirección del esclavo I2C (ajustar según sea necesario)
+#define BUFFER_SIZE 6     // Tamaño del buffer para recibir datos
+char receivedData[BUFFER_SIZE]; // Buffer para almacenar los datos recibidos
+uint8_t dataLength = 0; // Longitud de los datos recibidos
 
 int temporal = 100;
 
@@ -323,13 +331,34 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
   errorCode = Wire.endTransmission();
 
   // Se formatea la salida para debug
-  Serial.print("Mandando mensaje a dirección: ");
-  Serial.println(slaveAddress);
+  // Serial.print("Mandando mensaje a dirección: ");
+  // Serial.println(slaveAddress);
   Serial.print("Código de error: ");
   Serial.println(errorCode);
-  Serial.print("Bytes escritos: ");
-  Serial.println(bytesWritten);
-  Serial.println("----------------");
+  // Serial.print("Bytes escritos: ");
+  // Serial.println(bytesWritten);
+  // Serial.println("----------------");
+}
+
+void readI2CMessage(uint8_t slaveAddress, uint8_t len){
+  Wire.requestFrom(slaveAddress, len);
+
+  // Leer los datos recibidos y almacenarlos en el buffer
+  // dataLength = 0; // Reiniciar la longitud de los datos
+  Serial.print("Datos: ");
+  while (Wire.available()) {
+    char data = Wire.read();
+    Serial.print(data);
+    // receivedData[dataLength++] = Wire.read(); // Leer un byte y almacenarlo en el buffer
+  }
+
+  // Mostrar los datos almacenados en el monitor serial
+  // Serial.print("Datos recibidos: ");
+  // for (uint8_t i = 0; i < dataLength; i++) {
+  //   Serial.print(receivedData[i]); // Imprimir cada byte en formato hexadecimal
+  //   Serial.print(" ");
+  // }
+  Serial.println(); // Nueva línea después de los datos
 }
 
 void setup() {
@@ -433,7 +462,7 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(1000);
+  delay(500);
   temporal ++;
 
   // AUMENTAR EL VALOR PARA VER SI SE LEE CORRECTAMENTE
@@ -449,6 +478,8 @@ void loop() {
   // Serial.println(pCharacteristic_PV->getValue());
 
   // Se manda información por I2C
-  const char* message2 = "ESP32 says Hi!";
-  sendI2CMessage(0x55, message2);
+  const char* message2 = "Hola, Esclavo!";
+  sendI2CMessage(SLAVE_ADDRESS, message2);
+  delay(500);
+  readI2CMessage(SLAVE_ADDRESS, 15);
 }
