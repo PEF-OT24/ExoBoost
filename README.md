@@ -30,11 +30,11 @@ Puedes encontrar mucho más de cómo utilizar este proyecto en nuestra [Wiki](ht
 
 _Menciona a todos aquellos que ayudaron a levantar el proyecto desde sus inicios_
 
-* **Carlos Reyes** - *IMT* - [reyesgithub](#https://github.com/carlosreyesb)
-* **David Villanueva** - *IMT* - [villagithub](#https://github.com/david-villanueva-02)
+* **Carlos Reyes** - *IMT* - [reyesgithub](https://github.com/carlosreyesb)
+* **David Villanueva** - *IMT* - [villagithub](https://github.com/david-villanueva-02)
 * **Eduardo Martinez** - *IDA / IMT* - [lalogithub](#lalogithub)
 * **Itzel Martinez** - *IBI / IMT* - [itzelgithub](#itzelgithub)
-* **Teresa Hernandez** - *IMT* - [teregithub](#https://github.com/Teresa-hdz)
+* **Teresa Hernandez** - *IMT* - [teregithub](https://github.com/Teresa-hdz)
 
 
 ---
