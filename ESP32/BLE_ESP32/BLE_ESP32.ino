@@ -22,7 +22,8 @@
 
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
-
+// -------------------------------- Declaración de funciones prototipo----------------
+void sendI2CMessage(uint8_t slaveAddress, const char* message);
 // -------------------------------- Variables para BLE --------------------------------
 // Declara variables del servidor
 BLEServer* pServer;
@@ -297,6 +298,17 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
     Serial.println("State: " + state);
     Serial.println("------------------------------");
 
+    // ELIMINAR
+    if (state == "sit_down_stand_up"){
+      const char* message2 = "ON ";
+      sendI2CMessage(SLAVE_ADDRESS, message2);
+    }
+    if (state == "walk"){
+      const char* message2 = "OFF";
+      sendI2CMessage(SLAVE_ADDRESS, message2);
+    }
+    
+
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;
     jsonrep["response"] = "Success";
@@ -345,13 +357,32 @@ void readI2CMessage(uint8_t slaveAddress, uint8_t len){
 
   // Leer los datos recibidos y almacenarlos en el buffer
   // dataLength = 0; // Reiniciar la longitud de los datos
-  Serial.print("Datos: ");
-  while (Wire.available()) {
-    char data = Wire.read();
-    Serial.print(data);
-    // receivedData[dataLength++] = Wire.read(); // Leer un byte y almacenarlo en el buffer
-  }
+  char mensaje_leido[len+1]; // Arreglo de len bytes para guardar el mensaje
 
+  // Lee los bytes recibidos
+  int i = 0;
+  while (Wire.available()) {
+    if (i < sizeof(mensaje_leido)-1) {
+      mensaje_leido[i++] = Wire.read();
+    }
+  }
+  mensaje_leido[i] = '\0';
+  // Imprime los datos leídos
+  Serial.print("Datos recibidos: ");
+  Serial.println(mensaje_leido);
+  Serial.println();
+
+  if (strcmp(mensaje_leido, "ON ") == 0) {
+    Serial.println("Encender motor");// Mensaje temporal para encnder el motor
+    
+  } 
+  else if (strcmp(mensaje_leido, "OFF") == 0) {
+    Serial.println("Apagar motor"); // Mensaje temporal para apagar el motor
+
+  } 
+  else {
+    Serial.println("Mensaje no reconocido");
+  }
   // Mostrar los datos almacenados en el monitor serial
   // Serial.print("Datos recibidos: ");
   // for (uint8_t i = 0; i < dataLength; i++) {
@@ -478,8 +509,8 @@ void loop() {
   // Serial.println(pCharacteristic_PV->getValue());
 
   // Se manda información por I2C
-  const char* message2 = "Hola, Esclavo!";
-  sendI2CMessage(SLAVE_ADDRESS, message2);
-  delay(500);
-  readI2CMessage(SLAVE_ADDRESS, 15);
+  // const char* message2 = "Hola, Esclavo!";
+  // sendI2CMessage(SLAVE_ADDRESS, message2); // Mandar un mensaje a la TivaC
+  // delay(500);
+  // readI2CMessage(SLAVE_ADDRESS, 3); // Leer un mensaje
 }

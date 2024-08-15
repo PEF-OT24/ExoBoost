@@ -1,3 +1,6 @@
+// Código general para la TIVAC que maneja protocolo CAN e I2C. 
+// Se incluye la lógica para el algoritmo de control 
+
 #define PART_TM4C123GH6PM
 #include <stdint.h>
 #include <stdbool.h>
@@ -16,7 +19,7 @@
 #include "driverlib/adc.h"
 #include "driverlib/can.h"
 #include "driverlib/systick.h"
-#include "Wire.h"
+#include <Wire.h>
 
 // LED Definitions
 #define RED_LED GPIO_PIN_1
@@ -28,15 +31,11 @@
 #define CAN_INT_INTID_STATUS 0x8000
 #endif
 
-uint32_t intensity = 0;
-uint8_t CANBUSSend_Stop[8u];
-uint8_t CANBUSReceive[8u];
-uint8_t inByte = 0;
-bool doControlFlag = 0;
+bool doControlFlag = 0; // Bandera de control en tiempo real 
 
-tCANMsgObject sMsgObjectRx;
-tCANMsgObject sMsgObjectTx_PIDvalues;
-tCANMsgObject sMsgObjectTx_Stop;
+#define I2C_DEV_ADDR 0x55 // Dirección del esclavo
+uint32_t i = 0;
+char data;
 
 void setup() {
     Serial.begin(9600);
@@ -78,6 +77,11 @@ void setup() {
     SysTickIntEnable();
     SysTickEnable();
 
+    // ------ Configuración de I2C ------
+    Wire.begin((uint8_t)I2C_DEV_ADDR);                // Inicializa el protocolo I2C 
+    Wire.onReceive(onReceive); // Se registra el evento de onreceive
+    Wire.onRequest(onRequest); // register event
+
     IntMasterEnable();
     SendParameters();
     //stop_motor(1);
@@ -90,6 +94,7 @@ void setup() {
     //set_stposition(1,90,1000,0,true);
 }
 
+
 void split32bits(int32_t number, uint8_t *byteArray) {
     // Se divide el número en 4 enteros de 8 bits
     byteArray[0] = (number >> 24) & 0xFF;  // byte más significativo
@@ -100,15 +105,17 @@ void split32bits(int32_t number, uint8_t *byteArray) {
 
 void split16bits(int16_t number, uint8_t *byteArray) {
     // Se divide el número en 2 enteros de 8 bits
-    byteArray[0] = (number >> 8) & 0xFF; // byte más significativo	
+    byteArray[0] = (number >> 8) & 0xFF; // byte más significativo  
     byteArray[1] = number & 0xFF;  // byte menos significativo
 }
 
-void ISRSysTick(void) {
+void ISRSysTick(void) { // Función de interrupción para tiempo real (NO SE USA)
     doControlFlag = true;
 }
 
-void CAN0IntHandler(void) {
+void CAN0IntHandler(void) { // Función de interrupción para el CAN (NO SE USA)
+    uint8_t CANBUSReceive[8u];
+    tCANMsgObject sMsgObjectRx;
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
 
     // Check if the interrupt is caused by a status change
@@ -164,6 +171,7 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){
 void SendParameters(){
   // Se define la variable que almacena el valor
   uint8_t CANBUSSend_PIDvalues[8u];
+  tCANMsgObject sMsgObjectTx_PIDvalues;
 
   // Define PID parameter values
   CANBUSSend_PIDvalues[0] = 0x64; 
@@ -420,7 +428,6 @@ void shutdown_motor(int8_t ID){
   send_cmd(ID, CAN_data_TX, false);
 }
 
-
 void reset_motor(int8_t ID){
   
   // Objetos para la comunicación CAN
@@ -440,8 +447,47 @@ void reset_motor(int8_t ID){
   send_cmd(ID, CAN_data_TX, true);
 }
 
+// -------- Funciones para I2C -------- 
+void onReceive(int len){
+  char mensaje_leido[len+1];
+  // Lee los bytes recibidos
+  int i = 0;
+  while (Wire.available()) {
+    if (i < sizeof(mensaje_leido)-1) {
+      mensaje_leido[i++] = Wire.read();
+    }
+  }
+  mensaje_leido[i] = '\0';
+  // Imprime los datos leídos
+  Serial.print("Datos recibidos: ");
+  Serial.println(mensaje_leido);
+  Serial.println();
+
+  if (strcmp(mensaje_leido, "ON ") == 0) {
+    Serial.println("Encender motor");// Mensaje temporal para encnder el motor
+    set_speed(1, 360, true);
+  } 
+  else if (strcmp(mensaje_leido, "OFF") == 0) {
+    Serial.println("Apagar motor"); // Mensaje temporal para apagar el motor
+    stop_motor(1);
+
+  } 
+  else {
+    Serial.println("Mensaje no reconocido");
+  }
+}
+
+void onRequest(){
+  // Se definen las cosas a mandar
+  const char *message = "Hello, Master! ";
+  
+  Serial.println("onRequest: ");
+  Wire.write(message); // test de respuesta
+}
+
 void loop() {
   //set_stposition(1,90,5000,1,true);
   //set_speed(1, 360, true);
-  stop_motor(1);
+  //stop_motor(1);
+  //reset_motor(1);
 }
