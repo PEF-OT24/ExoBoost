@@ -23,6 +23,7 @@ from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
+from kivymd.uix.behaviors.toggle_behavior import MDToggleButton 
 
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
@@ -55,13 +56,14 @@ class SecundaryWindow(Screen): pass      # Pantalla secundaria
 
 # Clases predefinidas reciclables
 # El formato específico y definido se encuentra en el archivo test.kv
-class CustomLabelRoboto(MDLabel): pass   # Case predefinida para los subtítulos con formato
-class CustomLabelAD(MDLabel): pass       # Case predefinida para los títulos con formato
-class CustomTextEntry(MDTextField): pass # Case predefinida para las entradas de texto con formato
-class InfoPopUp(Popup): pass             # Clase para mostrar un pop up de información
-class ImageTeam(Image): pass             # Clase para formatear las imágenes del equipo
-class LabelTeam(MDLabel): pass           # Clase para formatear los datos del equipo
-class ButtonDevices(MDFlatButton): pass  # Clase para crear botones de los dispositivos encontrados
+class CustomLabelRoboto(MDLabel): pass        # Case predefinida para los subtítulos con formato
+class CustomLabelAD(MDLabel): pass            # Case predefinida para los títulos con formato
+class CustomTextEntry(MDTextField): pass      # Case predefinida para las entradas de texto con formato
+class InfoPopUp(Popup): pass                  # Clase para mostrar un pop up de información
+class ImageTeam(Image): pass                  # Clase para formatear las imágenes del equipo
+class LabelTeam(MDLabel): pass                # Clase para formatear los datos del equipo
+class ButtonDevices(MDFlatButton): pass       # Clase para crear botones de los dispositivos encontrados
+class ButtonParameters(MDFlatButton, MDToggleButton): pass  # Clase para crear botones para seleccionar los parámetros a procesar
 
 class ErrorPopup(Popup):
     '''Clase para mostrar un error genérico'''
@@ -393,6 +395,10 @@ class ExoBoostApp(MDApp):
         def perform_connection():
             '''Método para realizar la conexión'''
             self.connection_successful = self.ble.connect(self.selected_device)
+            Clock.schedule_once(update_label)
+
+        def update_label(*args):
+            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
         # No hace ninguna acción si no hay un dispositivo seleccionado o si el BLE no está disponible
         if not self.selected_device or not self.ble_found: return
@@ -405,7 +411,7 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
             # Se cambia el texto del label y se muestra a que dispositivo se conectó
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
-            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
+            # self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
             # Comienza la lectura de datos
             self.read_thread.start()
@@ -421,25 +427,8 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text = "Disconnected"
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
-    def send_params(self): 
-        '''Método para enviar parámetros al dispositivo conectado'''
-        # Acción de submit parámetros
-        print("Método para enviar parámetros")
-        if not self.ble_found: return
-
-        # Se define la información a mandar con la limb
-        json_data: dict = self.motor_parameters_pi
-        json_data["limb"] = self.selected_limb
-
-        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
-        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
-        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
-
-        # Se mandan los datos
-        if not self.ble.connected: return
-        self.ble.write_json(service_uuid, char_uuid, json_data) 
-
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
+
     # ---------------- Imprime valor del slider ----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
@@ -522,10 +511,13 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
-    def assitance_method(self): pass
-
     #----------------------------------------------------- Métodos del menú de sintonizción -----------------------------------------------------
-    #Método para desplegar valores de PI en cada motor de acuerdo a la extremidad seleccionada
+    def load_params(self): 
+        print("Método para cargar parámetros guardados")
+
+    def save_params(self): 
+        print("Método para guardar los parámetros escritos")
+
     def limb_dropdown_clicked(self, limb: str) -> None: 
 
         '''
@@ -557,6 +549,36 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.kc_motor3.text = "100"
         self.root.get_screen('Main Window').ids.ti_motor3.text = "50"
         self.root.get_screen('Main Window').ids.pv_motor3.text = "0"
+
+    def send_params(self): 
+        '''Método para enviar parámetros al dispositivo conectado'''
+        # Acción de submit parámetros
+        print("Método para enviar parámetros")
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data: dict = self.motor_parameters_pi[self.selected_limb]
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
+
+        # Se mandan los datos
+        if not self.ble.connected: return
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
+    
+    def send_sp(self): 
+        print("Método para enviar el set point")
+    
+    def process_var_select(self, instance, value) -> None:
+        '''
+        Método para establecer la variable de processo seleccionada.
+        Dicha variable está ligada tanto al monitoreo de su valor como variable de proceso, 
+        los valores de PI para la sintonización y su punto de set point para el control.
+        '''
+        if value == 'down':
+            print(f'Seleccionaste: {instance.text}')
 
     def on_entry_text(self, param: str, motor: str, value: str) -> None: 
         """
@@ -668,8 +690,6 @@ class ExoBoostApp(MDApp):
     def close_popup(self):
         '''Función para cerra el pop up de información'''
         self.popup.dismiss()
-
-
 
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
