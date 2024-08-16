@@ -1,42 +1,53 @@
-// Archivo donde se definen todas las funciones y clases del módulo
-#include "BLE_MODULE.h"
+// Código para la ESP32 que maneja el protocolo BLE e I2C como maestro. 
 
+// Importación de librerías
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
 #include <ArduinoJson.h>
+#include "Wire.h"
 
-// Definición del nombre del dispositivo
-#define DEVICE_NAME "ESP32_BLE_Server"
-
-// Definición de servicios y sus características
-#define SERVICE_UUID_PARAMS "00000001-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa" // parámetros de PI con SP
-#define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // nivel de asistencia del motor
-
-// Estos no se usan 
-#define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"
-
-#define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa"
-
+// -------------------------------- Variables de uso general --------------------------------
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
 
-// -------------------------------- Variables para BLE --------------------------------
-// Declara variables del servidor
+// -------------------------------- Declaración de funciones prototipo ---------------------------
+void sendI2CMessage(uint8_t slaveAddress, const char* message);
+
+// ------------------------------------- Set up para BLE -------------------------------------
+// ------- Variables para BLE -------
+// Nombre del dispositivo
+#define DEVICE_NAME "ESP32"
+
+// Definición de servicios y sus características
+// Servicio para los parámetros
+#define SERVICE_UUID_PARAMS "00000001-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI y SP
+#define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // Característica para el nivel de asistencia del motor
+
+// Servicio para las variables de proceso
+#define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"   // Característica para recibir el valor de la variable de proceso
+#define CHARACTERISTIC_UUID_VAR "0000000e-0000-1000-8000-00805f9b34fa"  // Característica para definir qué variable de proceso analizar
+
+// Servicio para el modo de comando 
+#define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
+#define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
+
+// Variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
 
 // Declara variables de las características
+BLECharacteristic *pCharacteristic_PI;
+BLECharacteristic *pCharacteristic_LEVEL
 BLECharacteristic *pCharacteristic_PV;
+BLECharacteristic *pCharacteristic_VAR;// PARA IMPLEMENTAR
+BLECharacteristic *pCharacteristic_MODE
 
-String selected_limb; // Articulación seleccionada actual 
-String state; // Estado del proceso actual
-
-// Declara variables para los parámetros
+// Variables para guardar los valores recibidos
+// Parámetros PI de los motores
 String motor1_kc;
 String motor1_ti;
 String motor1_sp;
@@ -46,29 +57,32 @@ String motor2_sp;
 String motor3_kc;
 String motor3_ti;
 String motor3_sp;
-
 String level; // Nivel de asistencia del slider 
 
-// Declara variables para la variable de proceso
+// Variable de proceso de los motores
 String motor1_pv;
 String motor2_pv;
 String motor3_pv;
+String actual_pv; // PARA IMPLEMENTAR
 
-int temporal = 100;
+String state; // Estado del proceso actual
 
+String selected_limb; // Articulación seleccionada actual 
+
+// ------- Clases para BLE -------
 // Clase que maneja los eventos de conexión y desconexión
 class ServerCallbacks: public BLEServerCallbacks {
-  void onConnect(BLEServer* pServer) {
-    digitalWrite(LED_PIN, HIGH);  // Enciende el LED
+  void onConnect(BLEServer* pServer) { // Cuando se conecta
+    digitalWrite(LED_PIN, HIGH); 
     Serial.println("Cliente conectado");
   }
 
-  void onDisconnect(BLEServer* pServer) {
-    digitalWrite(LED_PIN, LOW);  // Apaga el LED
-    Serial.println("Cliente desconectado");
+  void onDisconnect(BLEServer* pServer) { // Cuando se desconecta
+    digitalWrite(LED_PIN, LOW);  
+    Serial.print("Cliente desconectado ... ");
     delay(0.5);
-    Serial.println("Reiniciando advertising...");
-    pAdvertising->start();  // Reinicia la publicidad
+    Serial.println("Reiniciando advertising.");
+    pAdvertising->start();                // Reinicia la publicidad
   }
 };
 
@@ -293,6 +307,17 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
     Serial.println("State: " + state);
     Serial.println("------------------------------");
 
+    // ELIMINAR
+    if (state == "sit_down_stand_up"){
+      const char* message2 = "ON ";
+      sendI2CMessage(SLAVE_ADDRESS, message2);
+    }
+    if (state == "walk"){
+      const char* message2 = "OFF";
+      sendI2CMessage(SLAVE_ADDRESS, message2);
+    }
+    
+
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;
     jsonrep["response"] = "Success";
@@ -302,6 +327,87 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
     pCharacteristic->notify();
   }
 };
+
+// ------------------------------------- Set up para I2C -------------------------------------
+#define SLAVE_ADDRESS 0x55 // Dirección del esclavo I2C (ajustar según sea necesario)
+#define BUFFER_SIZE 6     // Tamaño del buffer para recibir datos
+char receivedData[BUFFER_SIZE]; // Buffer para almacenar los datos recibidos
+uint8_t dataLength = 0; // Longitud de los datos recibidos
+
+int temporal = 100;
+
+// Función para mandar un mensaje a través de I2C
+void sendI2CMessage(uint8_t slaveAddress, const char* message) {
+  int length = strlen(message);  // Calculate the length of the message
+  byte byteArray[length];        // Create a byte array of the same length
+
+  // Variables de estatus
+  int bytesWritten; // Longitud de los bytes escritos
+  int errorCode;    // Código de error después de escribir
+
+  // Se convierte el string a un arreglo de bytes
+  for (int i = 0; i < length; i++) {
+    byteArray[i] = (byte)message[i];
+  }
+
+  // Se imprime el mensaje a mandar
+  Serial.print("Sending message: ");
+  Serial.println(message);
+
+  // Se manda el mensaje al esclavo I2C
+  Wire.beginTransmission(slaveAddress);
+  bytesWritten = Wire.write(byteArray, length);  
+  errorCode = Wire.endTransmission();
+
+  // Se formatea la salida para debug
+  // Serial.print("Mandando mensaje a dirección: ");
+  // Serial.println(slaveAddress);
+  Serial.print("Código de error: ");
+  Serial.println(errorCode);
+  // Serial.print("Bytes escritos: ");
+  // Serial.println(bytesWritten);
+  // Serial.println("----------------");
+}
+
+void readI2CMessage(uint8_t slaveAddress, uint8_t len){
+  Wire.requestFrom(slaveAddress, len);
+
+  // Leer los datos recibidos y almacenarlos en el buffer
+  // dataLength = 0; // Reiniciar la longitud de los datos
+  char mensaje_leido[len+1]; // Arreglo de len bytes para guardar el mensaje
+
+  // Lee los bytes recibidos
+  int i = 0;
+  while (Wire.available()) {
+    if (i < sizeof(mensaje_leido)-1) {
+      mensaje_leido[i++] = Wire.read();
+    }
+  }
+  mensaje_leido[i] = '\0';
+  // Imprime los datos leídos
+  Serial.print("Datos recibidos: ");
+  Serial.println(mensaje_leido);
+  Serial.println();
+
+  if (strcmp(mensaje_leido, "ON ") == 0) {
+    Serial.println("Encender motor");// Mensaje temporal para encnder el motor
+    
+  } 
+  else if (strcmp(mensaje_leido, "OFF") == 0) {
+    Serial.println("Apagar motor"); // Mensaje temporal para apagar el motor
+
+  } 
+  else {
+    Serial.println("Mensaje no reconocido");
+  }
+  // Mostrar los datos almacenados en el monitor serial
+  // Serial.print("Datos recibidos: ");
+  // for (uint8_t i = 0; i < dataLength; i++) {
+  //   Serial.print(receivedData[i]); // Imprimir cada byte en formato hexadecimal
+  //   Serial.print(" ");
+  // }
+  Serial.println(); // Nueva línea después de los datos
+}
 
 void setup() {
   // Inicializa el puerto serie para la depuración
@@ -322,7 +428,7 @@ void setup() {
   // Crea el servicio de envío de parámetros de PI
   BLEService *pService_PARAMS = pServer->createService(SERVICE_UUID_PARAMS);
   // Crea la característica BLE para recibir datos del PI
-  BLECharacteristic *pCharacteristic_PI = pService_PARAMS->createCharacteristic(
+  pCharacteristic_PI = pService_PARAMS->createCharacteristic(
                                          CHARACTERISTIC_UUID_PI,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
@@ -331,7 +437,7 @@ void setup() {
                                        );
   pCharacteristic_PI->setCallbacks(new BLECallback_PI());
   // Crea la característica BLE para recibir el nivel de asistencia del slider
-  BLECharacteristic *pCharacteristic_LEVEL = pService_PARAMS->createCharacteristic(
+  pCharacteristic_LEVEL = pService_PARAMS->createCharacteristic(
                                          CHARACTERISTIC_UUID_LEVEL,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
@@ -355,7 +461,7 @@ void setup() {
   // Crea el servicio de envío de valor del estado
   BLEService *pService_MODE = pServer->createService(SERVICE_UUID_COMMAND);
   // Crea la característica BLE para recibir datos de la PV
-  BLECharacteristic *pCharacteristic_MODE = pService_MODE->createCharacteristic(
+  pCharacteristic_MODE = pService_MODE->createCharacteristic(
                                          CHARACTERISTIC_UUID_MODE,
                                          BLECharacteristic::PROPERTY_READ |
                                          BLECharacteristic::PROPERTY_WRITE |
@@ -417,4 +523,11 @@ void loop() {
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
 
-} 
+  // Serial.println(pCharacteristic_PV->getValue());
+
+  // Se manda información por I2C
+  // const char* message2 = "Hola, Esclavo!";
+  // sendI2CMessage(SLAVE_ADDRESS, message2); // Mandar un mensaje a la TivaC
+  // delay(500);
+  // readI2CMessage(SLAVE_ADDRESS, 3); // Leer un mensaje
+}

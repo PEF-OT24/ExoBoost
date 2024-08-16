@@ -1,3 +1,6 @@
+// Código para la ESP32 que maneja el protocolo BLE e I2C como maestro. 
+
+// Importación de librerías
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEUtils.h>
@@ -5,26 +8,30 @@
 #include <ArduinoJson.h>
 #include "Wire.h"
 
-// Definición del nombre del dispositivo
-#define DEVICE_NAME "ESP32_BLE_Server"
+// -------------------------------- Declaración de funciones prototipo ---------------------------
+void sendI2CMessage(uint8_t slaveAddress, const char* message);
+
+// ------------------------------------- Set up para BLE -------------------------------------
+// ------- Variables para BLE -------
+// Nombre del dispositivo
+#define DEVICE_NAME "ESP32"
 
 // Definición de servicios y sus características
+// Servicio para los parámetros
 #define SERVICE_UUID_PARAMS "00000001-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa" // parámetros de PI con SP
-#define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // nivel de asistencia del motor
+#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI y SP
+#define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // Característica para el nivel de asistencia del motor
 
-// Estos no se usan 
+// Servicio para las variables de proceso
 #define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"
+#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"   // Característica para recibir posición
 
 #define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa"
 
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
-// -------------------------------- Declaración de funciones prototipo----------------
-void sendI2CMessage(uint8_t slaveAddress, const char* message);
-// -------------------------------- Variables para BLE --------------------------------
+
 // Declara variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;

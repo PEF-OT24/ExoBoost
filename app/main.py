@@ -154,27 +154,36 @@ class ExoBoostApp(MDApp):
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
         # Todos se inicializan con un valor arbitrario
-        self.motor_parameters_pi =  {
-            "Right leg": {
-                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
-            },
-            "Left leg": {
-                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
-            },
-            "Right arm": {
-                "motor1": {"kc": "10", "ti": "100", "sp": "0"},
-                "motor2": {"kc": "10", "ti": "100", "sp": "0"},
-                "motor3": {"kc": "10", "ti": "100", "sp": "0"},
-            },
-            "Left arm": {
-                "motor1": {"kc": "10", "ti": "500", "sp": "0"},
-                "motor2": {"kc": "10", "ti": "500", "sp": "0"},
-                "motor3": {"kc": "10", "ti": "500", "sp": "0"},
-            }
+        # self.motor_parameters_pi =  {
+        #     "Right leg": {
+        #         "motor1": {"kc": "100", "ti": "50", "sp": "0"},
+        #         "motor2": {"kc": "100", "ti": "50", "sp": "0"},
+        #         "motor3": {"kc": "100", "ti": "50", "sp": "0"},
+        #     },
+        #     "Left leg": {
+        #         "motor1": {"kc": "50", "ti": "100", "sp": "0"},
+        #         "motor2": {"kc": "50", "ti": "100", "sp": "0"},
+        #         "motor3": {"kc": "50", "ti": "100", "sp": "0"},
+        #     },
+        #     "Right arm": {
+        #         "motor1": {"kc": "10", "ti": "100", "sp": "0"},
+        #         "motor2": {"kc": "10", "ti": "100", "sp": "0"},
+        #         "motor3": {"kc": "10", "ti": "100", "sp": "0"},
+        #     },
+        #     "Left arm": {
+        #         "motor1": {"kc": "10", "ti": "500", "sp": "0"},
+        #         "motor2": {"kc": "10", "ti": "500", "sp": "0"},
+        #         "motor3": {"kc": "10", "ti": "500", "sp": "0"},
+        #     }
+        # }
+
+        # Inicialización de los parámetros del PI 
+        self.motor_parameters_pi = {
+            "limb": "Right leg", # "Right leg", "Left leg", "Right arm", "Left arm"
+            "monitoring": "pos", # "pos", "vel", "acc", "temp"
+            "motor1": {"kc": "100", "ti": "50", "sp": "0"},
+            "motor2": {"kc": "100", "ti": "50", "sp": "0"},
+            "motor3": {"kc": "100", "ti": "50", "sp": "0"}
         }
 
         # Diccionario de valores de la variable de proceso de los motores
@@ -442,7 +451,7 @@ class ExoBoostApp(MDApp):
         if not self.ble_found: return
 
         # Se define la información a mandar con la limb
-        json_data: dict = self.motor_parameters_pi[self.selected_limb]
+        json_data: dict = self.motor_parameters_pi
         json_data["limb"] = self.selected_limb
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
@@ -541,13 +550,14 @@ class ExoBoostApp(MDApp):
     #----------------------------------------------------- Métodos del menú de sintonizción -----------------------------------------------------
     #Método para desplegar valores de PI en cada motor de acuerdo a la extremidad seleccionada
     def limb_dropdown_clicked(self, limb: str) -> None: 
+
         '''
         Método para actualizar en la app los parámetros de los motores al seleccionar otra extremidad
         Entrada: Entrada seleccionada (str)
         '''
 
-        # Se obtiene la selección
-        self.selected_limb = limb
+        # Se guarda la selección de la extremidad
+        self.motor_parameters_pi["limb"] = self.selected_limb = limb
 
         # Se cambian las etiquetas de los motores
         new_labels: list[str] = self.motors_labels[self.selected_limb]
@@ -555,21 +565,21 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.motor2_label.text = new_labels[1]
         self.root.get_screen('Main Window').ids.motor3_label.text = new_labels[2]
 
+        # MEJORA: SE DEBERÍA MANDAR UN REQUEST DE LECTURA PARA LEER LOS DATOS DEL MOTOR DEPENDIENDO DE LA EXTREMIDAD SELECCIONADA 
+        # PARA MOSTRAR LA INFORMACIÓN ACTUALIZADA EN LA APP
         # Se cambian los valores de los parámetros PI de los motores
-        new_params: dict[dict[str]]= self.motor_parameters_pi[self.selected_limb]
-        process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
         # Motor 1
-        self.root.get_screen('Main Window').ids.kc_motor1.text = new_params["motor1"]["kc"]
-        self.root.get_screen('Main Window').ids.ti_motor1.text = new_params["motor1"]["ti"]
-        self.root.get_screen('Main Window').ids.pv_motor1.text = process_params["motor1"]
+        self.root.get_screen('Main Window').ids.kc_motor1.text = "100"
+        self.root.get_screen('Main Window').ids.ti_motor1.text = "50"
+        self.root.get_screen('Main Window').ids.pv_motor1.text = "0"
         # Motor 2
-        self.root.get_screen('Main Window').ids.kc_motor2.text = new_params["motor2"]["kc"]
-        self.root.get_screen('Main Window').ids.ti_motor2.text = new_params["motor2"]["ti"]
-        self.root.get_screen('Main Window').ids.pv_motor2.text = process_params["motor2"]
+        self.root.get_screen('Main Window').ids.kc_motor2.text = "100"
+        self.root.get_screen('Main Window').ids.ti_motor2.text = "50"
+        self.root.get_screen('Main Window').ids.pv_motor2.text = "0"
         # Motor 3
-        self.root.get_screen('Main Window').ids.kc_motor3.text = new_params["motor3"]["kc"]
-        self.root.get_screen('Main Window').ids.ti_motor3.text = new_params["motor3"]["ti"]
-        self.root.get_screen('Main Window').ids.pv_motor3.text = process_params["motor3"]
+        self.root.get_screen('Main Window').ids.kc_motor3.text = "100"
+        self.root.get_screen('Main Window').ids.ti_motor3.text = "50"
+        self.root.get_screen('Main Window').ids.pv_motor3.text = "0"
 
     def on_entry_text(self, param: str, motor: str, value: str) -> None: 
         """
@@ -578,18 +588,17 @@ class ExoBoostApp(MDApp):
                   motor -> número de motor {'motor1', 'motor2', 'motor3'}
                   value -> valor ingresado
         """
-        old_params: dict[dict[str]] = self.motor_parameters_pi[self.selected_limb]
+        if not self.is_valid(value, 1): self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][param]
+        if not param in ["kc", "ti", "sp"]: return
 
-        if self.is_valid(value, 1): # Validación de dato como int
-            if param in ["kc", "ti", "sp"]:
-                max_value = self.motor_params_lims[self.selected_limb][motor][param]
-                if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
-                    # Si es válido, se actualiza el diccionario de parámetros
-                    self.motor_parameters_pi[self.selected_limb][motor][param] = value
-                else: # Valor no válido
-                    self.param_pi_entries[motor][param].text = old_params[motor][param]
-        else: # Tipo no válido
-            self.param_pi_entries[motor][param].text = old_params[motor][param]
+        max_value = self.motor_params_lims[self.selected_limb][motor][param]
+        if int(value) <= int(max_value): # Validación de valor máximo de acuerdo al parámetro
+            # Si es válido, se actualiza el diccionario de parámetros
+            self.motor_parameters_pi[motor][param] = value
+        else: # Valor no válido, reescribe el texto
+            self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][param]
+        
+        print(self.motor_parameters_pi)
 
     def read_cycle(self, time: int):  
         # MEJORA: INDICAR QUÉ CARACTERÍSTICA SE QUIERE LEER ANTES DE HACER EL REQUEST. 
