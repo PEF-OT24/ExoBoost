@@ -83,6 +83,7 @@ class ExoBoostApp(MDApp):
         
         # Diccionario de etiquetas para la sintonización
         self.selected_limb: str = "Right leg"
+        self.selected_param: str = "pos" # Valores posibles para el parámetro a elegir. ["pos", "vel", "cur", "temp"] 
         self.motors_labels: dict[str] = {
             "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
             "Left leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
@@ -153,30 +154,6 @@ class ExoBoostApp(MDApp):
 
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
-        # Todos se inicializan con un valor arbitrario
-        # self.motor_parameters_pi =  {
-        #     "Right leg": {
-        #         "motor1": {"kc": "100", "ti": "50", "sp": "0"},
-        #         "motor2": {"kc": "100", "ti": "50", "sp": "0"},
-        #         "motor3": {"kc": "100", "ti": "50", "sp": "0"},
-        #     },
-        #     "Left leg": {
-        #         "motor1": {"kc": "50", "ti": "100", "sp": "0"},
-        #         "motor2": {"kc": "50", "ti": "100", "sp": "0"},
-        #         "motor3": {"kc": "50", "ti": "100", "sp": "0"},
-        #     },
-        #     "Right arm": {
-        #         "motor1": {"kc": "10", "ti": "100", "sp": "0"},
-        #         "motor2": {"kc": "10", "ti": "100", "sp": "0"},
-        #         "motor3": {"kc": "10", "ti": "100", "sp": "0"},
-        #     },
-        #     "Left arm": {
-        #         "motor1": {"kc": "10", "ti": "500", "sp": "0"},
-        #         "motor2": {"kc": "10", "ti": "500", "sp": "0"},
-        #         "motor3": {"kc": "10", "ti": "500", "sp": "0"},
-        #     }
-        # }
-
         # Inicialización de los parámetros del PI 
         self.motor_parameters_pi = {
             "limb": "Right leg", # "Right leg", "Left leg", "Right arm", "Left arm"
