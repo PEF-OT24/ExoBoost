@@ -649,10 +649,21 @@ WindowManager:
                                 #padding: dp(10), dp(10)
                                 spacing: dp(10)
                             
-                                BoxLayout:
-                                    orientation: "vertical"
-                                    size_hint: None, None
-                                    width: dp(45)
+                                MDIconButton:
+                                    id: load_params
+                                    icon: "download"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    theme_icon_color: "Custom"
+                                    icon_color: app.colors['White']
+                                    
+                                    on_press: 
+                                        self.md_bg_color = app.colors['Light Orange']
+                                    on_release: 
+                                        self.md_bg_color = app.colors['Cyan']
+                                        app.load_params()
+
+                                    md_bg_color: app.colors['Cyan']
+
                                 MDIconButton:
                                     id: save_params
                                     icon: "content-save-cog"
@@ -702,10 +713,24 @@ WindowManager:
                                     on_release: self.md_bg_color = app.colors['Cyan']
 
                                     md_bg_color: app.colors['Cyan']
-                                BoxLayout:
-                                    orientation: "vertical"
-                                    size_hint: None, None
-                                    width: dp(45)
+
+                                MDIconButton:
+                                    id: upload_sp
+                                    icon: "upload"
+                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                    theme_icon_color: "Custom"
+                                    icon_color: app.colors['White']
+                                    
+                                    on_press: 
+                                        self.md_bg_color = app.colors['Light Orange']
+                                        app.send_sp()
+                                    on_release: self.md_bg_color = app.colors['Cyan']
+
+                                    md_bg_color: app.colors['Cyan']
+                                # BoxLayout:
+                                #     orientation: "vertical"
+                                #     size_hint: None, None
+                                #     width: dp(45)
 
                         BoxLayout: #ROW 3 Selección del parámetro 
                             orientation: "horizontal"

@@ -526,26 +526,11 @@ class ExoBoostApp(MDApp):
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     #----------------------------------------------------- Métodos del menú de sintonizción -----------------------------------------------------
-    def send_params(self): 
-        '''Método para enviar parámetros al dispositivo conectado'''
-        # Acción de submit parámetros
-        print("Método para enviar parámetros")
-        if not self.ble_found: return
+    def load_params(self): 
+        print("Método para cargar parámetros guardados")
 
-        # Se define la información a mandar con la limb
-        json_data: dict = self.motor_parameters_pi[self.selected_limb]
-        json_data["limb"] = self.selected_limb
-
-        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
-        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
-        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
-
-        # Se mandan los datos
-        if not self.ble.connected: return
-        self.ble.write_json(service_uuid, char_uuid, json_data) 
-    
-    def save_params(self): pass # TODO
-
+    def save_params(self): 
+        print("Método para guardar los parámetros escritos")
 
     def limb_dropdown_clicked(self, limb: str) -> None: 
         '''
@@ -577,8 +562,34 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.kc_motor3.text = new_params["motor3"]["kc"]
         self.root.get_screen('Main Window').ids.ti_motor3.text = new_params["motor3"]["ti"]
         self.root.get_screen('Main Window').ids.pv_motor3.text = process_params["motor3"]
+
+    def send_params(self): 
+        '''Método para enviar parámetros al dispositivo conectado'''
+        # Acción de submit parámetros
+        print("Método para enviar parámetros")
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data: dict = self.motor_parameters_pi[self.selected_limb]
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
+
+        # Se mandan los datos
+        if not self.ble.connected: return
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
+    
+    def send_sp(self): 
+        print("Método para enviar el set point")
     
     def process_var_select(self, instance, value) -> None:
+        '''
+        Método para establecer la variable de processo seleccionada.
+        Dicha variable está ligada tanto al monitoreo de su valor como variable de proceso, 
+        los valores de PI para la sintonización y su punto de set point para el control.
+        '''
         if value == 'down':
             print(f'Seleccionaste: {instance.text}')
 
