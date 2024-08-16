@@ -61,6 +61,10 @@
     on_press: self.md_bg_color = app.colors['Light Orange']
     # on_release: self.md_bg_color = app.colors['Dark Blue']
 
+<ButtonParameters>:
+    # PERSONALIZACIÓN DE LOS BOTONES
+    pos_hint: {"center_x": 0.5}
+
 # --------------------------------------- Ventana de PopUp de Error ----------------------------------------
 <ErrorPopup>:
     title: 'Error'
@@ -612,20 +616,20 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    GridLayout: # Distribución principal del menú como GridLayout de 5 filas
-                        rows: 5
+                    GridLayout: # Distribución principal del menú como GridLayout de 6 filas
+                        rows: 6
                         cols: 1
                         padding: dp(10)
                         spacing: dp(5)
 
             # ---------------------------------- Título del Menú -------------------------------------------- 
-                        BoxLayout: 
+                        BoxLayout: # ROW 1 Título general
                             orientation: "vertical"
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             size_hint: None, None
                             size: (root.width, dp(50))
                             
-                            CustomLabelAD: # ROW 1 
+                            CustomLabelAD: 
                                 id: tuning_label
                                 text: "Tuning Mode"
                                 size: self.size
@@ -633,8 +637,7 @@ WindowManager:
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
             # ----------------------- Menú desplegable para la selección de la articulación ------------
-                        
-                        BoxLayout: 
+                        BoxLayout: # ROW 2 selección de la articulación
                             orientation: "vertical"
                             size_hint: None, None
                             #size: (root.width*0.95, dp(50))
@@ -651,7 +654,7 @@ WindowManager:
                                     size_hint: None, None
                                     width: dp(45)
                                 MDIconButton:
-                                    #id: upload_pid
+                                    id: save_params
                                     icon: "content-save-cog"
                                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                                     theme_icon_color: "Custom"
@@ -659,8 +662,9 @@ WindowManager:
                                     
                                     on_press: 
                                         self.md_bg_color = app.colors['Light Orange']
-                                        #app.send_params()
-                                    on_release: self.md_bg_color = app.colors['Cyan']
+                                    on_release: 
+                                        self.md_bg_color = app.colors['Cyan']
+                                        app.save_params()
 
                                     md_bg_color: app.colors['Cyan']
                                 Spinner:
@@ -702,9 +706,32 @@ WindowManager:
                                     orientation: "vertical"
                                     size_hint: None, None
                                     width: dp(45)
-                        
+
+                        BoxLayout: #ROW 3 Selección del parámetro 
+                            orientation: "horizontal"
+                            padding: dp(5)
+
+                            # Se agregan botones para seleccionar el parámetro de proceso deseado
+                            ButtonParameters: 
+                                id: process_button1
+                                group: "process_vars"
+                                text: "Position"
+                                on_state: app.process_var_select(self, self.state)
+
+                            ButtonParameters: 
+                                id: process_button2
+                                group: "process_vars"
+                                text: "Velocity"
+                                on_state: app.process_var_select(self, self.state)
+                                
+                            ButtonParameters: 
+                                id: process_button3
+                                group: "process_vars"
+                                text: "Current"
+                                on_state: app.process_var_select(self, self.state)
+
             # --------------------------- Parámetros PI del motor 1 ------------------------- 
-                        BoxLayout: #ROW 3 
+                        BoxLayout: #ROW 4
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
                             spacing: dp(5)
@@ -758,7 +785,7 @@ WindowManager:
                                     readonly: True
 
             # --------------------------- Parámetros PI del motor 2 ------------------------- 
-                        BoxLayout: #ROW 4
+                        BoxLayout: #ROW 5
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
                             spacing: dp(10)
@@ -810,7 +837,7 @@ WindowManager:
                                     readonly: True
 
             # --------------------------- Parámetros PI del motor 3 ------------------------- 
-                        BoxLayout: #ROW 5
+                        BoxLayout: #ROW 6
                             orientation: "vertical"
                             padding: (dp(10), dp(10))
                             spacing: dp(10)
