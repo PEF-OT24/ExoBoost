@@ -100,8 +100,48 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
     Serial.println("Característica escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<200> jsonrec;
+    StaticJsonDocument<450> jsonrec; // Longitud larga para procesar el JSON
     DeserializationError error = deserializeJson(jsonrec, value);
+    /* Ejemplo de archivo
+      "mensaje" = {
+        "limb": "Right leg",
+        "motor1": {
+            "pos": {"kc": "100", "ti": "50"},
+            "vel": {"kc": "100", "ti": "50"},
+            "cur": {"kc": "100", "ti": "50"},
+            },
+        "motor2": {
+            "pos": {"kc": "100", "ti": "50"},
+            "vel": {"kc": "100", "ti": "50"},
+            "cur": {"kc": "100", "ti": "50"},
+            },
+        "motor3": {
+            "pos": {"kc": "100", "ti": "50"},
+            "vel": {"kc": "100", "ti": "50"},
+            "cur": {"kc": "100", "ti": "50"},
+            },
+        }
+    
+      Después de recibirlo se enviarán en 5 paquetes por I2C
+      Paquete 1: Indicador de INICIO con limb
+      Paquete 2: Parámetros de motor 1
+      Paquete 3: Parámetros de motor 2
+      Paquete 4: Parámetros de motor 3
+      Paquete 5: Indicador de FINAL
+      (Esta lógica se tiene que procesar en la TIVA para esta recepción de mensajes)
+
+      Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
+      // SI NO SE PUEDE JSON
+      "1, P, 100, 50, V, 100, 50, C, 100, 50" 
+
+      // SI SE PUEDE JSON 
+      "motor1": {               
+        "pos": {"kc": "100", "ti": "50"},
+        "vel": {"kc": "100", "ti": "50"},
+        "cur": {"kc": "100", "ti": "50"},
+      },
+    */
+
 
     Serial.println("Mensaje recibido: ");
     serializeJson(jsonrec, Serial);
@@ -113,45 +153,7 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
       return;
     }
     
-    // Recibe el valor y se comprueba que no haya errores. 
-    StaticJsonDocument<200> motor1_params = jsonrec["motor1"];
-    StaticJsonDocument<200> motor2_params = jsonrec["motor2"];
-    StaticJsonDocument<200> motor3_params = jsonrec["motor3"];
-    selected_limb = String((const char*)jsonrec["limb"]);
-
-    if (motor1_params == "null" or motor2_params == "null" or motor3_params == "null" or selected_limb == "null") {
-      Serial.println("Error al mandar los parámetros.");
-      return;
-    }
-
-    motor1_kc = String(motor1_params["kc"]);
-    motor1_ti = String(motor1_params["ti"]);
-    motor1_sp = String(motor1_params["sp"]);
-  
-    motor2_kc = String(motor2_params["kc"]);
-    motor2_ti = String(motor2_params["ti"]);
-    motor2_sp = String(motor2_params["sp"]);
-    
-    motor3_kc = String(motor3_params["kc"]);
-    motor3_ti = String(motor3_params["ti"]);
-    motor3_sp = String(motor3_params["sp"]);
-
-    // Impresión de datos
-    Serial.println("\nExtremidad seleccionada: " + selected_limb);
-    Serial.println("------------------------------");
-    Serial.println("motor 1 - kc: " + motor1_kc);
-    Serial.println("motor 1 - ti: " + motor1_ti);
-    Serial.println("motor 1 - sp: " + motor1_sp);
-
-    Serial.println("------------------------------");
-    Serial.println("motor 2 - kc: " + motor2_kc);
-    Serial.println("motor 2 - ti: " + motor2_ti);
-    Serial.println("motor 2 - sp: " + motor2_sp);
-
-    Serial.println("------------------------------");
-    Serial.println("motor 3 - kc: " + motor3_kc);
-    Serial.println("motor 3 - ti: " + motor3_ti);
-    Serial.println("motor 3 - sp: " + motor3_sp);
+    // PROCESAMIENTO PARA GUARDAR LOS PARÁMETROS RECIBIDOS
 
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;
@@ -176,7 +178,7 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
     Serial.println("Característica escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<200> jsonrec;
+    StaticJsonDocument<30> jsonrec;
     DeserializationError error = deserializeJson(jsonrec, value);
 
     Serial.println("Mensaje recibido: ");
@@ -199,8 +201,8 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
     }
 
     // Impresión de datos
-    Serial.println("\nNivel de asistencia: " + level);
-    Serial.println("------------------------------");
+    Serial.print("Nivel de asistencia: ");
+    Serial.println(level);
 
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<200> jsonrep;

@@ -1,16 +1,30 @@
+'''
+Módulo de manejo de BLE para Android desde P4A. 
+Este módulo tiene dependencias en pyjnius v. 1.6.1.
+Se importan clases de Android SDK (API v. 31) en el paquete javadev/test_pkg
+
+Este módulo es parte del Proyecto de Evaluación Final para la Carrera de Ingeniería en Mecatrónica en la UDEM. 
+
+Fecha creada: 06/06/2024
+Asesor: Dr. Mario Claros
+Autores: Teresa Hernandez, Carlos Reyes y David Villanueva.
+
+Ante cualquier duda contactar: david.villanueva@udem.edu
+'''
+
 from jnius import autoclass
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
-import uuid
 import json 
 
+# Se establece la ruta de la librería para Android
 os.environ['CLASSPATH'] = 'javadev'
 
 # Base genérica para los UUID personalizados
 BASE_UUID = "00000000-0000-1000-8000-00805f9b34fb"
 
-# Se importan las clases de Android java con Python for Android mediante pyjnius
+# Se importan las clases de Android SDK (API v. 31) en el paquete con P4A
 Context = autoclass('android.content.Context')
 PythonActivity = autoclass('org.kivy.android.PythonActivity').mActivity
 
@@ -21,12 +35,12 @@ BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice') # Dispositvos e
 BluetoothGatt = autoclass('android.bluetooth.BluetoothGatt')     # GATT del dispositivo encontrado
 BluetoothGattService = autoclass('android.bluetooth.BluetoothGattService') # Clase de los servicios descubiertos
 BluetoothGattCharacteristic = autoclass('android.bluetooth.BluetoothGattCharacteristic') # Clase de las características de los servicios
+ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 UUIDClass = autoclass('java.util.UUID') 
 
+# Se importan las clases del paquete personalizado 
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
 PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
-
-ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 
 class Characteristic_Info:
     '''
@@ -35,7 +49,7 @@ class Characteristic_Info:
     ''' 
 
     def __init__(self, characteristic: BluetoothGattCharacteristic) -> None: # type: ignore
-        '''Se inicializa para analizar su información'''
+        '''Método constructor de la clase'''
         self.characteristic = characteristic
         self.properties: int = characteristic.getProperties() # Se obtienen las properties de la característica
 
@@ -55,13 +69,13 @@ class Characteristic_Info:
         '''
         Método que obtiene el UUID de una característica en formato de string
         Entrada: characteristic BluetoothGattCharacteristic -> Característica
-        Salida: str -> UUID de la característica
+        Salida: str -> UUID de la característica en formato de string
         '''
         return self.characteristic.getUuid().toString()
     
     def contains_property(self, property: int) -> bool: # type: ignore
-        '''Comprueba si una característica contiene una propiedad
-        Entradas: characteristic BluetoothGattCharacteristic -> Característica
+        '''Comprueba si una característica contiene una propiedad en espefícico
+        Entradas: characteristic BluetoothGattCharacteristic -> Característica a analizar
                   property int -> Propiedad a buscar
 
         Salida: bool -> True si la característica contiene la propiedad indicada, False de lo contrario
@@ -69,69 +83,76 @@ class Characteristic_Info:
         return True if self.properties & property == property else False
     
     def isBroadastable(self) -> bool: # type: ignore
-        '''Comprueba si una característica es Broadcastable'''
+        '''Comprueba si la característica es Broadcastable
+        Salida: bool -> True si la característica es Broadcastable, False de lo contrario'''
         return self.contains_property(self.all_properties["BROADCAST"])
     
     def isIndicatable(self) -> bool: # type: ignore
-        '''Comprueba si una característica es Indicatable'''
+        '''Comprueba si la característica es Indicatable
+        Salida: bool -> True si la característica es Indicatable, False de lo contrario'''
         return self.contains_property(self.all_properties["INDICATE"])
     
     def isNotifiable(self) -> bool: # type: ignore
-        '''Comprueba si una característica es Notifiable'''
+        '''Comprueba si la característica es Notifiable
+        Salida: bool -> True si la característica es Notifiable, False de lo contrario'''
         return self.contains_property(self.all_properties["NOTIFY"])
     
     def isReadable(self) -> bool: # type: ignore
-        '''Comprueba si una característica es Readable'''
+        '''Comprueba si la característica es Readable
+        Salida: bool -> True si la característica es Readable, False de lo contrario'''
         return self.contains_property(self.all_properties["READ"])
     
     def isWriteable(self) -> bool: # type: ignore
-        '''Comprueba si una característica es Writeable'''
+        '''Comprueba si la característica es Writeable
+        Salida: bool -> True si la característica es Writeable, False de lo contrario'''
         return self.contains_property(self.all_properties["WRITE"])
         
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
     def __init__(self):
-        '''Inicializa el objeto BluetoothAdapter automáticamente'''
+        '''Constructor de la clase'''
         # ----------- Métodos inicializadores -----------
         self.request_ble_permissions() # Solicitar permisos
 
         # ----------- Atributos -----------
-        # Entorno de Python para Android
+        # Entorno de P4A
         self.context = PythonActivity
         self.found_devices: list[BluetoothDevice] = [] # type: ignore # Arreglo para guardar dispositivos
 
         # Manejo de BLE principal
         self.bluetooth_adapter = self.initialize_bluetooth()
 
-        # Escaneador de BLE
+        # Se habilita el Bluetooth en el dispositivo
         self.ble_enable = self.is_bluetooth_enabled()
         if not(self.ble_enable): self.enable_bluetooth()
 
         # Se crea el escaneador de BLE
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
-        self.python_scan_callback = PythonScanCallback() # Se obtiene la instanciad del ScanCallback
-        self.python_gatt_callback = PythonBluetoothGattCallback()
+        self.python_scan_callback = PythonScanCallback()          # Instancia de Callback para escaneo
+        self.python_gatt_callback = PythonBluetoothGattCallback() # Instancia de Callback para el estado del GATT
 
         # ----------- Atributos lógicos -----------
-        self._GATT_MAX_MTU_SIZE = 517
-        self.scanning: bool = False
-        self.connected: bool = False
-        self.connected_device: BluetoothDevice = None # type: ignore
-        self.connected_gatt: BluetoothGatt = None # type: ignore
-        self.discovered_services: list[BluetoothGattService] = [] # type: ignore
-        self.discovered_characteristics: dict[BluetoothGattCharacteristic] = {} # type: ignore
+        self._GATT_MAX_MTU_SIZE = 517               # Tamaño máximo de transmisión
+        self.scanning: bool = False                 # Bandera de escaneo
+        self.connected: bool = False                # Bandera de conectado
+        self.connected_device: BluetoothDevice = None # type: ignore              # Dispositivo conectado
+        self.connected_gatt: BluetoothGatt = None # type: ignore                  # GATT del dispositivo conectado
+        self.discovered_services: list[BluetoothGattService] = [] # type: ignore  # Lista de servicios descubiertos
+        self.discovered_characteristics: dict[BluetoothGattCharacteristic] = {} # type: ignore # Diccionario de características descubiertas
 
     def initialize_bluetooth(self):
-        '''Inicializa el objeto BluetoothAdapter'''
+        '''Método que inicializa el objeto BluetoothAdapter'''
         bluetooth_manager = self.context.getSystemService(Context.BLUETOOTH_SERVICE)
         bluetooth_adapter = bluetooth_manager.getAdapter()
         return bluetooth_adapter
     
-    def resetBLE(self): self.python_scan_callback.resetScanning()
+    def resetBLE(self): 
+        '''Método que llama al método resetScanning de PythonScanCallback para reiniciar el escaneo'''
+        self.python_scan_callback.resetScanning()
 
     def request_ble_permissions(self):
-        '''Solicitar permisos para el uso de Bluetooth'''
+        '''Método para solicitar permisos para el uso de Bluetooth en Android'''
         permissions = [
             Permission.BLUETOOTH, 
             Permission.BLUETOOTH_ADMIN, 
@@ -143,19 +164,17 @@ class BluetoothManager_App:
         request_permissions(permissions)
 
     def is_bluetooth_enabled(self) -> bool:
-        '''Detecta si el BLE está habilitado'''
-        estado = self.bluetooth_adapter.isEnabled()
-        print(estado)
-        return estado
-
+        '''Método que detecta si el BLE está habilitado'''
+        return self.bluetooth_adapter.isEnabled()
+        
     def enable_bluetooth(self):
-        '''Habilita el Bluetooth'''
+        '''Método para habilitar el Bluetooth'''
         self.bluetooth_adapter.enable()
 
     def start_ble_scan(self):
         '''
         Método para iniciar la búsqueda de dipositivos. 
-        Solo funciona cuando no está conectado ni escaneando
+        El Bluetooth Adatparter no debe estar conectado ni escaneando
         '''
         try:
             if not(self.scanning) and not(self.connected):
@@ -167,20 +186,19 @@ class BluetoothManager_App:
             print(f"Error: Bluetooth no disponible: {e}")
 
     def stop_ble_scan(self) -> list[str]:
-        '''Detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando'''
+        '''Método que detiene la búsqueda de dispositivos si el Bluetooth está habilitado y si estaba previamente buscando
+        Salida: devices_names list[str] -> Lista de nombres de los dispositivos encontrados'''
         if self.ble_scanner and self.scanning:
-            print("Stopping scan")
             self.ble_scanner.stopScan(self.python_scan_callback)
             self.scanning = False
 
             # Se obtienen los dispositivos
-            print("Getting found devices")
             self.found_devices.clear()
             self.found_devices = self.python_scan_callback.getScanResults()
 
             # Se obtienen los nombres de los dispositivos y se retornan
-            nombres = [name.getName() for name in self.found_devices]
-            return nombres
+            devices_names = [name.getName() for name in self.found_devices]
+            return devices_names
 
     def connect(self, device_name: str) -> bool:
         '''
@@ -260,7 +278,10 @@ class BluetoothManager_App:
             print(f"Error de Bluetooth al intentar desconectarse: {e}")
 
     def discover_services(self, wait_time: float) -> list[BluetoothGattService]: # type: ignore
-        '''Método que descubre los servicios de un dispositivo ya conectado'''
+        '''Método que descubre los servicios de un dispositivo ya conectado
+        Entrada: wait_time float -> tiempo de espera para la descubrimiento de los servicios
+        Salida: list[BluetoothGattService] -> Lista de los servicios encontrados
+        '''
         if not self.connected_gatt: return # Marca error si no hay un GATT conectado
 
         # Llama al método para comenzar el descubrimiento de los servicios
@@ -274,7 +295,6 @@ class BluetoothManager_App:
             return
         
         # Se obtienen los servicios
-        print("Discovered services")
         discovered_services = self.connected_gatt.getServices()
 
         # Si no hay servicios, marca error
@@ -289,7 +309,7 @@ class BluetoothManager_App:
         Método que descubre las características de un servicio ya descubierto. El procedimiento toma algo de tiempo, por lo que se recomienda
         que se llame en un hilo separado.
         
-        Entrada: service BluetoothGattService -> Servicio cuyas características se descubren
+        Entrada: service BluetoothGattService     -> Servicio cuyas características se descubren
         Salida: list[BluetoothGattCharacteristic] -> Lista de las características del servicio
         '''        
         # Se obtienen las características
