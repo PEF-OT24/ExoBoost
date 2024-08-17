@@ -8,16 +8,16 @@
 #include <ArduinoJson.h>
 #include "Wire.h"
 
-// ------------------------------------------ Variables de uso general ------------------------------------------
+// ------------------------------------------ Variables de uso general ---------------------------------------------
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
 
 // ----------------------------------- Declaración de funciones prototipo ------------------------------------------
-void sendI2CMessage(uint8_t slaveAddress, const char* message);
-void readI2CMessage(uint8_t slaveAddress, uint8_t len);
+void sendI2CMessage(uint8_t slaveAddress, char* message);
+String readI2CMessage(uint8_t slaveAddress, uint8_t len);
 
-// ------------------------------------------ Set up para BLE ------------------------------------------
-// ------- Variables para BLE -------
+// --------------------------------------- Constantes de uso general -----------------------------------------------
+// ------- Constantes para BLE -------
 // Nombre del dispositivo
 #define DEVICE_NAME "ESP32"
 
@@ -37,16 +37,23 @@ void readI2CMessage(uint8_t slaveAddress, uint8_t len);
 #define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
 
+// ------- Constantes para I2C -------
+#define SLAVE_ADDRESS 0x55 // Dirección del esclavo I2C para Right Leg
+#define BUFFER_SIZE 300     // Tamaño del buffer para recibir datos ELIMINAR
+
+// ------------------------------------------ Set up para BLE ------------------------------------------
+// ------- Variables para BLE -------
 // Variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
 
 // Declara variables de las características
 BLECharacteristic *pCharacteristic_PI;
-BLECharacteristic *pCharacteristic_LEVEL
+BLECharacteristic *pCharacteristic_LEVEL;
+BLECharacteristic *pCharacteristic_SP;
 BLECharacteristic *pCharacteristic_PV;
-BLECharacteristic *pCharacteristic_VAR;// PARA IMPLEMENTAR
-BLECharacteristic *pCharacteristic_MODE
+BLECharacteristic *pCharacteristic_VAR;   // NO SE USA 
+BLECharacteristic *pCharacteristic_MODE;
 
 // Variables para guardar los valores recibidos
 // Parámetros PI de los motores
@@ -92,7 +99,7 @@ class ServerCallbacks: public BLEServerCallbacks {
 class BLECallback_PI: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
-    Serial.println("Característica leída por el cliente");
+    Serial.println("Característica PI leída por el cliente");
   } // fin de onRead
 
   void onWrite(BLECharacteristic *pCharacteristic) {
@@ -104,7 +111,7 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
     StaticJsonDocument<450> jsonrec; // Longitud para procesar el JSON
     DeserializationError error = deserializeJson(jsonrec, value);
     /* Ejemplo de archivo
-      "mensaje" = {
+      {
         "limb": "Right leg",
         "motor1": {
             "pos": {"kc": "100", "ti": "50"},
@@ -121,7 +128,7 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
             "vel": {"kc": "100", "ti": "50"},
             "cur": {"kc": "100", "ti": "50"},
             },
-        }
+      }
     
       Después de recibirlo se enviarán en 5 paquetes por I2C
       Paquete 1: Indicador de INICIO con limb
@@ -160,18 +167,69 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
     // Enviar notificación de éxito en formato JSON
     StaticJsonDocument<20> jsonrep;
     jsonrep["response"] = "Success";
-    char responseBuffer[200];
+    char responseBuffer[20];
     serializeJson(jsonrep, responseBuffer);
     pCharacteristic->setValue("Write response");
     pCharacteristic->notify();
   } // fin de onWrite
 };
 
+// Clase callback que maneja los datos escritos en la característica del parámetro SP
+class BLECallback_SP: public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica SP leída por el cliente");
+  } // fin de onRead
+
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica escrita: " + String(value.c_str()));
+
+    // Procesa los datos recibidos en formato JSON
+    StaticJsonDocument<180> jsonrec;
+    DeserializationError error = deserializeJson(jsonrec, value);
+
+    Serial.println("Mensaje recibido: ");
+    serializeJson(jsonrec, Serial);
+
+    // Valida el formato del JSON
+    if (error) {
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    /* Ejemplo de archivo
+      {
+          "limb": "Right leg", 
+          "monitoring": "pos", 
+          "motor1": "0",
+          "motor2": "0",
+          "motor3": "0",
+      }
+
+      Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
+      // SI NO SE PUEDE JSON
+      "l, RL, M, P, M1, 0, M2, 0, M3, 0" 
+
+      // SI SE PUEDE JSON 
+      Enviar tal cual se recibió
+    */
+    
+    // Enviar notificación de éxito en formato JSON
+    StaticJsonDocument<20> jsonrep;
+    jsonrep["response"] = "Success";
+    char responseBuffer[20];
+    serializeJson(jsonrep, responseBuffer);
+    pCharacteristic->setValue("Write response");
+    pCharacteristic->notify();
+  } // fin de onWrite
+};
 // Clase callback que maneja los datos escritos en la característica de parámetros PI
 class BLECallback_LEVEL: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
-    Serial.println("Característica leída por el cliente");
+    Serial.println("Característica LEVELleída por el cliente");
   } // fin de onRead
 
   void onWrite(BLECharacteristic *pCharacteristic) {
@@ -192,7 +250,17 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
       Serial.println(error.c_str());
       return;
     }
-    
+    /* Ejemplo de archivo 
+      {"asistance_level": "100"}
+
+      Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
+      // SI NO SE PUEDE JSON
+      "AL, 100" 
+
+      // SI SE PUEDE JSON 
+      Enviar tal cual se recibió (debería ser sencillo de procesar)
+    */
+
     // Recibe el valor y se comprueba que no haya errores. 
     level = String((const char*)jsonrec["asistance_level"]);
 
@@ -222,51 +290,10 @@ class BLECallback_PV : public BLECharacteristicCallbacks {
     // Método que notifica cuando el cliente lee la característica
     Serial.println("Característica leída por el cliente");
   } // fin de onRead
-
   void onWrite(BLECharacteristic *pCharacteristic) {
     // Método que recibe un nuevo valor de la característica
     std::string value = std::string(pCharacteristic->getValue().c_str());
     Serial.println("Característica escrita: " + String(value.c_str()));
-
-    // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<200> jsonrec;
-    DeserializationError error = deserializeJson(jsonrec, value);
-
-    Serial.println("Mensaje recibido: ");
-    serializeJson(jsonrec, Serial);
-
-    // Valida el formato del JSON
-    if (error) {
-      Serial.print("Error al analizar JSON: ");
-      Serial.println(error.c_str());
-      return;
-    }
-
-    // Recibe el valor y se comprueba que no haya errores. 
-    motor1_pv = String(jsonrec["motor1"]);
-    motor2_pv = String(jsonrec["motor2"]);
-    motor3_pv = String(jsonrec["motor3"]);
-    selected_limb = String(jsonrec["limb"]);
-
-    // Se comprueba que no haya errores
-    if (motor1_pv == "null" or motor2_pv == "null" or motor3_pv == "null" or selected_limb == "null") {
-      Serial.println("Error al mandar los parámetros.");
-      return;
-    }
-
-    // Impresión de datos
-    Serial.println("\nExtremidad seleccionada: " + selected_limb);
-    Serial.println("------------------------------");
-    Serial.println("motor 1 - pv: " + motor1_pv);
-    Serial.println("motor 2 - pv: " + motor2_pv);
-    Serial.println("motor 3 - pv: " + motor3_pv);
-
-    // Enviar notificación de éxito en formato JSON
-    StaticJsonDocument<200> jsonrep;
-    jsonrep["response"] = "Success";
-    char responseBuffer[200];
-    serializeJson(jsonrep, responseBuffer);
-    pCharacteristic->setValue("Write response");
     pCharacteristic->notify();
   }
 };
@@ -284,7 +311,7 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
     Serial.println("Característica escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<200> jsonrec;
+    StaticJsonDocument<50> jsonrec;
     DeserializationError error = deserializeJson(jsonrec, value);
 
     Serial.println("Mensaje recibido: ");
@@ -296,29 +323,27 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
       Serial.println(error.c_str());
       return;
     }
+    /* Ejemplo de archivo
+      {"state": "sit_down_stand_up"}
+
+      Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
+      // SI NO SE PUEDE JSON
+      "S: SDSU" 
+
+      // SI SE PUEDE JSON 
+      Enviar tal cual se recibió (debería ser sencillo de procesar)
+    */
 
     // Recibe el valor y se comprueba que no haya errores. 
     state = String(jsonrec["state"]);
-    selected_limb = String(jsonrec["limb"]);
-
-    // Se comprueba que no haya errores
-    if (state == "null" or selected_limb == "null") {
-      Serial.println("Error al mandar los parámetros.");
-      return;
-    }
-
-    // Impresión de datos
-    Serial.println("\nExtremidad seleccionada: " + selected_limb);
-    Serial.println("State: " + state);
-    Serial.println("------------------------------");
 
     // ELIMINAR
     if (state == "sit_down_stand_up"){
-      const char* message2 = "ON ";
+      char* message2 = "ON ";
       sendI2CMessage(SLAVE_ADDRESS, message2);
     }
     if (state == "walk"){
-      const char* message2 = "OFF";
+      char* message2 = "OFF";
       sendI2CMessage(SLAVE_ADDRESS, message2);
     }
     
@@ -334,21 +359,17 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
 };
 
 // ------------------------------------- Set up para I2C -------------------------------------
-#define SLAVE_ADDRESS 0x55 // Dirección del esclavo I2C (ajustar según sea necesario)
-#define BUFFER_SIZE 6     // Tamaño del buffer para recibir datos
+// ------- Variables para I2C -------
+
 char receivedData[BUFFER_SIZE]; // Buffer para almacenar los datos recibidos
 uint8_t dataLength = 0; // Longitud de los datos recibidos
 
-int temporal = 100;
-
+// ------- funciones para I2C -------
 // Función para mandar un mensaje a través de I2C
-void sendI2CMessage(uint8_t slaveAddress, const char* message) {
-  int length = strlen(message);  // Calculate the length of the message
-  byte byteArray[length];        // Create a byte array of the same length
-
-  // Variables de estatus
-  int bytesWritten; // Longitud de los bytes escritos
-  int errorCode;    // Código de error después de escribir
+void sendI2CMessage(uint8_t slaveAddress, char* message) {
+  int length = strlen(message);  // Calcular el tamaño del mensaje
+  message[length] = 'X';         // Añadir un terminador X personalizado 
+  byte byteArray[length++];      // Crear un arreglo de bytes del mismo tamaño 
 
   // Se convierte el string a un arreglo de bytes
   for (int i = 0; i < length; i++) {
@@ -361,57 +382,40 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
 
   // Se manda el mensaje al esclavo I2C
   Wire.beginTransmission(slaveAddress);
-  bytesWritten = Wire.write(byteArray, length);  
-  errorCode = Wire.endTransmission();
+  int bytesWritten = Wire.write(byteArray, length);  
+  int errorCode = Wire.endTransmission();
 
-  // Se formatea la salida para debug
-  // Serial.print("Mandando mensaje a dirección: ");
-  // Serial.println(slaveAddress);
-  Serial.print("Código de error: ");
-  Serial.println(errorCode);
-  // Serial.print("Bytes escritos: ");
-  // Serial.println(bytesWritten);
-  // Serial.println("----------------");
+  // Se imprime el error si hay uno
+  if (errorCode != 0){
+    Serial.print("Código de error: ");
+    Serial.println(errorCode);
+  }
 }
 
-void readI2CMessage(uint8_t slaveAddress, uint8_t len){
+String readI2CMessage(uint8_t slaveAddress, uint8_t len){
   Wire.requestFrom(slaveAddress, len);
 
   // Leer los datos recibidos y almacenarlos en el buffer
-  // dataLength = 0; // Reiniciar la longitud de los datos
-  char mensaje_leido[len+1]; // Arreglo de len bytes para guardar el mensaje
+  String mensaje_leido = "";
 
   // Lee los bytes recibidos
   int i = 0;
   while (Wire.available()) {
-    if (i < sizeof(mensaje_leido)-1) {
-      mensaje_leido[i++] = Wire.read();
+    const char rec_data = Wire.read();
+
+    // Verificar si el byte recibido es "X"
+    if (rec_data == 'X') {
+      Serial.println("Byte 'X' recibido. Deteniendo la lectura.");
+      break; // Deja de leer
     }
+
+    mensaje_leido += rec_data;
   }
-  mensaje_leido[i] = '\0';
-  // Imprime los datos leídos
+
   Serial.print("Datos recibidos: ");
   Serial.println(mensaje_leido);
-  Serial.println();
 
-  if (strcmp(mensaje_leido, "ON ") == 0) {
-    Serial.println("Encender motor");// Mensaje temporal para encnder el motor
-    
-  } 
-  else if (strcmp(mensaje_leido, "OFF") == 0) {
-    Serial.println("Apagar motor"); // Mensaje temporal para apagar el motor
-
-  } 
-  else {
-    Serial.println("Mensaje no reconocido");
-  }
-  // Mostrar los datos almacenados en el monitor serial
-  // Serial.print("Datos recibidos: ");
-  // for (uint8_t i = 0; i < dataLength; i++) {
-  //   Serial.print(receivedData[i]); // Imprimir cada byte en formato hexadecimal
-  //   Serial.print(" ");
-  // }
-  Serial.println(); // Nueva línea después de los datos
+  return mensaje_leido;
 }
 
 void setup() {
@@ -450,6 +454,15 @@ void setup() {
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic_LEVEL->setCallbacks(new BLECallback_LEVEL());
+  // Crea la característica BLE para recibir el SP del proceso
+  pCharacteristic_SP = pService_PARAMS->createCharacteristic(
+                                         CHARACTERISTIC_UUID_SP,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_SP->setCallbacks(new BLECallback_SP());
 
   // Crea el servicio de envío de parámetros de PV
   BLEService *pService_PV = pServer->createService(SERVICE_UUID_PROCESS);
@@ -515,24 +528,4 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(500);
-  temporal ++;
-
-  // AUMENTAR EL VALOR PARA VER SI SE LEE CORRECTAMENTE
-  StaticJsonDocument<200> values_doc;
-  char values_buffer[200];
-  values_doc["limb"] = "Right leg";
-  values_doc["motor1"] = String(temporal);
-  values_doc["motor2"] = String(temporal);
-  values_doc["motor3"] = String(temporal);
-  serializeJson(values_doc, values_buffer);
-  pCharacteristic_PV->setValue(values_buffer);
-
-  // Serial.println(pCharacteristic_PV->getValue());
-
-  // Se manda información por I2C
-  // const char* message2 = "Hola, Esclavo!";
-  // sendI2CMessage(SLAVE_ADDRESS, message2); // Mandar un mensaje a la TivaC
-  // delay(500);
-  // readI2CMessage(SLAVE_ADDRESS, 3); // Leer un mensaje
 }

@@ -709,9 +709,9 @@ class ExoBoostApp(MDApp):
                     print(e)  
 
                 # Se guardan los valores en el diccionario
-                self.motor_parameters_pv[limb_read]["motor1"] = motor1pv_read
-                self.motor_parameters_pv[limb_read]["motor2"] = motor2pv_read
-                self.motor_parameters_pv[limb_read]["motor3"] = motor3pv_read
+                self.motor_parameters_pv["motor1"] = motor1pv_read
+                self.motor_parameters_pv["motor2"] = motor2pv_read
+                self.motor_parameters_pv["motor3"] = motor3pv_read
 
                 # Se muestran en pantalla los parámetros
                 if self.selected_limb == limb_read:
