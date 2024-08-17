@@ -168,26 +168,21 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){
   }
 }
 
-void SendParameters(){
+void SendParameters(uint8_t ID, uint8_t PosKP, uint8_t PosKI, uint8_t SpdKP, uint8_t SpdKI, uint8_t CurrKP, uint8_t CurrKI){
   // Se define la variable que almacena el valor
-  uint8_t CANBUSSend_PIDvalues[8u];
-  tCANMsgObject sMsgObjectTx_PIDvalues;
+  uint8_t CAN_data_TX[8u];
 
-  // Define PID parameter values
-  CANBUSSend_PIDvalues[0] = 0x64; 
-  CANBUSSend_PIDvalues[1] = 0x32;
-  CANBUSSend_PIDvalues[2] = 0x64;
-  CANBUSSend_PIDvalues[3] = 0x32;
-  CANBUSSend_PIDvalues[4] = 0x64;
-  CANBUSSend_PIDvalues[5] = 0x32;
-  CANBUSSend_PIDvalues[6] = 0x64;
-  CANBUSSend_PIDvalues[7] = 0x32;
+  // Se definen los valores de los parámetros PI para las tres variables por motor
+  CAN_data_TX[0] = 0x64; 
+  CAN_data_TX[1] = 0x32;
+  CAN_data_TX[2] = CurrKP; // KP para corriente
+  CAN_data_TX[3] = CurrKI; // KI para corriente
+  CAN_data_TX[4] = SpdKP;  // KP para velocidad
+  CAN_data_TX[5] = SpdKI;  // KI para velocidad
+  CAN_data_TX[6] = PosKP;  // KP para posición
+  CAN_data_TX[7] = PosKI;  // KI para posición
   
-  sMsgObjectTx_PIDvalues.ui32MsgID = 0x141;
-  sMsgObjectTx_PIDvalues.ui32MsgIDMask = 0xFFFFFFFF;
-  sMsgObjectTx_PIDvalues.ui32MsgLen = 8u;
-  sMsgObjectTx_PIDvalues.pui8MsgData = CANBUSSend_PIDvalues;
-  CANMessageSet(CAN0_BASE, 1, &sMsgObjectTx_PIDvalues, MSG_OBJ_TYPE_TX);
+  send_cmd(ID, CANBUSSend_PIDvalues, true);
 }
 
 void ReadParameters(int8_t ID, bool show){
