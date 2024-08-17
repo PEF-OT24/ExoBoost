@@ -8,14 +8,15 @@
 #include <ArduinoJson.h>
 #include "Wire.h"
 
-// -------------------------------- Variables de uso general --------------------------------
+// ------------------------------------------ Variables de uso general ------------------------------------------
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
 
-// -------------------------------- Declaración de funciones prototipo ---------------------------
+// ----------------------------------- Declaración de funciones prototipo ------------------------------------------
 void sendI2CMessage(uint8_t slaveAddress, const char* message);
+void readI2CMessage(uint8_t slaveAddress, uint8_t len);
 
-// ------------------------------------- Set up para BLE -------------------------------------
+// ------------------------------------------ Set up para BLE ------------------------------------------
 // ------- Variables para BLE -------
 // Nombre del dispositivo
 #define DEVICE_NAME "ESP32"
@@ -70,7 +71,7 @@ String state; // Estado del proceso actual
 
 String selected_limb; // Articulación seleccionada actual 
 
-// ------- Clases para BLE -------
+// ------- Clases de callbacks para las características BLE -------
 // Clase que maneja los eventos de conexión y desconexión
 class ServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) { // Cuando se conecta
@@ -81,9 +82,9 @@ class ServerCallbacks: public BLEServerCallbacks {
   void onDisconnect(BLEServer* pServer) { // Cuando se desconecta
     digitalWrite(LED_PIN, LOW);  
     Serial.print("Cliente desconectado ... ");
-    delay(0.5);
+    delay(100); // Delay para reiniciar advertising
     Serial.println("Reiniciando advertising.");
-    pAdvertising->start();                // Reinicia la publicidad
+    pAdvertising->start();               // Reinicia el advertisement
   }
 };
 
@@ -100,7 +101,7 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
     Serial.println("Característica escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<450> jsonrec; // Longitud larga para procesar el JSON
+    StaticJsonDocument<450> jsonrec; // Longitud para procesar el JSON
     DeserializationError error = deserializeJson(jsonrec, value);
     /* Ejemplo de archivo
       "mensaje" = {
@@ -141,8 +142,9 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
         "cur": {"kc": "100", "ti": "50"},
       },
     */
-
-
+    
+    // Se guarda la extremidad recibida
+    selected_limb = String(jsonrec["limb"]);
     Serial.println("Mensaje recibido: ");
     serializeJson(jsonrec, Serial);
 
@@ -156,7 +158,7 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
     // PROCESAMIENTO PARA GUARDAR LOS PARÁMETROS RECIBIDOS
 
     // Enviar notificación de éxito en formato JSON
-    StaticJsonDocument<200> jsonrep;
+    StaticJsonDocument<20> jsonrep;
     jsonrep["response"] = "Success";
     char responseBuffer[200];
     serializeJson(jsonrep, responseBuffer);

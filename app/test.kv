@@ -9,7 +9,7 @@
 
 <CustomLabelRoboto>: # Case predefinida para los subtítulos con formato
     font_name: "Roboto" # Roboto para texto y subtítulos
-    font_size: "15sp" # 30sp para texto y subtítulos
+    font_size: "15sp" 
     halign: "center"
     pos_hint: {"center_x": 0.5, "center_y": 0.5, "top": 0}
     theme_text_color: "Custom"
@@ -35,8 +35,7 @@
     mode: "fill"
     fill_color: app.colors["Light Gray"]
 
-# Clase para dar formato a dispositivos desplegados y que funcionen como botones
-<ButtonDevices>:
+<ButtonDevices>: # Clase para dar formato a dispositivos desplegados y que funcionen como botones
     text: ""
     #size_hint_y: None
     size_hint_x: None
@@ -48,13 +47,13 @@
     #size: self.size
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
 
-    #Texto dentro del boton
+    # Texto dentro del boton
     font_size: "12sp"
     font_name: "Roboto"
     theme_text_color: "Custom"
     text_color: app.colors["White"]
-    #halign: 'left'
-    #Fondo del boton y efectos
+    # halign: 'left'
+    # Fondo del boton y efectos
     md_bg_color: app.colors["Dark Blue"]
     ripple_effect: False
     ripple_color: app.colors['Dark Blue']
@@ -65,8 +64,7 @@
     # PERSONALIZACIÓN DE LOS BOTONES
     pos_hint: {"center_x": 0.5}
 
-# --------------------------------------- Ventana de PopUp de Error ----------------------------------------
-<ErrorPopup>:
+<ErrorPopup>: # Ventana de PopUp de Error
     title: 'Error'
     size_hint: None, None
     size: 400, 200
@@ -87,7 +85,8 @@
             size_hint_y: None
             height: '48dp'
             on_release: root.dismiss()
-# --------------------------------------- Ventana de PopUp de Información ----------------------------------------
+            
+# -------------- Ventana de PopUp de Información --------------
 <LabelTeam>:
     size_hint_y: None
     height: dp(100)  # Altura fija para cada fila
@@ -97,14 +96,13 @@
     text_color: app.colors["Black"]
     halign: "center"
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
-# Para dar formato a las imágenes dentro del popup
-<ImageTeam>:
+
+<ImageTeam>: # Formato de las imágenes dentro del popup
     size_hint: None, None
     size: dp(80), dp(80)  # Tamaño fijo para cada imagen
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
-# ---------------- Estructura del popup -------------------------    
-<InfoPopUp>:
+<InfoPopUp>: # Estructura del popup
     title: 'Información'
     title_align: "center"
     title_font: 'fonts/ADLaMDisplay-Regular.ttf'
@@ -137,7 +135,7 @@
                 size: self.size
                 radius: [10, 10, 10, 10]  
         
-    # ----------------------- Información del proyecto --------------------
+    # ---  Información del proyecto ---
         BoxLayout: 
             orientation: "vertical"
             size_hint: 1, None
@@ -164,7 +162,8 @@
             on_release: 
                 self.md_bg_color = app.colors["Cyan"]
                 app.open_repo()
-    # ----------------------- Información del equipo ----------------------
+
+    # --- Información del equipo ---
         BoxLayout: # Título para los participantes
             size_hint: None, None
             size: dp(280), dp(30)
@@ -204,14 +203,13 @@
                 self.md_bg_color = app.colors["Cyan"]
                 root.dismiss()
 
-
-# --------------------------------------- Establecer prioridad en las ventanas ---------------------------------------- (SE PUEDE BORRAR)
+# --------------------------------------- Establecer prioridad en las ventanas ----------------------------------------
 WindowManager:
     SplashScreen:
     MainWindow:
     SecundaryWindow:
 
-# --------------------------------- Ventana de Inicio de Aplicación -------------------------------
+# --------------------------------------- Ventana de Inicio de Aplicación ---------------------------------------
 <SplashScreen>:
     name: 'Splash Screen'
     BoxLayout:
@@ -911,7 +909,7 @@ WindowManager:
                                     id: pv_motor3
                                     hint_text: "PV:"
                                     readonly: True
-    # -------------------------- Botón info de equipo -------------------------------------------
+    # ----------------------------- Botón info de equipo -----------------------------
     FloatLayout: 
         MDIconButton:
             icon: "information-outline"

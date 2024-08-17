@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = scan_BLE_import
+title = ExoBoostApp
 
 # (str) Package name
 package.name = myapp

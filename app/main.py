@@ -289,7 +289,6 @@ class ExoBoostApp(MDApp):
             Window.fullscreen = True
 
     #----------------------------------------------------- Métodos generales ----------------------------------------------------
-
     def on_tab_select(self, tab: str): 
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
         if tab == "Assistance mode": 
@@ -300,8 +299,6 @@ class ExoBoostApp(MDApp):
         elif tab == "Tuning mode": 
             self.mode = "tuning"
             self.reading = True
-        
-        print(self.mode)
 
     def is_valid(self, var: str, tipo) -> bool:
         """
@@ -750,7 +747,7 @@ class ExoBoostApp(MDApp):
         url: str = "https://github.com/PEF-OT24/ExoBoost"
         try: 
             webbrowser.open(url)
-        except:
+        except: # En caso de error mostrar con una popup
             dialog = MDDialog(
                 title="Error",
                 text="Ha ocurrido un error.",
@@ -764,5 +761,4 @@ class ExoBoostApp(MDApp):
 
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
-    ExoBoostApp = ExoBoostApp()
-    ExoBoostApp.run()
+    ExoBoostApp().run()
