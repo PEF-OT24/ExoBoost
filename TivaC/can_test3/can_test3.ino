@@ -1,6 +1,7 @@
 // Código general para la TIVAC que maneja protocolo CAN e I2C. 
 // Se incluye la lógica para el algoritmo de control 
 
+// Importación de librerías
 #define PART_TM4C123GH6PM
 #include <stdint.h>
 #include <stdbool.h>
@@ -21,7 +22,8 @@
 #include "driverlib/systick.h"
 #include <Wire.h>
 
-// LED Definitions
+// --------------------------------------- Constantes de uso general -----------------------------------------------
+// Definición de pines LED 
 #define RED_LED GPIO_PIN_1
 #define BLUE_LED GPIO_PIN_2
 #define GREEN_LED GPIO_PIN_3
@@ -37,6 +39,7 @@ bool doControlFlag = 0; // Bandera de control en tiempo real
 uint32_t i = 0;
 char data;
 
+// ----------------------------------------------------- Setup ----------------------------------------------------
 void setup() {
     Serial.begin(9600);
 
@@ -94,7 +97,7 @@ void setup() {
     //set_stposition(1,90,1000,0,true);
 }
 
-
+// ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {
     // Se divide el número en 4 enteros de 8 bits
     byteArray[0] = (number >> 24) & 0xFF;  // byte más significativo
@@ -109,6 +112,7 @@ void split16bits(int16_t number, uint8_t *byteArray) {
     byteArray[1] = number & 0xFF;  // byte menos significativo
 }
 
+// ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real (NO SE USA)
     doControlFlag = true;
 }
@@ -133,7 +137,8 @@ void CAN0IntHandler(void) { // Función de interrupción para el CAN (NO SE USA)
     }
 }
 
-void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){
+// ----------------------------------- Funciones de manejo de CAN -----------------------------------
+void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
   // Objetos para la comunicación CAN
   tCANMsgObject Message_Tx;
   tCANMsgObject Message_Rx;
@@ -169,6 +174,8 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){
 }
 
 void SendParameters(uint8_t ID, uint8_t PosKP, uint8_t PosKI, uint8_t SpdKP, uint8_t SpdKI, uint8_t CurrKP, uint8_t CurrKI){
+  // Función para enviar los valores de los parámetros PI
+
   // Se define la variable que almacena el valor
   uint8_t CAN_data_TX[8u];
 
@@ -185,7 +192,9 @@ void SendParameters(uint8_t ID, uint8_t PosKP, uint8_t PosKI, uint8_t SpdKP, uin
   send_cmd(ID, CANBUSSend_PIDvalues, true);
 }
 
-void ReadParameters(int8_t ID, bool show){
+void ReadParameters(int8_t ID, bool show){ // MEJORA: RETORNAR PARÁMETROS LEÍDOS
+  // Función para leer los parámetros PI
+
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
   
@@ -204,6 +213,7 @@ void ReadParameters(int8_t ID, bool show){
 }
 
 void set_speed(int8_t ID, int64_t speed_ref, bool show){
+  // Función para establecer la velocidad
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -228,6 +238,7 @@ void set_speed(int8_t ID, int64_t speed_ref, bool show){
 }
 
 void read_acceleration(int8_t ID, bool show){
+  // Función para leer aceleración 
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -247,6 +258,7 @@ void read_acceleration(int8_t ID, bool show){
 }
 
 void set_acceleration(int8_t ID, int64_t accel_ref, bool show){
+  // Función para establecer la aceleración
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -272,6 +284,7 @@ void set_acceleration(int8_t ID, int64_t accel_ref, bool show){
 }
 
 void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, bool show){ // NO FUNCIONA
+  // Función para establecer la posición absoluta
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -282,7 +295,7 @@ void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, b
   uint8_t byteArray_speed[2];
   uint8_t byteArray_position[4];
 
-  // Split the number into 4 bytes
+  // Se dividen los valores en 2 y 4 bytes
   split32bits(sp, byteArray_position);
   split16bits(max_speed, byteArray_speed);
   
@@ -301,6 +314,7 @@ void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, b
 }
 
 void set_incremental_position(int8_t ID, int32_t position_inc, int16_t max_speed, bool show){ 
+  // Función para establecer la posición incremental
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -330,6 +344,7 @@ void set_incremental_position(int8_t ID, int32_t position_inc, int16_t max_speed
 }
 
 void set_stposition(int8_t ID, int16_t position_inc, int16_t max_speed, int8_t direction, bool show){ 
+  // Función para establecer la posición en relativo a una vuelta
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -359,6 +374,7 @@ void set_stposition(int8_t ID, int16_t position_inc, int16_t max_speed, int8_t d
 }
 
 void set_torque(int8_t ID, int64_t current_torque, bool show){ 
+  // Función para establecer el torque a través de la corriente
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -386,6 +402,7 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
 }
 
 void stop_motor(int8_t ID){
+  // Función para detener el motor
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -405,6 +422,7 @@ void stop_motor(int8_t ID){
 }
 
 void shutdown_motor(int8_t ID){
+  // Función para apagar el motor
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -424,6 +442,7 @@ void shutdown_motor(int8_t ID){
 }
 
 void reset_motor(int8_t ID){
+  // Función para restablecer los comandos enviados al motor
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
@@ -442,8 +461,10 @@ void reset_motor(int8_t ID){
   send_cmd(ID, CAN_data_TX, true);
 }
 
-// -------- Funciones para I2C -------- 
+// ----------------------------------- Funciones de manejo de I2c -----------------------------------
 void onReceive(int len){
+  // Función de callback que se ejecuta al recibir un mensaje por I2C
+
   char mensaje_leido[len+1];
   // Lee los bytes recibidos
   int i = 0;
@@ -473,13 +494,17 @@ void onReceive(int len){
 }
 
 void onRequest(){
-  // Se definen las cosas a mandar
+  // Función de callback que se ejecuta al recibir un request por I2C
+
+  // Se define el mensaje a mandar
   const char *message = "Hello, Master! ";
   
+  // Se imprime el mensaje mandado
   Serial.println("onRequest: ");
   Wire.write(message); // test de respuesta
 }
 
+// ----- Main Loop -----
 void loop() {
   //set_stposition(1,90,5000,1,true);
   //set_speed(1, 360, true);

@@ -131,20 +131,18 @@ class ExoBoostApp(MDApp):
         else: self.ble = None
 
         # Atributos de lógica BLE
-        self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
-        self.connection_successful: bool = False # Almacena si la conexión fue exitosa
-        self.reading: bool = False # Almacena si la lectura de datos se encuentra activa
+        self.selected_device: str = None           # Indica el nombre del dispositivo seleccionado
+        self.connection_successful: bool = False   # Indica si la conexión fue exitosa
+        self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
         # Se inicializa el hilo secundario de la lectura de datos
         self.read_thread = Thread(target=self.read_cycle, args=(1000,))
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
-        # Nombres de los servicios para manejo interno
-        names = ["Parameters", "Process", "Commands"]
-        values = [0x0001, 0x0002, 0x0003]
-        # Se generan los UUIDs para los servicios
-        self.uuid_manager.generate_uuids_services(names, values)
+        names = ["Parameters", "Process", "Commands"] # Nombres de los servicios
+        values = [0x0001, 0x0002, 0x0003]             # Sub UUIDs para los servicios
+        self.uuid_manager.generate_uuids_services(names, values) # Se generan los UUIDs
 
         # Se generan las carcacterísticas para los servicios
         # --- Servicio de Parameters ---
@@ -303,10 +301,10 @@ class ExoBoostApp(MDApp):
     def is_valid(self, var: str, tipo) -> bool:
         """
         Valida si un dato en formato de string pertenece a otro tipo de dato. 
-        Función para validación de informaicón
+        Función para validación de informaicón.
 
-        Entradas: var  - Dato a validar tipo string
-                  tipo - valor correspondiente a la clase para validación
+        Entradas: var  str -> Dato a validar tipo string
+                  tipo any -> valor correspondiente a la clase para validación deseada
         Salida: Booleano indicando si el dato pertenece a la clase indicada
         """
         try:
@@ -722,9 +720,9 @@ class ExoBoostApp(MDApp):
 
     def update_process_variable(self, *args):
         '''Método para actualizar la variable de proceso en la app'''
-        self.root.get_screen('Main Window').ids.sp_motor1.text = self.motor_parameters_pv["motor1"]
-        self.root.get_screen('Main Window').ids.sp_motor2.text = self.motor_parameters_pv["motor2"]
-        self.root.get_screen('Main Window').ids.sp_motor3.text = self.motor_parameters_pv["motor3"]
+        self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
+        self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
+        self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
