@@ -30,15 +30,15 @@ String readI2CMessage(uint8_t slaveAddress, uint8_t len);
 
 // Servicio para las variables de proceso
 #define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"   // Característica para recibir el valor de la variable de proceso
-#define CHARACTERISTIC_UUID_VAR "0000000e-0000-1000-8000-00805f9b34fa"  // Característica para definir qué variable de proceso analizar
+#define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"      // Característica para recibir el valor de la variable de proceso
+#define CHARACTERISTIC_UUID_ALL_PV "0000000e-0000-1000-8000-00805f9b34fa"  // Característica para leer todas las variables de proceso en modo de monitoreo
 
 // Servicio para el modo de comando 
 #define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
 
 // ------- Constantes para I2C -------
-#define SLAVE_ADDRESS 0x55 // Dirección del esclavo I2C para Right Leg
+#define SLAVE_ADDRESS 0x55  // Dirección del esclavo I2C para Right Leg
 #define BUFFER_SIZE 300     // Tamaño del buffer para recibir datos ELIMINAR
 
 // ------------------------------------------ Set up para BLE ------------------------------------------
@@ -499,6 +499,7 @@ void setup() {
   StaticJsonDocument<200> values_doc;
   char values_buffer[200];
   values_doc["limb"] = "Right leg";
+  values_doc["monitoring"] = "pos";
   values_doc["motor1"] = "100";
   values_doc["motor2"] = "100";
   values_doc["motor3"] = "100";
@@ -528,4 +529,7 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
+  delay(500);
+  // Se notifica que se debe leer una característica
+  pCharacteristic_PV->notify();
 }

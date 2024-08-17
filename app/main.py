@@ -136,7 +136,7 @@ class ExoBoostApp(MDApp):
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
         # Se inicializa el hilo secundario de la lectura de datos
-        self.read_thread = Thread(target=self.read_cycle, args=(1000,))
+        self.read_thread = Thread(target=self.read_pv_cycle, args=(100,))
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
@@ -148,7 +148,7 @@ class ExoBoostApp(MDApp):
         # --- Servicio de Parameters ---
         self.uuid_manager.generate_uuids_chars(names[0], ["PI", "SP","LEVEL"], [0x000a, 0x000f, 0x000d])
         # --- Servicio de Process ---
-        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "VAR"], [0x000b, 0x000e])
+        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
         self.uuid_manager.generate_uuids_chars(names[2], ["MODE"], [0x000c])
 
@@ -294,6 +294,7 @@ class ExoBoostApp(MDApp):
             self.reading = True
         elif tab == "Bluetooth settings": 
             self.mode = "bluetooth"
+            self.reading = False
         elif tab == "Tuning mode": 
             self.mode = "tuning"
             self.reading = True
@@ -407,7 +408,6 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
             # Se cambia el texto del label y se muestra a que dispositivo se conectó
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
-            # self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
             # Comienza la lectura de datos
             self.read_thread.start()
@@ -424,15 +424,14 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
-    # ---------------- Imprime valor del slider ----------------
+    # ---------------- Valor del slider ----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
         print(f"Assitance Level: {value}")
-        print(type(value))
 
-        # Acción de submit parámetros
-        print("Acción de sentado/parado")
+        # Valida si se pueden enviar parámetros
         if not self.ble_found: return
+        if not self.ble.connected: return
 
         # Se define la información a mandar con la limb
         json_data = {"asistance_level": str(value)}
@@ -442,7 +441,6 @@ class ExoBoostApp(MDApp):
         char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["LEVEL"]) # Se convierte a string
 
         # Se mandan los datos
-        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     # ------- Botones de asistencia -------
@@ -665,57 +663,56 @@ class ExoBoostApp(MDApp):
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
 
-    def read_cycle(self, time: int):  
-        # MEJORA: INDICAR QUÉ CARACTERÍSTICA SE QUIERE LEER ANTES DE HACER EL REQUEST. 
+    def read_pv_cycle(self, time: int):  
         '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
+        Este método se llama mientras se encuentre en modo sintonización.
         Entrada: time interval int -> Periodo de lectura de datos en ms'''
-
-        print("read cycle method")
-
-        # Comprueba que el dispositivo BLE exista
-        if not self.ble: 
-            print("Dispositivo BLE no encontrado, terminando operación")
-            return
 
         sleep(2) # Espera un momento antes de comenzar la lectura
         while True:
-            print("Intento de lectura...")
-            if self.ble.connected and self.reading:
-                print("Leyendo...")
-                # Se realiza la lectura si está conectado y en lectura activa
-                service_uuid = str(self.uuid_manager.uuids_services["Process"]) # Se convierte a string
-                char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) # Se convierte a string
-                json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-                ''' Estructura deseada del json
-                json_dict = {
-                    "limb": "Rigth leg",
-                    "motor1": "100",
-                    "motor2": "100",
-                    "motor3": "100"
-                }
-                '''
+            # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+            if not self.ble: continue
+            if not self.ble.connected: continue
+            if not self.reading: continue
 
-                # Se obtienen los valores del diccionario
-                try: 
-                    limb_read = json_dict["limb"]            
-                    motor1pv_read = json_dict["motor1"]            
-                    motor2pv_read = json_dict["motor2"]            
-                    motor3pv_read = json_dict["motor3"]       
-                except Exception as e:
-                    print("Error al leer los datos")
-                    print(e)  
+            # Se realiza la lectura si está conectado y en lectura activa
+            service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+            char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
+            json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-                # Se guardan los valores en el diccionario
-                self.motor_parameters_pv["motor1"] = motor1pv_read
-                self.motor_parameters_pv["motor2"] = motor2pv_read
-                self.motor_parameters_pv["motor3"] = motor3pv_read
+            ''' Estructura deseada del json
+            json_dict = {
+                "limb": "Rigth leg", " {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+                "monitoring": "pos", # {"pos", "vel", "cur"}
+                "motor1": "100",
+                "motor2": "100",
+                "motor3": "100"
+            }
+            '''
 
-                # Se muestran en pantalla los parámetros
-                if self.selected_limb == limb_read:
-                    Clock.schedule_once(self.update_process_variable)
-                
-                # Se espera el tiempo indicado para la siguiente lectura
+            # Se obtienen los valores del diccionario
+            try: 
+                limb_read = json_dict["limb"]      
+                monitoring_read = json_dict["monitoring"]      
+                motor1pv_read = json_dict["motor1"]            
+                motor2pv_read = json_dict["motor2"]            
+                motor3pv_read = json_dict["motor3"]       
+            except Exception as e:
+                print("Error al leer los datos")
+                print(e)  
+
+            if not monitoring_read == self.motor_parameters_pv["monitoring"]: continue
+
+            # Se guardan los valores en el diccionario
+            self.motor_parameters_pv["motor1"] = motor1pv_read
+            self.motor_parameters_pv["motor2"] = motor2pv_read
+            self.motor_parameters_pv["motor3"] = motor3pv_read
+
+            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+            if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
+            
+            # Se espera el tiempo indicado para la siguiente lectura
             sleep(float(time/1000))
 
     def update_process_variable(self, *args):
