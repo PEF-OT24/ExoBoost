@@ -145,10 +145,10 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){
   Message_Rx.pui8MsgData = CAN_data_RX;
 
   // Envío por CAN
-  CANMessageSet(CAN0_BASE, ID, &Message_Tx, MSG_OBJ_TYPE_TX); 
+  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX); 
 
   // Lee el mensaje de respuesta
-  CANMessageSet(CAN0_BASE, ID, &Message_Rx, MSG_OBJ_TYPE_RXTX_REMOTE);
+  CANMessageSet(CAN0_BASE, 1, &Message_Rx, MSG_OBJ_TYPE_RXTX_REMOTE);
 
   // Imprime el mensaje si el usuario lo indica
   if (show){
@@ -361,7 +361,7 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
   uint8_t CAN_data_TX[8u];
   uint8_t CAN_data_RX[8u];
 
-  int32_t sp = current_torque * 100;
+  int16_t sp = current_torque * 100;
 
   uint8_t byteArray_current[2];
 
@@ -375,8 +375,8 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
   CAN_data_TX[3] = 0x00;
   CAN_data_TX[4] = byteArray_current[1];
   CAN_data_TX[5] = byteArray_current[0];
-  CAN_data_TX[6] = 0;
-  CAN_data_TX[7] = 0;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
 
   // Se envía el mensaje
   send_cmd(ID, CAN_data_TX, show);
@@ -440,8 +440,38 @@ void reset_motor(int8_t ID){
   send_cmd(ID, CAN_data_TX, true);
 }
 
-void loop() {
-  //set_stposition(1,90,5000,1,true);
-
+void changeID(int8_t ID){
   
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x81; 
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
+
+void loop() {
+  //if (doControlFlag) {
+    //doControlFlag = false;
+    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
+    //stop_motor(1);
+    //stop_motor(2);
+    //reset_motor(1);
+    //reset_motor(2);
+    //shutdown_motor(1);
+    //shutdown_motor(2);
+    //set_speed(1,50,true);
+    //set_speed(2,360,true);
+    //set_torque(2,20,true);
+    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW);
+  //}
 }
