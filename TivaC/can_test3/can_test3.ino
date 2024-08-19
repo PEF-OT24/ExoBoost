@@ -21,6 +21,7 @@
 #include "driverlib/can.h"
 #include "driverlib/systick.h"
 #include <Wire.h>
+#include <ArduinoJson.h>
 
 // --------------------------------------- Constantes de uso general -----------------------------------------------
 // Definición de pines LED 
@@ -33,69 +34,30 @@
 #define CAN_INT_INTID_STATUS 0x8000
 #endif
 
+// Delay entre mensajes de CAN en ms
+#define CAN_DELAY 100
+// ----------------- Variables globales ------------------
+int8_t assitance_level = 0; // Nivel de asistencia
+// Parámetros de PI para un determinado motor
+uint8_t posKP; 
+uint8_t posKI; 
+uint8_t velKP; 
+uint8_t velKI; 
+uint8_t curKP; 
+uint8_t curKI; 
+
+uint16_t SP_motor1; // Set Point para el motor 1
+uint32_t SP_motor2; // Set Point para el motor 2
+uint32_t SP_motor3; // Set Point para el motor 3
+uint16_t max_speed = 500; // Velocidad máxima al controlar posición
+
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 
-#define I2C_DEV_ADDR 0x55 // Dirección del esclavo
+// ----------------- Variables para I2C ------------------
+#define I2C_DEV_ADDR 0x55        // Dirección del esclavo
+String mensaje_leido = "";       // Buffer para recibir el mensaje
 uint32_t i = 0;
 char data;
-
-// ----------------------------------------------------- Setup ----------------------------------------------------
-void setup() {
-    Serial.begin(9600);
-
-    // Enable peripherals
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF)) {}
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED);
-
-    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_ADC0)) {}
-    GPIOPinTypeADC(GPIO_PORTE_BASE, GPIO_PIN_3);
-    ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_PROCESSOR, 0);
-    ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH0);
-    ADCSequenceEnable(ADC0_BASE, 0);
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_UART0)) {}
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
-    UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
-    CANInit(CAN0_BASE);
-    CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
-    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
-    CANEnable(CAN0_BASE);
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB)) {}
-    GPIOPinConfigure(GPIO_PB4_CAN0RX);
-    GPIOPinConfigure(GPIO_PB5_CAN0TX);
-    GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
-
-    SysTickIntRegister(ISRSysTick);
-    SysTickPeriodSet(11200);
-    SysTickIntEnable();
-    SysTickEnable();
-
-    // ------ Configuración de I2C ------
-    Wire.begin((uint8_t)I2C_DEV_ADDR);                // Inicializa el protocolo I2C 
-    Wire.onReceive(onReceive); // Se registra el evento de onreceive
-    Wire.onRequest(onRequest); // register event
-
-    IntMasterEnable();
-    SendParameters();
-    //stop_motor(1);
-    //reset_motor(1);
-    //shutdown_motor(1);
-    //set_acceleration(1,500,true);
-    //set_incremental_position(1, 90, 360, true);
-    //set_speed(1, 360, true);
-    //set_absolute_position(1, 90, 1000, true);
-    //set_stposition(1,90,1000,0,true);
-}
 
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {
@@ -117,7 +79,7 @@ void ISRSysTick(void) { // Función de interrupción para tiempo real (NO SE USA
     doControlFlag = true;
 }
 
-void CAN0IntHandler(void) { // Función de interrupción para el CAN (NO SE USA)
+void CAN0IntHandler(void) { // Función de interrupción para el CAN (NO SE USA, creo xd)
     uint8_t CANBUSReceive[8u];
     tCANMsgObject sMsgObjectRx;
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
@@ -189,7 +151,7 @@ void SendParameters(uint8_t ID, uint8_t PosKP, uint8_t PosKI, uint8_t SpdKP, uin
   CAN_data_TX[6] = PosKP;  // KP para posición
   CAN_data_TX[7] = PosKI;  // KI para posición
   
-  send_cmd(ID, CANBUSSend_PIDvalues, true);
+  send_cmd(ID, CAN_data_TX, true);
 }
 
 void ReadParameters(int8_t ID, bool show){ // MEJORA: RETORNAR PARÁMETROS LEÍDOS
@@ -378,14 +340,13 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
   
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
-  uint8_t CAN_data_RX[8u];
 
   int32_t sp = current_torque * 100;
 
   uint8_t byteArray_current[2];
 
   // Split the number into 4 bytes
-  split16bits(current_torque, byteArray_current);
+  split16bits(sp, byteArray_current);
   
   // Define el setpoint de la velocidad
   CAN_data_TX[0] = 0xA1;
@@ -461,35 +422,211 @@ void reset_motor(int8_t ID){
   send_cmd(ID, CAN_data_TX, true);
 }
 
-// ----------------------------------- Funciones de manejo de I2c -----------------------------------
+// ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
 void onReceive(int len){
   // Función de callback que se ejecuta al recibir un mensaje por I2C
 
-  char mensaje_leido[len+1];
   // Lee los bytes recibidos
-  int i = 0;
-  while (Wire.available()) {
-    if (i < sizeof(mensaje_leido)-1) {
-      mensaje_leido[i++] = Wire.read();
-    }
+  while (Wire.available()) { // Guarda los bytes recibidos
+    char rec_data = Wire.read();
+    mensaje_leido += rec_data;
   }
-  mensaje_leido[i] = '\0';
-  // Imprime los datos leídos
-  Serial.print("Datos recibidos: ");
-  Serial.println(mensaje_leido);
-  Serial.println();
 
-  if (strcmp(mensaje_leido, "ON ") == 0) {
-    Serial.println("Encender motor");// Mensaje temporal para encnder el motor
-    set_speed(1, 360, true);
-  } 
-  else if (strcmp(mensaje_leido, "OFF") == 0) {
-    Serial.println("Apagar motor"); // Mensaje temporal para apagar el motor
-    stop_motor(1);
+  if (mensaje_leido.endsWith("\n")){ // Indicador de que el mensaje está completo
+    mensaje_leido.trim();
+    JsonDocument jsonrec;            // Archivo json para recibir información 
+    
+    Serial.print("Datos recibidos: ");
+    Serial.println(mensaje_leido);
+  
+    // ----- Procesamiento del mensaje recibido -----
+    const char *value = mensaje_leido.c_str();
+    DeserializationError error = deserializeJson(jsonrec, value);
+  
+    // Se revisan errores
+    if (error) { // Error al deserializar
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    else if (!jsonrec.containsKey("T")){ // Si no contiene el tipo
+      Serial.println("Tipo no encontrado en el JSON");
+      return;
+    }
+    else if (!jsonrec["T"].is<const char*>()){
+      Serial.println("Tipo de dato erróneo");
+      return;  
+    }
+  
+    // ----------- Se procesan diferentes JSON --------
+    const char* type = jsonrec["T"];
+    if (strcmp(type, "A") == 0){ 
+      // ------------- Nivel de asistencia -------------
+      // Ejemplo: {"T": "A","asistance_level": "100"}
 
-  } 
-  else {
-    Serial.println("Mensaje no reconocido");
+      // Se revisan errores en el JSON
+      if (!jsonrec.containsKey("asistance_level")){ // Si si no contiene el tipo
+        Serial.print("Información no encontrada");
+        return;
+      }
+      else if (!jsonrec["asistance_level"].is<String>()){
+        Serial.println("Información en formato incorrcto");
+        return;
+      }
+  
+      // Se extrae la información recibida
+      assitance_level = jsonrec["asistance_level"].as<int>(); // Se guarda el valor
+      Serial.print("Nivel de asistencia: ");
+      Serial.println(assitance_level);
+    }
+    else if (strcmp(type, "B") == 0 || strcmp(type, "C") == 0 || strcmp(type, "D") == 0){ // Parámetros PI para cualquier motor
+      // ------------- Parámetros de PI -------------
+      /*Ejemplo
+      {
+        "T": "B",
+        "motor1":{
+          "pos": {"kc": "100", "ti": "50"},
+          "vel": {"kc": "100", "ti": "50"},
+          "cur": {"kc": "100", "ti": "50"},
+        }      
+      }    
+      */   
+
+      char address = 0; // dirección del motor
+      JsonDocument json_motor;
+      if (jsonrec.containsKey("motor1")){ // Si contiene el motor 1
+        Serial.println("Parámetros del motor 1");
+        address = 1;
+        json_motor = jsonrec["motor1"];
+      }  
+      else if (jsonrec.containsKey("motor2")){
+        Serial.println("Parámetros del motor 2");
+        address = 2; 
+        json_motor = jsonrec["motor2"];
+      }
+      else if (jsonrec.containsKey("motor3")){
+        Serial.println("Parámetros del motor 3");
+        address = 3;
+        json_motor = jsonrec["motor3"];
+      }
+      else {
+        Serial.print("Información no encontrada");
+        return;  
+      }
+
+      // Revisión de errores dentro del nuevo archivo JSON
+      if (!json_motor.containsKey("pos") || !json_motor.containsKey("vel") || !json_motor.containsKey("cur")){
+        Serial.print("Error en los datos encontrados");
+        return;
+      }
+      
+      JsonDocument json_parametros;
+      // Procesamiento para parámetros de posición
+      json_parametros = json_motor["pos"];
+      if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
+        Serial.println("Parámetros no encontrados");
+        return;
+      }
+      posKP = json_parametros["kc"].as<int>();
+      posKI = json_parametros["ti"].as<int>();
+      json_parametros.clear();
+
+      // Procesamiento para parámetros de velocidad
+      json_parametros = json_motor["vel"];
+      if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
+        Serial.println("Parámetros no encontrados");
+        return;
+      }
+      velKP = json_parametros["kc"].as<int>();
+      velKI = json_parametros["ti"].as<int>();
+      json_parametros.clear();
+      
+      // Procesamiento para parámetros de corriente
+      json_parametros = json_motor["cur"];
+      if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
+        Serial.println("Parámetros no encontrados");
+        return;
+      }
+      curKP = json_parametros["kc"].as<int>();
+      curKI = json_parametros["ti"].as<int>();
+      json_parametros.clear();
+
+      // Se mandan los parámetros
+      Serial.println("Parámetros de posición: ");
+      Serial.print("kc: "); 
+      Serial.println(posKP);
+      Serial.print("ti: ");
+      Serial.println(posKI);
+      Serial.println("Parámetros de velocidad: ");
+      Serial.print("kc: "); 
+      Serial.println(velKP);
+      Serial.print("ti: ");
+      Serial.println(velKI);
+      Serial.println("Parámetros de corriente: ");
+      Serial.print("kc: "); 
+      Serial.println(curKP);
+      Serial.print("ti: ");
+      Serial.println(curKI);
+      SendParameters(address, posKP, posKI, velKP, velKI, curKP, curKI);
+    }
+    else if(strcmp(type, "E") == 0) {
+      // ------- Mandar el Set Point -------
+      /* Ejemplo
+        {
+          "T": "E",
+          "monitoring": "pos", 
+          "motor1": "0",
+          "motor2": "0",
+          "motor3": "0",
+        }
+      */
+      // Se revisan errores
+      if (!jsonrec.containsKey("monitoring") || !jsonrec.containsKey("motor1") || !jsonrec.containsKey("motor2") || !jsonrec.containsKey("motor3")){
+        Serial.print("Información no encontrada");
+        return;
+      }
+
+      // Se extraen los Set Points del mensaje
+      SP_motor1 = jsonrec["motor1"].as<int>();
+      SP_motor2 = jsonrec["motor2"].as<int>();
+      SP_motor3 = jsonrec["motor3"].as<int>();
+
+      // Control dependiendo del tipo 
+      const char* process_variable = jsonrec["monitoring"];
+      if (strcmp(process_variable, "pos") == 0){
+        // Control de posición
+        Serial.println("Control de posición");
+        set_absolute_position(1, SP_motor1, max_speed, true);
+        delay(CAN_DELAY); // delay 
+        set_absolute_position(2, SP_motor3, max_speed, true);
+        delay(CAN_DELAY); // delay 
+        set_absolute_position(3, SP_motor3, max_speed, true);
+        delay(CAN_DELAY); // delay 
+      }
+      else if(strcmp(process_variable, "vel") == 0){
+        // Control de velocidad
+        Serial.println("Control de velocidad");
+        set_speed(1, SP_motor1, true);
+        delay(CAN_DELAY); // delay 
+        set_speed(2, SP_motor2, true);
+        delay(CAN_DELAY); // delay 
+        set_speed(3, SP_motor3, true);
+        delay(CAN_DELAY); // delay 
+      }
+      else if (strcmp(process_variable, "cur") == 0){
+        // Control de torque
+        Serial.println("Control de torque");
+        set_torque(1, SP_motor1, false);
+        delay(CAN_DELAY); // delay 
+        set_torque(2, SP_motor2, false);
+        delay(CAN_DELAY); // delay 
+        set_torque(3, SP_motor3, false);
+        delay(CAN_DELAY); // delay 
+      }
+    }
+  
+    // Se limpia el buffer y el archivo json receptor
+    mensaje_leido = "";
   }
 }
 
@@ -502,6 +639,67 @@ void onRequest(){
   // Se imprime el mensaje mandado
   Serial.println("onRequest: ");
   Wire.write(message); // test de respuesta
+}
+
+// ----------------------------------------------------- Setup ----------------------------------------------------
+void setup() {
+    Serial.begin(9600);
+
+    // Enable peripherals
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOF)) {}
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED);
+
+    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_ADC0)) {}
+    GPIOPinTypeADC(GPIO_PORTE_BASE, GPIO_PIN_3);
+    ADCSequenceConfigure(ADC0_BASE, 0, ADC_TRIGGER_PROCESSOR, 0);
+    ADCSequenceStepConfigure(ADC0_BASE, 0, 0, ADC_CTL_IE | ADC_CTL_END | ADC_CTL_CH0);
+    ADCSequenceEnable(ADC0_BASE, 0);
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_UART0)) {}
+    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+    UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
+    CANInit(CAN0_BASE);
+    CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
+    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
+    CANEnable(CAN0_BASE);
+
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB)) {}
+    GPIOPinConfigure(GPIO_PB4_CAN0RX);
+    GPIOPinConfigure(GPIO_PB5_CAN0TX);
+    GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
+
+    SysTickIntRegister(ISRSysTick);
+    SysTickPeriodSet(11200);
+    SysTickIntEnable();
+    SysTickEnable();
+
+    // ------ Configuración de I2C ------
+    Wire.begin((uint8_t)I2C_DEV_ADDR);                // Inicializa el protocolo I2C
+    Wire.onReceive(onReceive); // Se registra el evento de onreceive
+    Wire.onRequest(onRequest); // register event
+
+    IntMasterEnable();
+    //SendParameters();
+    //stop_motor(1);
+    //reset_motor(1);
+    //shutdown_motor(1);
+    //set_acceleration(1,500,true);
+    //set_incremental_position(1, 90, 360, true);
+    //set_speed(1, 360, true);
+    //set_absolute_position(1, 90, 1000, true);
+    //set_stposition(1,90,1000,0,true);
+
+    Serial.println("Listo: ");
+
 }
 
 // ----- Main Loop -----

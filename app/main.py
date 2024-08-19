@@ -434,7 +434,7 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected: return
 
         # Se define la información a mandar con la limb
-        json_data = {"asistance_level": str(value)}
+        json_data = {"assistance_level": str(value)}
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
         service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string

@@ -13,7 +13,7 @@
 #define LED_PIN 2
 
 // ----------------------------------- Declaración de funciones prototipo ------------------------------------------
-void sendI2CMessage(uint8_t slaveAddress, char* message);
+void sendI2CMessage(uint8_t slaveAddress, const char* message);
 String readI2CMessage(uint8_t slaveAddress, uint8_t len);
 
 // --------------------------------------- Constantes de uso general -----------------------------------------------
@@ -38,9 +38,9 @@ String readI2CMessage(uint8_t slaveAddress, uint8_t len);
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
 
 // ------- Constantes para I2C -------
-#define SLAVE_ADDRESS 0x55  // Dirección del esclavo I2C para Right Leg
-#define BUFFER_SIZE 300     // Tamaño del buffer para recibir datos ELIMINAR
-
+#define SLAVE_ADDRESS 0x55     // Dirección del esclavo I2C para Right Leg
+#define BUFFER_SIZE 300        // Tamaño del buffer para recibir datos ELIMINAR
+#define I2C_BUFFER_LENGTH 128  // Tamaño máximo del buffer modificado en la ESP32
 // ------------------------------------------ Set up para BLE ------------------------------------------
 // ------- Variables para BLE -------
 // Variables del servidor
@@ -110,6 +110,23 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
     // Procesa los datos recibidos en formato JSON
     StaticJsonDocument<450> jsonrec; // Longitud para procesar el JSON
     DeserializationError error = deserializeJson(jsonrec, value);
+
+    // Revisión de errores 
+    // La validación del sub archivo json dentro de motor1, motor2 y motor3 se hace en la Tiva
+    if (error) { // Error en la deserialización
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    else if (!jsonrec.containsKey("limb") || !jsonrec.containsKey("motor1") || !jsonrec.containsKey("motor2") || !jsonrec.containsKey("motor3")){ // Error de key
+      Serial.println("Información incorrecta en el archivo JSON");
+      return;
+    }
+    else if (!jsonrec["limb"].is<String>()){ // Error de tipo de dato
+      Serial.println("Tipo de dato erróneo en limb");
+      return;  
+    }
+
     /* Ejemplo de archivo
       {
         "limb": "Right leg",
@@ -130,46 +147,54 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
             },
       }
     
-      Después de recibirlo se enviarán en 5 paquetes por I2C
-      Paquete 1: Indicador de INICIO con limb
-      Paquete 2: Parámetros de motor 1
-      Paquete 3: Parámetros de motor 2
-      Paquete 4: Parámetros de motor 3
-      Paquete 5: Indicador de FINAL
-      (Esta lógica se tiene que procesar en la TIVA para esta recepción de mensajes)
+      Después de recibirlo se enviarán en 3 paquetes por I2C
+      Paquete 1: Parámetros de motor 1
+      Paquete 2: Parámetros de motor 2
+      Paquete 3: Parámetros de motor 3
 
       Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
-      // SI NO SE PUEDE JSON
-      "1, P, 100, 50, V, 100, 50, C, 100, 50" 
-
-      // SI SE PUEDE JSON 
-      "motor1": {               
-        "pos": {"kc": "100", "ti": "50"},
-        "vel": {"kc": "100", "ti": "50"},
-        "cur": {"kc": "100", "ti": "50"},
-      },
+      {
+        "T": "B"
+        "motor1": {               
+          "pos": {"kc": "100", "ti": "50"},
+          "vel": {"kc": "100", "ti": "50"},
+          "cur": {"kc": "100", "ti": "50"},
+        },
+      }
     */
-    
-    // Se guarda la extremidad recibida
-    selected_limb = String(jsonrec["limb"]);
-    Serial.println("Mensaje recibido: ");
-    serializeJson(jsonrec, Serial);
+    // --------------- Procesamiento del archivo json para mandar ---------------
+    DynamicJsonDocument jsonsend(160);
+    String stringsend = "";
 
-    // Valida el formato del JSON
-    if (error) {
-      Serial.print("Error al analizar JSON: ");
-      Serial.println(error.c_str());
-      return;
-    }
-    
-    // PROCESAMIENTO PARA GUARDAR LOS PARÁMETROS RECIBIDOS
+    // JSON del motor 1
+    jsonsend["motor1"] = jsonrec["motor1"];
+    jsonsend["T"] = "B";
+    serializeJson(jsonsend, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+    delay(300); // Se espera 300 ms para mandar el siguiente
 
+    // JSON del motor 2
+    jsonsend.remove("motor1");
+    jsonsend["motor2"] = jsonrec["motor2"];
+    jsonsend["T"] = "C";
+    stringsend = "";
+    serializeJson(jsonsend, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+    delay(300); // Se espera 300 ms para mandar el siguiente
+
+    // JSON del motor 3
+    jsonsend.remove("motor2");
+    jsonsend["motor3"] = jsonrec["motor3"];
+    jsonsend["T"] = "D";
+    stringsend = "";
+    serializeJson(jsonsend, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+    delay(300); // Se espera 300 ms para mandar el siguiente
+    
     // Enviar notificación de éxito en formato JSON
-    StaticJsonDocument<20> jsonrep;
-    jsonrep["response"] = "Success";
-    char responseBuffer[20];
-    serializeJson(jsonrep, responseBuffer);
-    pCharacteristic->setValue("Write response");
     pCharacteristic->notify();
   } // fin de onWrite
 };
@@ -187,7 +212,7 @@ class BLECallback_SP: public BLECharacteristicCallbacks {
     Serial.println("Característica escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<180> jsonrec;
+    StaticJsonDocument<100> jsonrec;
     DeserializationError error = deserializeJson(jsonrec, value);
 
     Serial.println("Mensaje recibido: ");
@@ -209,19 +234,25 @@ class BLECallback_SP: public BLECharacteristicCallbacks {
       }
 
       Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
-      // SI NO SE PUEDE JSON
-      "l, RL, M, P, M1, 0, M2, 0, M3, 0" 
-
-      // SI SE PUEDE JSON 
-      Enviar tal cual se recibió
+      {
+        "T": "E",
+        "monitoring": "pos", 
+        "motor1": "0",
+        "motor2": "0",
+        "motor3": "0",
+      }
     */
-    
+
+    // --------------- Procesamiento del archivo json para mandar ---------------
+    // Formato y transmisión para I2C
+    jsonrec.remove("limb"); // Se quita la limb del mensaje
+    jsonrec["T"] = "E";     // Se añade el tipo de mensaje 
+    String stringsend = "";
+    serializeJson(jsonrec, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+
     // Enviar notificación de éxito en formato JSON
-    StaticJsonDocument<20> jsonrep;
-    jsonrep["response"] = "Success";
-    char responseBuffer[20];
-    serializeJson(jsonrep, responseBuffer);
-    pCharacteristic->setValue("Write response");
     pCharacteristic->notify();
   } // fin de onWrite
 };
@@ -235,52 +266,46 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     // Método que recibe un nuevo valor de la característica
     std::string value = std::string(pCharacteristic->getValue().c_str());
-    Serial.println("Característica escrita: " + String(value.c_str()));
+    Serial.println("Característica nueva en BLE: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
-    StaticJsonDocument<30> jsonrec;
+    DynamicJsonDocument jsonrec(40);
     DeserializationError error = deserializeJson(jsonrec, value);
 
-    Serial.println("Mensaje recibido: ");
-    serializeJson(jsonrec, Serial);
-
-    // Valida el formato del JSON
-    if (error) {
+    // --- Revisión de errores ---
+    if (error) { // Error en la deserialización
       Serial.print("Error al analizar JSON: ");
       Serial.println(error.c_str());
       return;
     }
+    else if (!jsonrec.containsKey("asistance_level")){ // Error de key
+      Serial.println("Tipo no encontrado en el JSON");
+      return;
+    }
+    else if (!jsonrec["asistance_level"].is<String>()){ // Error de tipo de dato
+      Serial.println("Tipo de dato erróneo");
+      return;  
+    }
+
     /* Ejemplo de archivo 
       {"asistance_level": "100"}
 
       Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
-      // SI NO SE PUEDE JSON
-      "AL, 100" 
-
-      // SI SE PUEDE JSON 
-      Enviar tal cual se recibió (debería ser sencillo de procesar)
+      { "T": "A",
+        "asistance_level": "100"
+      }
     */
 
-    // Recibe el valor y se comprueba que no haya errores. 
-    level = String((const char*)jsonrec["asistance_level"]);
-
-    // Verifica que encontró el valor
-    if (level == "null") {
-      Serial.println("Error al mandar los parámetros.");
-      return;
-    }
-
-    // Impresión de datos
-    Serial.print("Nivel de asistencia: ");
-    Serial.println(level);
+    // --------------- Procesamiento del archivo json para mandar ---------------
+    // Formato y transmisión para I2C
+    jsonrec["T"] = "A"; // Se añade el tipo de mensaje 
+    String stringsend = "";
+    serializeJson(jsonrec, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
     // Enviar notificación de éxito en formato JSON
-    StaticJsonDocument<200> jsonrep;
-    jsonrep["response"] = "Success";
-    char responseBuffer[200];
-    serializeJson(jsonrep, responseBuffer);
-    pCharacteristic->setValue("Write response");
-    pCharacteristic->notify();
+    pCharacteristic_LEVEL->notify();
   } // fin de onWrite
 };
 
@@ -366,31 +391,36 @@ uint8_t dataLength = 0; // Longitud de los datos recibidos
 
 // ------- funciones para I2C -------
 // Función para mandar un mensaje a través de I2C
-void sendI2CMessage(uint8_t slaveAddress, char* message) {
+void sendI2CMessage(uint8_t slaveAddress, const char* message) {
   int length = strlen(message);  // Calcular el tamaño del mensaje
-  message[length] = 'X';         // Añadir un terminador X personalizado 
-  byte byteArray[length++];      // Crear un arreglo de bytes del mismo tamaño 
+  byte byteArray[length];        // Crear un arreglo de bytes del mismo tamaño 
+  int buffer_size = 32;          // Número máximo de bytes a transmitir (por protocolo)
+  int errorCode;
+  Serial.println(length);
 
-  // Se convierte el string a un arreglo de bytes
-  for (int i = 0; i < length; i++) {
-    byteArray[i] = (byte)message[i];
-  }
-
-  // Se imprime el mensaje a mandar
-  Serial.print("Sending message: ");
+  Serial.print("Sending message: "); // Fragmentar el mensaje y enviarlo en partes
   Serial.println(message);
+  for (int i = 0; i < length; i += buffer_size) { 
+    Wire.beginTransmission(slaveAddress);  // Iniciar transmisión con la dirección del esclavo
+    
+    // Cantidad de bytes a mandar
+    int bytes_to_send = min(buffer_size, length - i);
 
-  // Se manda el mensaje al esclavo I2C
-  Wire.beginTransmission(slaveAddress);
-  int bytesWritten = Wire.write(byteArray, length);  
-  int errorCode = Wire.endTransmission();
+    // Envía el fragmento del mensaje
+    for (int j = 0; j < bytes_to_send; j++) {
+      Wire.write(message[i + j]);
+    }
 
-  // Se imprime el error si hay uno
-  if (errorCode != 0){
-    Serial.print("Código de error: ");
-    Serial.println(errorCode);
+    errorCode = Wire.endTransmission();
+    // Se imprime el error si hay uno
+    if (errorCode != 0){
+      Serial.print("Código de error: ");
+      Serial.println(errorCode);
+    }
+    
+    delay(10);  // delay para evitar saturación del bus I2C
   }
-}
+} //  fin de la función
 
 String readI2CMessage(uint8_t slaveAddress, uint8_t len){
   Wire.requestFrom(slaveAddress, len);
@@ -424,6 +454,7 @@ void setup() {
   Serial.println("Iniciando el servidor BLE...");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
+  Wire.setClock(400000);  // Establece la velocidad a 400 kHz
 
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
