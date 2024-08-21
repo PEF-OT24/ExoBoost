@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = scan_BLE_import
+title = ExoBoostApp
 
 # (str) Package name
 package.name = myapp
@@ -13,7 +13,7 @@ package.domain = org.test
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,ttf,txt,jpeg,java,class
+source.include_exts = py,png,jpg,kv,atlas,ttf,txt,jpeg,java,class,json
 
 # (list) List of inclusions using pattern matching
 #source.include_patterns = assets/*,images/*.png

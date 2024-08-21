@@ -6,6 +6,7 @@ Config.set('graphics', 'fullscreen', '0')
 
 # Módulos internos
 from ColorManager import ColorManager
+from UUIDManager import UUIDManager
 
 # Importar librerías de kivy
 from kivy.lang import Builder
@@ -36,7 +37,6 @@ import json
 import uuid
 import webbrowser
 from time import sleep
-from UUIDManager import UUIDManager
 
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
@@ -85,6 +85,7 @@ class ExoBoostApp(MDApp):
         
         # Diccionario de etiquetas para la sintonización
         self.selected_limb: str = "Right leg"
+        self.selected_param: str = "pos" # Valores posibles para el parámetro a elegir. ["pos", "vel", "cur"], modo de servo control 
         self.motors_labels: dict[str] = {
             "Right leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
             "Left leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
@@ -121,7 +122,7 @@ class ExoBoostApp(MDApp):
         if self.os_name == "Android" or self.os_name == "Linux":
             print("Importando librería de BLE")
             # Librería de BLE
-            from BLE2 import BluetoothManager_App
+            from BLEManager import BluetoothManager_App
             self.ble_found = True
         else: self.ble_found = False
 
@@ -130,89 +131,73 @@ class ExoBoostApp(MDApp):
         else: self.ble = None
 
         # Atributos de lógica BLE
-        self.selected_device: str = None # Almacena el nombre del dispositivo seleccionado
-        self.connection_successful: bool = False # Almacena si la conexión fue exitosa
-        self.reading: bool = False # Almacena si la lectura de datos se encuentra activa
+        self.selected_device: str = None           # Indica el nombre del dispositivo seleccionado
+        self.connection_successful: bool = False   # Indica si la conexión fue exitosa
+        self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
         # Se inicializa el hilo secundario de la lectura de datos
-        self.read_thread = Thread(target=self.read_cycle, args=(1000,))
+        self.read_thread = Thread(target=self.read_pv_cycle, args=(100,))
 
         # -------- Manejo de los UUID según la ESP32 ---------
-        self.uuid_manager = UUIDManager()
-        # Nombres de los servicios para manejo interno
-        names = ["Parameters", "Process", "Commands"]
-        values = [0x0001, 0x0002, 0x0003]
-        # Se generan los UUIDs para los servicios
-        self.uuid_manager.generate_uuids_services(names, values)
+        self.uuid_manager = UUIDManager() # Ver UUIDManager.py
+        names = ["Parameters", "Process", "Commands"] # Nombres de los servicios
+        values = [0x0001, 0x0002, 0x0003]             # Sub UUIDs para los servicios
+        self.uuid_manager.generate_uuids_services(names, values) # Se generan los UUIDs
 
         # Se generan las carcacterísticas para los servicios
         # --- Servicio de Parameters ---
-        self.uuid_manager.generate_uuids_chars(names[0], ["PI", "LEVEL"], [0x000a, 0x000d])
+        self.uuid_manager.generate_uuids_chars(names[0], ["PI", "SP","LEVEL"], [0x000a, 0x000f, 0x000d])
         # --- Servicio de Process ---
-        self.uuid_manager.generate_uuids_chars(names[1], ["PV"], [0x000b])
+        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
         self.uuid_manager.generate_uuids_chars(names[2], ["MODE"], [0x000c])
 
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
-        # Todos se inicializan con un valor arbitrario
-        self.motor_parameters_pi =  {
-            "Right leg": {
-                "motor1": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor2": {"kc": "100", "ti": "50", "sp": "0"},
-                "motor3": {"kc": "100", "ti": "50", "sp": "0"},
-            },
-            "Left leg": {
-                "motor1": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor2": {"kc": "50", "ti": "100", "sp": "0"},
-                "motor3": {"kc": "50", "ti": "100", "sp": "0"},
-            },
-            "Right arm": {
-                "motor1": {"kc": "10", "ti": "100", "sp": "0"},
-                "motor2": {"kc": "10", "ti": "100", "sp": "0"},
-                "motor3": {"kc": "10", "ti": "100", "sp": "0"},
-            },
-            "Left arm": {
-                "motor1": {"kc": "10", "ti": "500", "sp": "0"},
-                "motor2": {"kc": "10", "ti": "500", "sp": "0"},
-                "motor3": {"kc": "10", "ti": "500", "sp": "0"},
-            }
+        
+        # Diccionario de valores de los parámetros PI 
+        self.motor_parameters_pi = {
+            "limb": "Right leg", # "Right leg", "Left leg", "Right arm", "Left arm"
+            "motor1": {
+                "pos": {"kc": "100", "ti": "50"},
+                "vel": {"kc": "100", "ti": "50"},
+                "cur": {"kc": "100", "ti": "50"}
+                },
+            "motor2": {
+                "pos": {"kc": "100", "ti": "50"},
+                "vel": {"kc": "100", "ti": "50"},
+                "cur": {"kc": "100", "ti": "50"}
+                },
+            "motor3": {
+                "pos": {"kc": "100", "ti": "50"},
+                "vel": {"kc": "100", "ti": "50"},
+                "cur": {"kc": "100", "ti": "50"}
+                }
         }
 
-        # Diccionario de valores de la variable de proceso de los motores
-        # Todos se inicializan con un valor arbitrario en 0
+        # Diccionario de valores de los parámetros SP
+        self.motor_setpoints = {
+            "limb": "Right leg", 
+            "monitoring": "pos", 
+            "motor1": "0",
+            "motor2": "0",
+            "motor3": "0",
+        }
+
+        # Diccionario de valores de los parámetros PV
         self.motor_parameters_pv =  {
-            "Right leg": {
-                "motor1": "0",
-                "motor2": "0",
-                "motor3": "0",
-            },
-            "Left leg": {
-                "motor1": "0",
-                "motor2": "0",
-                "motor3": "0",
-            },
-            "Right arm": {
-                "motor1": "0",
-                "motor2": "0",
-                "motor3": "0",
-            },
-            "Left arm": {
-                "motor1": "0",
-                "motor2": "0",
-                "motor3": "0",
-            }
+            "limb": "Right leg",
+            "monitoring": "pos",
+            "motor1": "0",
+            "motor2": "0",
+            "motor3": "0",
         }
 
-        # Pantalla para desplegar app (no. de monitor)
+        # Pantalla para desplegar app (número de monitor)
         self.pos_screen(0)
 
         # Diccionario de colores
-        self.colors: dict = ColorManager()._get_colors()
-        '''
-        Colores disponibles:
-        Cyan, Dark Blue, Light Orange, Light Gray, Black, White.
-        '''
+        self.colors: dict = ColorManager()._get_colors() # Ver ColorManager.py
 
     def build(self):
         """Carga kivy design file"""
@@ -302,7 +287,6 @@ class ExoBoostApp(MDApp):
             Window.fullscreen = True
 
     #----------------------------------------------------- Métodos generales ----------------------------------------------------
-
     def on_tab_select(self, tab: str): 
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
         if tab == "Assistance mode": 
@@ -310,21 +294,21 @@ class ExoBoostApp(MDApp):
             self.reading = True
         elif tab == "Bluetooth settings": 
             self.mode = "bluetooth"
+            self.reading = False
         elif tab == "Monitoring tab": 
             self.mode = "monitoring"
+            self.reading = True
         elif tab == "Tuning mode": 
             self.mode = "tuning"
             self.reading = True
-        
-        print(self.mode)
 
     def is_valid(self, var: str, tipo) -> bool:
         """
         Valida si un dato en formato de string pertenece a otro tipo de dato. 
-        Función para validación de informaicón
+        Función para validación de informaicón.
 
-        Entradas: var  - Dato a validar tipo string
-                  tipo - valor correspondiente a la clase para validación
+        Entradas: var  str -> Dato a validar tipo string
+                  tipo any -> valor correspondiente a la clase para validación deseada
         Salida: Booleano indicando si el dato pertenece a la clase indicada
         """
         try:
@@ -427,7 +411,6 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Disconnect"
             # Se cambia el texto del label y se muestra a que dispositivo se conectó
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
-            # self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
             # Comienza la lectura de datos
             self.read_thread.start()
@@ -444,30 +427,26 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
-
-    # ---------------- Imprime valor del slider ----------------
+    # ---------------- Valor del slider ----------------
     def on_slider_value(self, value):
         '''Handle the slider value change'''
         print(f"Assitance Level: {value}")
-        print(type(value))
 
-        # Acción de submit parámetros
-        print("Acción de sentado/parado")
+        # Valida si se pueden enviar parámetros
         if not self.ble_found: return
+        if not self.ble.connected: return
 
         # Se define la información a mandar con la limb
-        json_data = {"asistance_level": str(value)}
+        json_data = {"assistance_level": str(value)}
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
         service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
         char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["LEVEL"]) # Se convierte a string
 
         # Se mandan los datos
-        if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
-    #------- Imprimen acciones en botones de asistencia -----
-    # Pararse/Sentarse
+    # ------- Botones de asistencia -------
     def sit_down_stand_up(self):
         '''Método para enviar el estado de sentarse/pararse'''
         
@@ -487,7 +466,6 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
-    #Caminar
     def walk(self):
         '''Método para enviar el estado de caminar'''
         
@@ -507,7 +485,6 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
-    #Detenerse
     def stop(self):
         '''Método para enviar el estado de detenerse'''
         
@@ -527,12 +504,34 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
 
-    #----------------------------------------------------- Métodos del menú de sintonizción -----------------------------------------------------
+    #----------------------------------------------------- Métodos del menú de sintonizción ----------------------------------------------------
     def load_params(self): 
-        print("Método para cargar parámetros guardados")
+        '''Método para cargar los parámetros guardados, se aplican para la extremidad seleccionada actualmente.'''
+        print("load params method")
+
+        with open('saved_parameters.json', 'r') as file:
+            saved_params = json.load(file)
+            print(saved_params)
+
+        # Se guardan los parámetros
+        self.motor_parameters_pi = saved_params
+        self.motor_parameters_pi["limb"] = self.selected_limb
+
+        # Se muestran los parámetros en la aplicación
+        self.limb_dropdown_clicked(self.selected_limb)
 
     def save_params(self): 
-        print("Método para guardar los parámetros escritos")
+        '''Método para guardar los parámetros escritos en un archivo .json
+        Los parámetros se guardan de manera indistinta a la extremidad seleccionada.'''
+        print("Save params method")
+
+        # Se crea una copia para guardar sin el parámetro limb
+        dict = self.motor_parameters_pi.copy()
+        dict.pop("limb")
+        
+        # Se abre el archivo y se guardan los parámetros
+        with open('saved_parameters.json', 'w') as file:
+            json.dump(dict, file, indent=4)
 
     def limb_dropdown_clicked(self, limb: str) -> None: 
         '''
@@ -540,8 +539,10 @@ class ExoBoostApp(MDApp):
         Entrada: Entrada seleccionada (str)
         '''
 
-        # Se obtiene la selección
-        self.selected_limb = limb
+        # Se guarda la selección de la extremidad
+        self.motor_parameters_pi["limb"] = self.selected_limb = limb
+        self.motor_parameters_pv["limb"] = self.selected_limb = limb
+        self.motor_setpoints["limb"]     = self.selected_limb = limb
 
         # Se cambian las etiquetas de los motores
         new_labels: list[str] = self.motors_labels[self.selected_limb]
@@ -549,42 +550,57 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.motor2_label.text = new_labels[1]
         self.root.get_screen('Main Window').ids.motor3_label.text = new_labels[2]
 
-        # Se cambian los valores de los parámetros PI de los motores
-        new_params: dict[dict[str]]= self.motor_parameters_pi[self.selected_limb]
-        process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
+        # MEJORA: SE DEBERÍA MANDAR UN REQUEST DE LECTURA PARA LEER LOS DATOS DEL MOTOR DEPENDIENDO DE LA EXTREMIDAD SELECCIONADA 
+        # PARA MOSTRAR LA INFORMACIÓN ACTUALIZADA EN LA APP
+
+        # Se cambian los valores de los parámetros PI de los motores en la aplicación
+        # Se toman los valores previamente guardados
         # Motor 1
-        self.root.get_screen('Main Window').ids.kc_motor1.text = new_params["motor1"]["kc"]
-        self.root.get_screen('Main Window').ids.ti_motor1.text = new_params["motor1"]["ti"]
-        self.root.get_screen('Main Window').ids.pv_motor1.text = process_params["motor1"]
+        self.root.get_screen('Main Window').ids.kc_motor1.text = self.motor_parameters_pi["motor1"][self.selected_param]["kc"]
+        self.root.get_screen('Main Window').ids.ti_motor1.text = self.motor_parameters_pi["motor1"][self.selected_param]["ti"]
+        self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
         # Motor 2
-        self.root.get_screen('Main Window').ids.kc_motor2.text = new_params["motor2"]["kc"]
-        self.root.get_screen('Main Window').ids.ti_motor2.text = new_params["motor2"]["ti"]
-        self.root.get_screen('Main Window').ids.pv_motor2.text = process_params["motor2"]
+        self.root.get_screen('Main Window').ids.kc_motor2.text = self.motor_parameters_pi["motor2"][self.selected_param]["kc"]
+        self.root.get_screen('Main Window').ids.ti_motor2.text = self.motor_parameters_pi["motor2"][self.selected_param]["ti"]
+        self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
         # Motor 3
-        self.root.get_screen('Main Window').ids.kc_motor3.text = new_params["motor3"]["kc"]
-        self.root.get_screen('Main Window').ids.ti_motor3.text = new_params["motor3"]["ti"]
-        self.root.get_screen('Main Window').ids.pv_motor3.text = process_params["motor3"]
+        self.root.get_screen('Main Window').ids.kc_motor3.text = self.motor_parameters_pi["motor3"][self.selected_param]["kc"]
+        self.root.get_screen('Main Window').ids.ti_motor3.text = self.motor_parameters_pi["motor3"][self.selected_param]["ti"]
+        self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
 
     def send_params(self): 
-        '''Método para enviar parámetros al dispositivo conectado'''
-        # Acción de submit parámetros
+        '''Método para enviar parámetros PI al dispositivo conectado de todos los motores'''
         print("Método para enviar parámetros")
+        print(self.motor_parameters_pi)
         if not self.ble_found: return
 
-        # Se define la información a mandar con la limb
-        json_data: dict = self.motor_parameters_pi[self.selected_limb]
-        json_data["limb"] = self.selected_limb
+        # Se define la información a mandar
+        json_data: dict = self.motor_parameters_pi
 
-        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
-        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) # Se convierte a string
-        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) # Se convierte a string
+        # Selección de destino: se definen los UUIDs de la característica y el servicio 
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) 
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["PI"]) 
 
-        # Se mandan los datos
+        # Se mandan los datos hay conexión 
         if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
     
     def send_sp(self): 
-        print("Método para enviar el set point")
+        '''Método para enviar parámetros SP al dispositivo conectado de todos los motores'''
+        print("Método para enviar parámetros")
+        print(self.motor_setpoints)
+        if not self.ble_found: return
+
+        # Se define la información a mandar
+        json_data: dict = self.motor_setpoints
+
+        # Selección de destino: se definen los UUIDs de la característica y el servicio 
+        service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) 
+        char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["SP"]) 
+
+        # Se mandan los datos hay conexión 
+        if not self.ble.connected: return
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
     
     def process_var_select(self, instance, value) -> None:
         '''
@@ -592,87 +608,122 @@ class ExoBoostApp(MDApp):
         Dicha variable está ligada tanto al monitoreo de su valor como variable de proceso, 
         los valores de PI para la sintonización y su punto de set point para el control.
         '''
-        if value == 'down':
+        if value == 'down': # Cuando un botón es presionado	
             print(f'Seleccionaste: {instance.text}')
+
+            # Se establece el parámetro a sintonizar según la selección        
+            match instance.text:
+                case "Position":
+                    self.selected_param = "pos"
+                case "Velocity":
+                    self.selected_param = "vel"
+                case "Current":
+                    self.selected_param = "cur"
+            
+            # Se guarda la variable seleccionada
+            self.motor_setpoints["monitoring"] = self.selected_param
+            self.motor_parameters_pv["monitoring"] = self.selected_param
+
+            # Se cambian los valores de los parámetros PI de los motores en la aplicación
+            # Se toman los valores previamente guardados
+            # Motor 1
+            self.root.get_screen('Main Window').ids.kc_motor1.text = self.motor_parameters_pi["motor1"][self.selected_param]["kc"]
+            self.root.get_screen('Main Window').ids.ti_motor1.text = self.motor_parameters_pi["motor1"][self.selected_param]["ti"]
+            self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
+            # Motor 2
+            self.root.get_screen('Main Window').ids.kc_motor2.text = self.motor_parameters_pi["motor2"][self.selected_param]["kc"]
+            self.root.get_screen('Main Window').ids.ti_motor2.text = self.motor_parameters_pi["motor2"][self.selected_param]["ti"]
+            self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
+            # Motor 3
+            self.root.get_screen('Main Window').ids.kc_motor3.text = self.motor_parameters_pi["motor3"][self.selected_param]["kc"]
+            self.root.get_screen('Main Window').ids.ti_motor3.text = self.motor_parameters_pi["motor3"][self.selected_param]["ti"]
+            self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
 
     def on_entry_text(self, param: str, motor: str, value: str) -> None: 
         """
-        Método que valida si el texto ingresado por el usuario es válido, tanto de clase como de rango.
+        Método que guarda el valor de entrada dependiendo si fue un parámetro o un set point. 
+        Valida si el texto ingresado por el usuario es válido, tanto de clase como de rango.
         Entradas: param -> parámetro {'kc', 'ti', 'sp'}
                   motor -> número de motor {'motor1', 'motor2', 'motor3'}
                   value -> valor ingresado
         """
-        old_params: dict[dict[str]] = self.motor_parameters_pi[self.selected_limb]
-
-        if self.is_valid(value, 1): # Validación de dato como int
-            if param in ["kc", "ti", "sp"]:
-                max_value = self.motor_params_lims[self.selected_limb][motor][param]
-                if int(value) <= int(max_value) and int(value) >= 0: # Validación de rango válido
-                    # Si es válido, se actualiza el diccionario de parámetros
-                    self.motor_parameters_pi[self.selected_limb][motor][param] = value
-                else: # Valor no válido
-                    self.param_pi_entries[motor][param].text = old_params[motor][param]
-        else: # Tipo no válido
-            self.param_pi_entries[motor][param].text = old_params[motor][param]
-
-    def read_cycle(self, time: int):  
-        '''Método asincrónico que leerá los datos de los motores perdiódicamente
-        Entrada: time interval int -> Periodo de lectura de datos en ms'''
-
-        print("read cycle method")
-
-        # Comprueba que el dispositivo BLE exista
-        if not self.ble: 
-            print("Dispositivo BLE no encontrado, terminando operación")
+        if not self.is_valid(value, 1) and not self.is_valid(value, 1.0): # Valida si es int o float
+            # Se pone el valor anteriormente guardado
+            if param in ["kc", "ti"]:
+                self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][self.selected_param][param]
+            else: 
+                self.param_pi_entries[motor][param].text = "0"
             return
+
+        if param in ["kc", "ti"]: # Parámetros de sintonización
+            
+            max_value = self.motor_params_lims[self.selected_limb][motor][param]
+            if float(value) <= float(max_value) and float(value) >= 0.0: # Validación de valor máximo y posistivo
+                # Si es válido, se actualiza el diccionario de parámetros
+                self.motor_parameters_pi[motor][self.selected_param][param] = value
+            else: # Valor no válido, reescribe el texto
+                self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][self.selected_param][param]
+        else: # Parámetro de set point
+            self.motor_setpoints[motor] = value
+
+    def read_pv_cycle(self, time: int):  
+        '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
+        Este método se llama mientras se encuentre en modo sintonización.
+        Entrada: time interval int -> Periodo de lectura de datos en ms'''
 
         sleep(2) # Espera un momento antes de comenzar la lectura
         while True:
-            print("Intento de lectura...")
-            if self.ble.connected and self.reading:
-                print("Leyendo...")
-                # Se realiza la lectura si está conectado y en lectura activa
-                service_uuid = str(self.uuid_manager.uuids_services["Process"]) # Se convierte a string
-                char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) # Se convierte a string
-                json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-                ''' Estructura deseada del json
-                json_dict = {
-                    "limb": "Rigth leg",
-                    "motor1": "100",
-                    "motor2": "100",
-                    "motor3": "100"
-                }
-                '''
+            # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+            if not self.ble: continue
+            if not self.ble.connected: continue
+            if not self.reading: continue
 
-                # Se obtienen los valores del diccionario
-                try: 
-                    limb_read = json_dict["limb"]            
-                    motor1pv_read = json_dict["motor1"]            
-                    motor2pv_read = json_dict["motor2"]            
-                    motor3pv_read = json_dict["motor3"]       
-                except Exception as e:
-                    print("Error al leer los datos")
-                    print(e)  
+            # Se realiza la lectura si está conectado y en lectura activa
+            service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+            char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
+            json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-                # Se guardan los valores en el diccionario
-                self.motor_parameters_pv[limb_read]["motor1"] = motor1pv_read
-                self.motor_parameters_pv[limb_read]["motor2"] = motor2pv_read
-                self.motor_parameters_pv[limb_read]["motor3"] = motor3pv_read
+            ''' Estructura deseada del json
+            json_dict = {
+                "limb": "Rigth leg", " {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+                "monitoring": "pos", # {"pos", "vel", "cur"}
+                "motor1": "100",
+                "motor2": "100",
+                "motor3": "100"
+            }
+            '''
 
-                # Se muestran en pantalla los parámetros
-                if self.selected_limb == limb_read:
-                    Clock.schedule_once(self.update_process_variable)
-                
-                # Se espera el tiempo indicado para la siguiente lectura
+            # Se obtienen los valores del diccionario
+            try: 
+                limb_read = json_dict["limb"]      
+                monitoring_read = json_dict["monitoring"]      
+                motor1pv_read = json_dict["motor1"]            
+                motor2pv_read = json_dict["motor2"]            
+                motor3pv_read = json_dict["motor3"]       
+            except Exception as e:
+                print("Error al leer los datos")
+                print(e)  
+
+            # Si es la variable de proceso de interés, se despliega la información 
+            if not monitoring_read == self.motor_parameters_pv["monitoring"]: continue
+
+            # Se guardan los valores en el diccionario
+            self.motor_parameters_pv["motor1"] = motor1pv_read
+            self.motor_parameters_pv["motor2"] = motor2pv_read
+            self.motor_parameters_pv["motor3"] = motor3pv_read
+
+            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+            if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
+            
+            # Se espera el tiempo indicado para la siguiente lectura
             sleep(float(time/1000))
 
     def update_process_variable(self, *args):
         '''Método para actualizar la variable de proceso en la app'''
-        process_params: dict[str] = self.motor_parameters_pv[self.selected_limb]
-        self.root.get_screen('Main Window').ids.sp_motor1.text = process_params["motor1"]
-        self.root.get_screen('Main Window').ids.sp_motor2.text = process_params["motor2"]
-        self.root.get_screen('Main Window').ids.sp_motor3.text = process_params["motor3"]
+        self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
+        self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
+        self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
@@ -694,7 +745,7 @@ class ExoBoostApp(MDApp):
         url: str = "https://github.com/PEF-OT24/ExoBoost"
         try: 
             webbrowser.open(url)
-        except:
+        except: # En caso de error mostrar con una popup
             dialog = MDDialog(
                 title="Error",
                 text="Ha ocurrido un error.",
@@ -708,5 +759,4 @@ class ExoBoostApp(MDApp):
 
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
-    ExoBoostApp = ExoBoostApp()
-    ExoBoostApp.run()
+    ExoBoostApp().run()

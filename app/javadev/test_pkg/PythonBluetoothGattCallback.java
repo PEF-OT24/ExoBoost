@@ -30,8 +30,13 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     // escribir
     public String serviceToRead = "";
     public String characteristicToRead = "";
+
     public String serviceToWrite = "";
     public String characteristicToWrite = "";
+
+    public String serviceNotified = "";
+    public String characteristicNotified = "";
+    public boolean ReadIndicated = false;
 
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
@@ -43,8 +48,28 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     @Override
     public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+        // La característica que se leerá probablemente será solo de parámetros de PI
         super.onCharacteristicChanged(gatt, characteristic);
         System.out.println("onCharacteristicChanged (python)");
+
+        // this.characteristicNotified = characteristic.getUuid().toString();
+        // List<BluetoothGattService> services = gatt.getServices();
+
+        // // Se recorren los servicios para encontrar el correspondiente
+        // for (BluetoothGattService servicio : services) {
+        // String UUID_servicio = servicio.getUuid().toString();
+        // // Para cada servicio se descubren características
+        // List<BluetoothGattCharacteristic> characteristics =
+        // servicio.getCharacteristics();
+        // for (BluetoothGattCharacteristic characteristic : characteristics) {
+        // String UUID_caracteristica = characteristic.getUuid().toString();
+        // if (UUID_caracteristica == this.characteristicNotified) {
+        // this.serviceNotified = UUID_servicio;
+        // break;
+        // }
+        // }
+        // }
+        // this.ReadIndicated = true; // Se indica que se debe leer una característica
     }
 
     @Override
@@ -213,5 +238,12 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         // Método para definir el UUID del servicio a leer
         this.serviceToWrite = serviceUUID;
         this.characteristicToWrite = characteristicUUID;
+    }
+
+    public void ReadFlag() {
+        // Método para definir el UUID del servicio a leer
+        if (this.ReadIndicated) {
+            this.ReadIndicated = false;
+        }
     }
 }
