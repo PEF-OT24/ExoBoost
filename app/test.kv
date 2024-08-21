@@ -618,7 +618,7 @@ WindowManager:
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
                     halign: "center"
                     valign: "center"
-                    #spacing: dp(5)
+                    spacing: dp(5)
 
                     canvas.before:
                         Color:
@@ -790,7 +790,7 @@ WindowManager:
             # --------------------------- Parámetros PI del motor 1 ------------------------- 
                         BoxLayout: #ROW 4
                             orientation: "vertical"
-                            #padding: (dp(5), dp(10))
+                            padding: (dp(5), dp(10))
                             spacing: dp(5)
                             size_hint_x: None
                             width: root.width*0.95
@@ -833,6 +833,7 @@ WindowManager:
                         # ROW 5
                         BoxLayout: #ROW 5
                             orientation: 'vertical'
+                            padding: (dp(5), dp(5))
                             size_hint: 0.5, None
                             pos_hint: {"center_x": 0.5}
                             CustomTextEntry:
@@ -846,7 +847,7 @@ WindowManager:
             # --------------------------- Parámetros PI del motor 2 ------------------------- 
                         BoxLayout: #ROW 6
                             orientation: "vertical"
-                            #padding: (dp(10), dp(10))
+                            padding: (dp(10), dp(10))
                             spacing: dp(5)
                             size_hint_x: None
                             width: root.width*0.95
@@ -860,7 +861,7 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                #padding: (dp(5), dp(5))
+                                padding: (dp(5), dp(5))
                                 spacing: dp(5)
                                 size_hint: None, None
                                 size: (root.width*0.85, dp(20))
@@ -887,6 +888,7 @@ WindowManager:
                         # ROW 7
                         BoxLayout: #ROW 7
                             orientation: 'vertical'
+                            padding: (dp(5), dp(5))
                             size_hint: 0.5, None
                             pos_hint: {"center_x": 0.5}
                             CustomTextEntry:
@@ -900,7 +902,7 @@ WindowManager:
             # --------------------------- Parámetros PI del motor 3 ------------------------- 
                         BoxLayout: #ROW 8
                             orientation: "vertical"
-                            #padding: (dp(10), dp(10))
+                            padding: (dp(10), dp(10))
                             spacing: dp(5)
                             size_hint_x: None
                             width: root.width*0.95
@@ -914,7 +916,7 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                #padding: (dp(5), dp(5))
+                                padding: (dp(5), dp(5))
                                 spacing: dp(5)
                                 size_hint: None, None
                                 size: (root.width*0.85, dp(20))
@@ -942,7 +944,7 @@ WindowManager:
                             orientation: 'vertical'
                             size_hint: 0.5, None
                             pos_hint: {"center_x": 0.5}
-                            #padding: (dp(5), dp(5))
+                            padding: (dp(5), dp(5))
                             #spacing: dp(5)
 
                             CustomTextEntry:
