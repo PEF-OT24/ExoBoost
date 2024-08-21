@@ -25,7 +25,8 @@
 
 <CustomTextEntry>: # Clase predefinida para las entradas de texto con formato
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
-    height: self.minimum_height
+    #height: self.minimum_height
+    height: dp(20)
     halign: "center"
     font_size: dp(8)
     hint_text_color_normal: app.colors["Black"]  # En negro cuando no está seleccionado
@@ -64,6 +65,17 @@
 <ButtonParameters>:
     # PERSONALIZACIÓN DE LOS BOTONES
     pos_hint: {"center_x": 0.5}
+    size_hint: None, None
+    width: dp(100)
+    #font_size: "12sp"
+    font_name: "Roboto"
+    theme_text_color: "Custom"
+    text_color: app.colors["White"]
+    md_bg_color: app.colors["Cyan"]
+    background_normal: app.colors['Cyan']
+    background_down: app.colors['Light Orange']
+    font_color_normal: app.colors['White']
+    font_color_down: app.colors['White']
 
 # --------------------------------------- Ventana de PopUp de Error ----------------------------------------
 <ErrorPopup>:
@@ -275,7 +287,7 @@ WindowManager:
                 # Configuraciones del menú de bluetooth
                 id: bluetooh_tab
                 name: "Bluetooth settings"
-                text: "Bluetooth settings"
+                text: "Bluetooth"
                 icon: "bluetooth-settings"
 
                 # Acciones 
@@ -396,7 +408,7 @@ WindowManager:
             MDBottomNavigationItem:
                 id: assistance_tab
                 name: "Assistance mode"
-                text: "Assistance mode"
+                text: "Assistance"
                 icon: "walk"
                 
                 # Acciones 
@@ -585,7 +597,7 @@ WindowManager:
             MDBottomNavigationItem:
                 id: tuning_tab
                 name: "Tuning mode"
-                text: "Tuning mode"
+                text: "Tuning"
                 icon: "equalizer"
 
                 # Acciones 
@@ -608,7 +620,7 @@ WindowManager:
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
                     halign: "center"
                     valign: "center"
-                    spacing: dp(5)
+                    #spacing: dp(5)
 
                     canvas.before:
                         Color:
@@ -616,8 +628,8 @@ WindowManager:
                         Rectangle:
                             pos: self.pos
                             size: self.size
-                    GridLayout: # Distribución principal del menú como GridLayout de 6 filas
-                        rows: 6
+                    GridLayout: # Distribución principal del menú como GridLayout de 9 filas
+                        rows: 9
                         cols: 1
                         padding: dp(10)
                         spacing: dp(5)
@@ -646,8 +658,8 @@ WindowManager:
                             GridLayout: 
                                 rows: 1
                                 cols: 5
-                                #padding: dp(10), dp(10)
-                                spacing: dp(10)
+                                padding: dp(10), dp(10)
+                                spacing: dp(5)
                             
                                 MDIconButton:
                                     id: load_params
@@ -685,7 +697,7 @@ WindowManager:
                                     
                                     # Personalización
                                     size_hint: None, None
-                                    size: (dp(150), dp(45))
+                                    size: (dp(100), dp(45))
                                     
                                     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
                                     sync_height: True
@@ -734,31 +746,53 @@ WindowManager:
 
                         BoxLayout: #ROW 3 Selección del parámetro 
                             orientation: "horizontal"
-                            padding: dp(5)
+                            #padding: dp(5)
+                            size_hint: None, None
+                            #size: (root.width*0.95, dp(50))
+                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            height: dp(45)
+                            width: root.width
+                            spacing: dp(30)
+                            padding: dp(50),dp(5),dp(50),dp(5)
 
                             # Se agregan botones para seleccionar el parámetro de proceso deseado
                             ButtonParameters: 
                                 id: process_button1
                                 group: "process_vars"
                                 text: "Position"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                size_hint: None, None
+                                #width: dp(80)
                                 on_state: app.process_var_select(self, self.state)
 
                             ButtonParameters: 
                                 id: process_button2
                                 group: "process_vars"
                                 text: "Velocity"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+
                                 on_state: app.process_var_select(self, self.state)
                                 
                             ButtonParameters: 
                                 id: process_button3
                                 group: "process_vars"
                                 text: "Current"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+
                                 on_state: app.process_var_select(self, self.state)
+                            
+                            # ButtonParameters: 
+                            #     id: process_button4
+                            #     group: "process_vars"
+                            #     text: "Tem"
+                            #     pos_hint: {"center_x": .5, "center_y": .5}
+
+                            #     on_state: app.process_var_select(self, self.state)
 
             # --------------------------- Parámetros PI del motor 1 ------------------------- 
                         BoxLayout: #ROW 4
                             orientation: "vertical"
-                            padding: (dp(10), dp(10))
+                            #padding: (dp(5), dp(10))
                             spacing: dp(5)
                             size_hint_x: None
                             width: root.width*0.95
@@ -772,15 +806,16 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: (dp(5), dp(5))
+                                #padding: (dp(5), dp(5))
                                 spacing: dp(5)
                                 size_hint: None, None
-                                size: (root.width*0.85, dp(25))
+                                size: (root.width*0.85, dp(20))
                                 pos_hint: {"center_x":  0.5, "center_y": 0.5}
 
                                 CustomTextEntry: # col 1
                                     id: kc_motor1
                                     hint_text: "Kc:"
+                                    
                                     on_text_validate:
                                         app.on_entry_text("kc", "motor1", kc_motor1.text)
                                 CustomTextEntry: # col 2
@@ -796,24 +831,25 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text("sp", "motor1", sp_motor1.text)
 
-                            # ------------- Valor del motor 1 ------------- 
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                padding: (dp(5), dp(5))
-                                spacing: dp(5)
-                                #size: (dp(50), dp(25))
-                                CustomTextEntry:
-                                    id: pv_motor1
-                                    hint_text: "PV:"
-                                    readonly: True
+                        # ------------- Valor del motor 1 ------------- 
+                        # ROW 5
+                        BoxLayout: #ROW 5
+                            orientation: 'vertical'
+                            size_hint: 0.5, None
+                            pos_hint: {"center_x": 0.5}
+                            CustomTextEntry:
+                                id: pv_motor1
+                                size_hint: 0.2, None
+                                height: dp(20)
+                                pos_hint: {"center_x": 0.5}
+                                hint_text: "PV:"
+                                readonly: True
 
             # --------------------------- Parámetros PI del motor 2 ------------------------- 
-                        BoxLayout: #ROW 5
+                        BoxLayout: #ROW 6
                             orientation: "vertical"
-                            padding: (dp(10), dp(10))
-                            spacing: dp(10)
+                            #padding: (dp(10), dp(10))
+                            spacing: dp(5)
                             size_hint_x: None
                             width: root.width*0.95
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
@@ -826,10 +862,10 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: (dp(5), dp(5))
+                                #padding: (dp(5), dp(5))
                                 spacing: dp(5)
                                 size_hint: None, None
-                                size: (root.width*0.85, dp(25))
+                                size: (root.width*0.85, dp(20))
                                 pos_hint: {"center_x":  0.5, "center_y": 0.5}
 
                                 CustomTextEntry: # col 1
@@ -849,23 +885,25 @@ WindowManager:
                                     on_text_validate:
                                         app.on_entry_text("sp", "motor2",sp_motor2.text)
                             
-                            # ------------- Valor del motor 2 ------------- 
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                padding: (dp(5), dp(5))
-                                spacing: dp(5)
-                                CustomTextEntry:
-                                    id: pv_motor2
-                                    hint_text: "PV:"
-                                    readonly: True
+                        # ------------- Valor del motor 2 ------------- 
+                        # ROW 7
+                        BoxLayout: #ROW 7
+                            orientation: 'vertical'
+                            size_hint: 0.5, None
+                            pos_hint: {"center_x": 0.5}
+                            CustomTextEntry:
+                                id: pv_motor2
+                                size_hint: 0.2, None
+                                height: dp(20)
+                                pos_hint: {"center_x": 0.5}
+                                hint_text: "PV:"
+                                readonly: True
 
             # --------------------------- Parámetros PI del motor 3 ------------------------- 
-                        BoxLayout: #ROW 6
+                        BoxLayout: #ROW 8
                             orientation: "vertical"
-                            padding: (dp(10), dp(10))
-                            spacing: dp(10)
+                            #padding: (dp(10), dp(10))
+                            spacing: dp(5)
                             size_hint_x: None
                             width: root.width*0.95
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
@@ -878,10 +916,10 @@ WindowManager:
                             GridLayout:
                                 rows: 1
                                 cols: 3
-                                padding: (dp(5), dp(5))
+                                #padding: (dp(5), dp(5))
                                 spacing: dp(5)
                                 size_hint: None, None
-                                size: (root.width*0.85, dp(25))
+                                size: (root.width*0.85, dp(20))
                                 pos_hint: {"center_x":  0.5, "center_y": 0.5}
 
                                 CustomTextEntry: # col 1
@@ -900,17 +938,63 @@ WindowManager:
                                     hint_text: "SP:"
                                     on_text_validate:
                                         app.on_entry_text("sp", "motor3",sp_motor3.text)
-                            # ------------------ Valor del motor 3 ------------------------
-                            BoxLayout:
-                                orientation: "vertical"
-                                size_hint: None, None
-                                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                                padding: (dp(5), dp(5))
-                                spacing: dp(5)
-                                CustomTextEntry:
-                                    id: pv_motor3
-                                    hint_text: "PV:"
-                                    readonly: True
+                        # ------------------ Valor del motor 3 ------------------------
+                        
+                        BoxLayout: #ROW 9
+                            orientation: 'vertical'
+                            size_hint: 0.5, None
+                            pos_hint: {"center_x": 0.5}
+                            #padding: (dp(5), dp(5))
+                            #spacing: dp(5)
+
+                            CustomTextEntry:
+                                id: pv_motor3
+                                size_hint: 0.2, None
+                                height: dp(20)
+                                pos_hint: {"center_x": 0.5}
+                                hint_text: "PV:"
+                                readonly: True
+                                
+    # ------------------------------------------- Menú de Monitoreo -------------------------------------------------            
+            MDBottomNavigationItem:
+                # Configuraciones del menú de bluetooth
+                id: monitoring_tab
+                name: "Monitoring tab"
+                text: "Monitoring"
+                icon: "eye-plus"
+
+                # Acciones 
+                on_tab_release:
+                    app.on_tab_select(monitoring_tab.name)
+
+                # Tab design
+                BoxLayout:
+                    orientation: 'vertical'
+                    # Background color
+                    canvas.before:
+                        Color:
+                            rgba: app.colors["Dark Blue"]
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+                    # Elements on app
+            # -------------------- Título del menú --------------------------
+                    CustomLabelAD:
+                        id: monitoring_title
+                        text: "Monitoring Tab"
+
+            # -------------------- Botón para buscar dispositivos -------------------                      
+                    BoxLayout:
+
+                        orientation: 'vertical'
+
+                        canvas.before:
+                            Color:
+                                rgba: app.colors["Dark Blue"]
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
     # -------------------------- Botón info de equipo -------------------------------------------
     FloatLayout: 
         MDIconButton:

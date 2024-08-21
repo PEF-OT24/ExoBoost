@@ -310,6 +310,8 @@ class ExoBoostApp(MDApp):
             self.reading = True
         elif tab == "Bluetooth settings": 
             self.mode = "bluetooth"
+        elif tab == "Monitoring tab": 
+            self.mode = "monitoring"
         elif tab == "Tuning mode": 
             self.mode = "tuning"
             self.reading = True
