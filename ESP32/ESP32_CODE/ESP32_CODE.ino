@@ -236,6 +236,7 @@ class BLECallback_SP: public BLECharacteristicCallbacks {
       Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
       {
         "T": "E",
+      {
         "monitoring": "pos", 
         "motor1": "0",
         "motor2": "0",
@@ -350,35 +351,26 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
     }
     /* Ejemplo de archivo
       {"state": "sit_down_stand_up"}
+      {"state": "walk"}
+      {"state": "stop"}
 
       Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
-      // SI NO SE PUEDE JSON
-      "S: SDSU" 
-
-      // SI SE PUEDE JSON 
-      Enviar tal cual se recibió (debería ser sencillo de procesar)
+      {"state": "stop", "T", "H"}
     */
 
     // Recibe el valor y se comprueba que no haya errores. 
     state = String(jsonrec["state"]);
 
-    // ELIMINAR
-    if (state == "sit_down_stand_up"){
-      char* message2 = "ON ";
-      sendI2CMessage(SLAVE_ADDRESS, message2);
-    }
-    if (state == "walk"){
-      char* message2 = "OFF";
-      sendI2CMessage(SLAVE_ADDRESS, message2);
-    }
-    
+    // --------------- Procesamiento del archivo json para mandar ---------------
+    // Formato y transmisión para I2C
+    jsonrec["T"] = "H"; // Se añade el tipo de mensaje 
+    jsonrec.remove("limb");
+    String stringsend = "";
+    serializeJson(jsonrec, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
     // Enviar notificación de éxito en formato JSON
-    StaticJsonDocument<200> jsonrep;
-    jsonrep["response"] = "Success";
-    char responseBuffer[200];
-    serializeJson(jsonrep, responseBuffer);
-    pCharacteristic->setValue("Write response");
     pCharacteristic->notify();
   }
 };
@@ -396,7 +388,6 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
   byte byteArray[length];        // Crear un arreglo de bytes del mismo tamaño 
   int buffer_size = 32;          // Número máximo de bytes a transmitir (por protocolo)
   int errorCode;
-  Serial.println(length);
 
   Serial.print("Sending message: "); // Fragmentar el mensaje y enviarlo en partes
   Serial.println(message);
@@ -558,9 +549,27 @@ void setup() {
   Serial.println("Servidor BLE iniciado y esperando conexiones...");
 }
 
+void read_PV(){
+  // Función que se ejecuta cada 1000 ms para leer la variable de proceso del motor
+
+  // Se indica que se desea leer
+  DynamicJsonDocument jsonsend(15);
+  String stringsend = "";
+  jsonsend["T"] = "F"; // {"T":"F"}
+  serializeJson(jsonsend, stringsend);
+  stringsend += '\n'; // Se añade el caracter terminador
+  sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+
+  delay(100); // Se espera a que la Tiva procese la información mandada
+
+  // Hace el request al esclavo
+  String strread = readI2CMessage(SLAVE_ADDRESS, 100); // Se leen 100 bytes
+}
+
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(500);
-  // Se notifica que se debe leer una característica
-  pCharacteristic_PV->notify();
+  // delay(1000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  // // Se notifica que se debe leer una característica
+  // pCharacteristic_PV->notify();
+  // read_PV();
 }

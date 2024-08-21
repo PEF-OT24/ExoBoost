@@ -702,6 +702,7 @@ class ExoBoostApp(MDApp):
                 print("Error al leer los datos")
                 print(e)  
 
+            # Si es la variable de proceso de interés, se despliega la información 
             if not monitoring_read == self.motor_parameters_pv["monitoring"]: continue
 
             # Se guardan los valores en el diccionario
