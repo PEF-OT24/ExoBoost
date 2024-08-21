@@ -1,0 +1,62 @@
+# How to install JAVA 17 in Linux
+
+sudo apt update
+sudo apt install openjdk-17-jdk
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+
+# How to install Android SDK to linux development environment
+
+# Download the command line tools from the official Android website:
+# https://developer.android.com/studio?hl=es-419#downloads
+
+sudo apt install sdkmanager
+mkdir -p ~/android-sdk/cmdline-tools
+cd ~/android-sdk/cmdline-tools
+unzip ~/Downloads/commandlinetools-linux-*.zip
+mv cmdline-tools latest
+cd
+sdkmanager "platform-tools"
+
+# How to install Android NDK to linux development environment
+
+# Download it from: https://developer.android.com/ndk/downloads?hl=es-419
+
+cd ~/Downloads
+unzip android-ndk-version.zip -d ~/android-ndk
+
+# How to setup the development environment
+
+# Open .bashrc from a editor and add these lines
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export PATH=$JAVA_HOME/bin:$PATH
+
+export ANDROID_HOME=$HOME/android-sdk
+export ANDROID_SDK_ROOT=$HOME/android-sdk
+export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+# Close .bashrc
+source ~/.bashrc
+
+Additional packages:
+sudo apt-get install xclip xset
+
+### --- ###
+# Steps to compile java files into .class and .jar files
+
+# Generate .java files
+# Create the necessary java files inside the directory app/javadev/packages
+# At the beginning of the file, the name of the package must be specified: 
+package javadev.test_pkg
+
+# Generate the .class files
+# Each .java file is compiled in order to generate .class file
+# Inside the directory app type
+javac -d . \javadev\test_pkg\ExtendedClass.java
+
+# This command will generate a .class file inside the same directory for simplicity
+
+# Generate .jar files
+# .class files can be packaged inside a single .jar file, containing one or more .class files
+
