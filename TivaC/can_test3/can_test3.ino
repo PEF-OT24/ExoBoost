@@ -93,15 +93,22 @@ void CAN0IntHandler(void) {
         ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
     } 
     // Check if the interrupt is caused by message object 1
-    else if (ui32Status == 1) {
+    else if (ui32Status == 1) { // motor 1
         // Clear the message object interrupt
         CANIntClear(CAN0_BASE, 1);
 
         // Handle the received message
         Message_Rx.pui8MsgData = CANBUSReceive;
-        CANMessageGet(CAN0_BASE, 1, &Message_Rx, true);
+        CANMessageGet(CAN0_BASE, 1, &Message_Rx, false);
 
-        // Example of processing received data
+        if (Message_Rx.ui32Flags == MSG_OBJ_NEW_DATA){
+          Serial.println("Nueva info");  
+        }
+        else if (Message_Rx.ui32Flags == MSG_OBJ_DATA_LOST){
+          Serial.println("Info perdida");  
+        }
+        
+        // Visualización
         Serial.print("Mensaje recibido: ");
         for (int i = 0; i < 8; i++) {
             Serial.print(CANBUSReceive[i], HEX);
@@ -112,7 +119,7 @@ void CAN0IntHandler(void) {
         // Handle unexpected interrupts
         CANIntClear(CAN0_BASE, ui32Status);
     }
-    Serial.println("Mensaje recibido");
+    Serial.println("Interrupt");
 }
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
@@ -125,6 +132,7 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para en
   Message_Tx.ui32MsgID = 0x140 + ID;
   Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
   Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.ui32Flags = MSG_OBJ_TX_INT_ENABLE; // Habilita interrupciones en el envío de mensaje
   Message_Tx.pui8MsgData = messageArray;
 
   // Define el mensaje para leer por CAN
@@ -138,11 +146,10 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para en
   CANMessageSet(CAN0_BASE, ID, &Message_Tx, MSG_OBJ_TYPE_TX); 
 
   // Lee el mensaje de respuesta
-  CANMessageSet(CAN0_BASE, ID, &Message_Rx, MSG_OBJ_TYPE_RX);
+  CANMessageSet(CAN0_BASE, 1, &Message_Rx, MSG_OBJ_TYPE_RX);
 
   // Imprime el mensaje si el usuario lo indica
-  if (show){
-    
+  if (show && false){
     char buffer[50];
     while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {Serial.println("waiting");}
     sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X", 
@@ -569,20 +576,20 @@ void onReceive(int len){
     }
     else if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
-      // Ejemplo: {"T": "A","asistance_level": "100"}
+      // Ejemplo: {"T": "A","assistance_level": "100"}
 
       // Se revisan errores en el JSON
-      if (!jsonrec.containsKey("asistance_level")){ // Si si no contiene el tipo
+      if (!jsonrec.containsKey("assistance_level")){ // Si si no contiene el tipo
         Serial.print("Información no encontrada");
         return;
       }
-      else if (!jsonrec["asistance_level"].is<String>()){
+      else if (!jsonrec["assistance_level"].is<String>()){
         Serial.println("Información en formato incorrcto");
         return;
       }
   
       // Se extrae la información recibida
-      assitance_level = jsonrec["asistance_level"].as<int>(); // Se guarda el valor
+      assitance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
       Serial.print("Nivel de asistencia: ");
       Serial.println(assitance_level);
     }
@@ -761,16 +768,16 @@ void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
   // Se debe de recibir primero el tipo de mensaje que se quiere mandar
 
+  // --------- Diferentes tipos de mensaje ---------
   // Se define el mensaje a mandar
   if(mensaje_mandar == "PV"){
-    Serial.println("test");
+    // Mensaje de prueba
+    String message = "Hello from Slave!\0";  // Mensaje con terminador '\0'
+    for (int i = 0; i < message.length(); i++) {
+      Serial.print(message[i]);
+      Wire.write(message[i]);
+    }
   }
-
-  for (int i = 0; i < 100; i++){
-    Wire.write("a"); // test de respuesta  
-  }
-
-  // AGREGAR LÓGICA PARA MANDAR EL JSON
 }
 
 // ----------------------------------------------------- Setup ----------------------------------------------------
@@ -795,14 +802,7 @@ void setup() {
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_UART0)) {}
     GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
     UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
-
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
-    CANInit(CAN0_BASE);
-    CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
-    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
-    CANEnable(CAN0_BASE);
-
+    
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB)) {}
     GPIOPinConfigure(GPIO_PB4_CAN0RX);
@@ -820,8 +820,17 @@ void setup() {
     Wire.onRequest(onRequest); // register event
 
     IntMasterEnable();
-    //CANIntRegister(CAN0_BASE,CAN0IntHandler);
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
+    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
+    CANInit(CAN0_BASE);
+    CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
+    CANEnable(CAN0_BASE);
+    CANIntEnable(CAN0_BASE, CAN_INT_MASTER);
+    // CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
+    IntEnable(INT_CAN0); // test
+    CANIntRegister(CAN0_BASE,CAN0IntHandler);
     //SendParameters();
+    
     //stop_motor(1);
     //reset_motor(1);
     //shutdown_motor(1);

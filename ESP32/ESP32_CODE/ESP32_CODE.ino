@@ -279,11 +279,11 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
       Serial.println(error.c_str());
       return;
     }
-    else if (!jsonrec.containsKey("asistance_level")){ // Error de key
+    else if (!jsonrec.containsKey("assistance_level")){ // Error de key
       Serial.println("Tipo no encontrado en el JSON");
       return;
     }
-    else if (!jsonrec["asistance_level"].is<String>()){ // Error de tipo de dato
+    else if (!jsonrec["assistance_level"].is<String>()){ // Error de tipo de dato
       Serial.println("Tipo de dato erróneo");
       return;  
     }
@@ -420,23 +420,31 @@ String readI2CMessage(uint8_t slaveAddress, uint8_t len){
   String mensaje_leido = "";
 
   // Lee los bytes recibidos
-  int i = 0;
   while (Wire.available()) {
-    const char rec_data = Wire.read();
-
-    // Verificar si el byte recibido es "X"
-    if (rec_data == 'X') {
-      Serial.println("Byte 'X' recibido. Deteniendo la lectura.");
-      break; // Deja de leer
-    }
-
+    char rec_data = Wire.read();
+    if (rec_data == '\0'){break;}
     mensaje_leido += rec_data;
   }
 
-  Serial.print("Datos recibidos: ");
-  Serial.println(mensaje_leido);
-
   return mensaje_leido;
+}
+
+void read_PV(){
+  // Función que se ejecuta cada 1000 ms para leer la variable de proceso del motor
+
+  // Se indica que se desea leer
+  DynamicJsonDocument jsonsend(15);
+  String stringsend = "";
+  jsonsend["T"] = "F"; // {"T":"F"}
+  serializeJson(jsonsend, stringsend);
+  stringsend += '\n'; // Se añade el caracter terminador
+  sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+
+  delay(100); // Se espera a que la Tiva procese la información mandada
+
+  // Hace el request al esclavo
+  String strread = readI2CMessage(SLAVE_ADDRESS, 100); // Se leen 100 bytes
+
 }
 
 void setup() {
@@ -549,27 +557,10 @@ void setup() {
   Serial.println("Servidor BLE iniciado y esperando conexiones...");
 }
 
-void read_PV(){
-  // Función que se ejecuta cada 1000 ms para leer la variable de proceso del motor
-
-  // Se indica que se desea leer
-  DynamicJsonDocument jsonsend(15);
-  String stringsend = "";
-  jsonsend["T"] = "F"; // {"T":"F"}
-  serializeJson(jsonsend, stringsend);
-  stringsend += '\n'; // Se añade el caracter terminador
-  sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
-
-  delay(100); // Se espera a que la Tiva procese la información mandada
-
-  // Hace el request al esclavo
-  String strread = readI2CMessage(SLAVE_ADDRESS, 100); // Se leen 100 bytes
-}
-
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  // delay(1000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
-  // // Se notifica que se debe leer una característica
+  delay(1000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  // Se notifica que se debe leer una característica
   // pCharacteristic_PV->notify();
   // read_PV();
 }
