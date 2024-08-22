@@ -109,10 +109,22 @@ void CAN0IntHandler(void) {
         }
         
         // Visualización
+        int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
+        position_read = round(position_read/100.0);
         Serial.print("Mensaje recibido: ");
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 5; i++) {
+          if (i == 0){
             Serial.print(CANBUSReceive[i], HEX);
             Serial.print(" ");
+          }
+          else if (i == 4){
+            Serial.print(position_read, DEC);
+            Serial.print(" ");
+          }
+          else {
+            Serial.print(CANBUSReceive[i], DEC);
+            Serial.print(" ");
+          }
         }
         Serial.println();
     } else {
@@ -535,6 +547,26 @@ void reset_all_motors(bool show){
   CANMessageSet(CAN0_BASE, 0x280, &Message_Tx, MSG_OBJ_TYPE_TX); 
 }
 
+void read_angle(int8_t ID){
+  // Función para apagar el motor
+  
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
+
 // ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
 void onReceive(int len){
   // Función de callback que se ejecuta al recibir un mensaje por I2C
@@ -851,4 +883,5 @@ void loop() {
   //set_speed(1, 360, true);
   //stop_motor(1);
   //reset_motor(1);
+  read_angle(2);
 }
