@@ -442,7 +442,7 @@ void clearI2CBuffer() {
 void read_PV(){
   // Función que se ejecuta cada 1000 ms para leer la variable de proceso del motor
 
-  /*
+  
   // Se indica que se desea leer
   DynamicJsonDocument jsonsend(15);
   String stringsend = "";
@@ -451,8 +451,7 @@ void read_PV(){
   stringsend += '\n'; // Se añade el caracter terminador
   sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
-  delay(100); // Se espera a que la Tiva procese la información mandada
-  */
+  delay(50); // Se espera a que la Tiva procese la información mandada
 
   // Hace el request al esclavo
   String stringread = readI2CMessage(SLAVE_ADDRESS); // Se leen 100 bytes
@@ -578,12 +577,6 @@ void setup() {
   values_doc["motor3"] = "100";
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
-
-  // Se muestra el valor inicial
-  Serial.println("----------------");
-  Serial.print("Valor inicial: ");
-  Serial.println(values_buffer);
-  Serial.println("----------------");
 
   // Inicia el servicio BLE
   pService_PARAMS->start();

@@ -50,6 +50,7 @@ uint8_t curKI;
 String stringsend_ESP32 = "";   // Se inicializa el mensaje como vacío
 JsonDocument jsonsend_ESP32;
 int index_alt;
+bool flag_send_ESP32 = false;
 
 uint16_t SP_motor1; // Set Point para el motor 1
 uint32_t SP_motor2; // Set Point para el motor 2
@@ -57,23 +58,10 @@ uint32_t SP_motor3; // Set Point para el motor 3
 uint16_t max_speed = 500; // Velocidad máxima al controlar posición
 
 // Variables de proceso
-String process_variable = "pos";
-
-uint32_t posPV1 = 1;
-uint32_t posPV2 = 1;
-uint32_t posPV3 = 1;
-
-uint32_t velPV1 = 1;
-uint32_t velPV2 = 1;
-uint32_t velPV3 = 1;
-
-uint32_t curPV1 = 1;
-uint32_t curPV2 = 1;
-uint32_t curPV3 = 1;
-
-uint32_t temPV1 = 1;
-uint32_t temPV2 = 1;
-uint32_t temPV3 = 1;
+String process_variable = "pos"; // pos, vel, cur, temp
+uint32_t PV1 = 1;
+uint32_t PV2 = 1;
+uint32_t PV3 = 1;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 
@@ -84,7 +72,6 @@ bool message_defined = false;
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
 const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
 String mensaje_leido = "";       // Buffer para recibir el mensaje
-String mensaje_mandar = "PV";      // Indicador de qué mensaje se le debe mandar en callback a un request
 uint32_t i = 0;
 char data;
 
@@ -576,7 +563,6 @@ void reset_all_motors(bool show){
 // ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
 void onReceive(int len){
   // Función de callback que se ejecuta al recibir un mensaje por I2C
-
   // Lee los bytes recibidos
   while (Wire.available()) { // Guarda los bytes recibidos
     char rec_data = Wire.read();
@@ -612,7 +598,19 @@ void onReceive(int len){
     // ----------- Se procesan diferentes JSON --------
     const char* type = jsonrec["T"];
     if (strcmp(type, "F") == 0){ // Se establece el tipo de mensaje a mandar
-      mensaje_mandar = "PV";
+      jsonsend_ESP32.clear();    // Se limpia el JSON anterior
+      stringsend_ESP32 = "";     // Se reinicia el string anterior
+
+      // Se define el mensaje con los valores de la variable de proceso
+      jsonsend_ESP32["monitoring"] = process_variable;
+      jsonsend_ESP32["motor1"] = PV1;
+      jsonsend_ESP32["motor2"] = PV2;
+      jsonsend_ESP32["motor3"] = PV3;
+
+      // Se construye el mensaje serializado
+      serializeJson(jsonsend_ESP32, stringsend_ESP32);
+      stringsend_ESP32 += '\n';                        // terminador '\n'
+
     }
     else if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
@@ -806,17 +804,10 @@ void onReceive(int len){
 
 void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
-  // Se debe de recibir primero el tipo de mensaje que se quiere mandar
 
-  // --------- Diferentes tipos de mensaje ---------
+  // Se levanta la bandera para mandar el mensaje
+  flag_send_ESP32 = true;
 
-  int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
-  Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
-  index_alt += bytesToSend;
-
-  if (index_alt >= stringsend_ESP32.length()) {
-    index_alt = 0;            // Reinicia el índice para el próximo ciclo
-  }
 }
 
 void clearI2CBuffer() {
@@ -908,10 +899,19 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
-  //set_stposition(1,90,5000,1,true);
-  //set_speed(1, 360, true);
-  //stop_motor(1);
-  //reset_motor(1);
-  //read_angle(2);
-  delay(5000);
+
+  // ----------------- Manejo de la interrupción de I2C onRequest -----------------
+  if (flag_send_ESP32) {  
+    flag_send_ESP32 = false; // Se baja la bandera
+
+    // Se manda un fragmento del mensaje
+    int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
+    Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
+    index_alt += bytesToSend;
+
+    if (index_alt >= stringsend_ESP32.length()) { // Se llega al final del mensaje
+      index_alt = 0;            
+    }
+  }
+
 }
