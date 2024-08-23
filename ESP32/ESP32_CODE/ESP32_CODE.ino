@@ -407,31 +407,42 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
     if (errorCode != 0){
       Serial.print("Código de error: ");
       Serial.println(errorCode);
+      clearI2CBuffer();
     }
     
     delay(10);  // delay para evitar saturación del bus I2C
   }
 } //  fin de la función
 
-String readI2CMessage(uint8_t slaveAddress, uint8_t len){
-  Wire.requestFrom(slaveAddress, len);
+String readI2CMessage(uint8_t slaveAddress) {
+  String message = "";
+  bool messageComplete = false;
 
-  // Leer los datos recibidos y almacenarlos en el buffer
-  String mensaje_leido = "";
-
-  // Lee los bytes recibidos
-  while (Wire.available()) {
-    char rec_data = Wire.read();
-    if (rec_data == '\0'){break;}
-    mensaje_leido += rec_data;
+  while (!messageComplete) {
+    Wire.requestFrom(slaveAddress, 32);  // Solicita hasta 32 bytes
+    while (Wire.available()) {
+      char receivedChar = Wire.read();
+      if (receivedChar == '\n') {
+        messageComplete = true;
+        break;
+      }
+      message += receivedChar;
+    }
   }
 
-  return mensaje_leido;
+  return message;
+}
+
+void clearI2CBuffer() {
+  while (Wire.available()) {
+    Wire.read();  // Lee y descarta todos los bytes en el buffer
+  }
 }
 
 void read_PV(){
   // Función que se ejecuta cada 1000 ms para leer la variable de proceso del motor
 
+  /*
   // Se indica que se desea leer
   DynamicJsonDocument jsonsend(15);
   String stringsend = "";
@@ -441,10 +452,41 @@ void read_PV(){
   sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
   delay(100); // Se espera a que la Tiva procese la información mandada
+  */
 
   // Hace el request al esclavo
-  String strread = readI2CMessage(SLAVE_ADDRESS, 100); // Se leen 100 bytes
+  String stringread = readI2CMessage(SLAVE_ADDRESS); // Se leen 100 bytes
 
+  Serial.print("I2C: ");
+  Serial.println(stringread);
+
+  /*
+  // Se deserializa el JSON
+  StaticJsonDocument<100> jsonrec; 
+  DeserializationError error = deserializeJson(jsonrec, stringread);
+
+  // Se revisan errores
+  if (error) {
+    Serial.print("Error al analizar JSON: ");
+    Serial.println(error.c_str());
+    clearI2CBuffer();
+    return;
+  }
+  else if (!jsonrec.containsKey("monitoring") || !jsonrec.containsKey("motor1") || !jsonrec.containsKey("motor2") || !jsonrec.containsKey("motor3")){
+      Serial.print("Información no encontrada");
+      return;
+  }
+
+  DynamicJsonDocument jsonsend2(100);
+  char values_buffer[100];
+  jsonsend2["monitoring"] = jsonrec["monitoring"];
+  jsonsend2["motor1"] = jsonrec["motor1"];
+  jsonsend2["motor2"] = jsonrec["motor2"];
+  jsonsend2["motor3"] = jsonrec["motor3"];
+  serializeJson(jsonsend2, values_buffer);
+  pCharacteristic_PV->setValue(values_buffer); // Se mandan los valores por BLE
+  Serial.println("Lecutra terminada");
+  */
 }
 
 void setup() {
@@ -453,7 +495,7 @@ void setup() {
   Serial.println("Iniciando el servidor BLE...");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
-  Wire.setClock(400000);  // Establece la velocidad a 400 kHz
+  // Wire.setClock(400000);  // Establece la velocidad a 400 kHz
 
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
@@ -526,6 +568,7 @@ void setup() {
   pCharacteristic_PI->setValue(buffer);
   pCharacteristic_MODE->setValue(buffer);
   
+  // Se inicializa el documento
   StaticJsonDocument<200> values_doc;
   char values_buffer[200];
   values_doc["limb"] = "Right leg";
@@ -559,8 +602,9 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(1000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  delay(2000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
   // pCharacteristic_PV->notify();
+  // Serial.println("leyendo");
   // read_PV();
 }

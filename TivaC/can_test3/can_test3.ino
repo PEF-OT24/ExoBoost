@@ -37,7 +37,7 @@
 // Delay entre mensajes de CAN en ms
 #define CAN_DELAY 130
 // ----------------- Variables globales ------------------
-int8_t assitance_level = 0; // Nivel de asistencia
+int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
 uint8_t posKP; 
 uint8_t posKI; 
@@ -46,17 +46,45 @@ uint8_t velKI;
 uint8_t curKP; 
 uint8_t curKI; 
 
+// String stringsend_ESP32 = "ola1ola2ola3ola4ola5ola6ola7ola8ola9ola10ola11ola12ola13\n";   // Se debe agregar con terminador '\n'
+String stringsend_ESP32 = "";   // Se inicializa el mensaje como vacío
+JsonDocument jsonsend_ESP32;
+int index_alt;
+
 uint16_t SP_motor1; // Set Point para el motor 1
 uint32_t SP_motor2; // Set Point para el motor 2
 uint32_t SP_motor3; // Set Point para el motor 3
 uint16_t max_speed = 500; // Velocidad máxima al controlar posición
 
+// Variables de proceso
+String process_variable = "pos";
+
+uint32_t posPV1 = 1;
+uint32_t posPV2 = 1;
+uint32_t posPV3 = 1;
+
+uint32_t velPV1 = 1;
+uint32_t velPV2 = 1;
+uint32_t velPV3 = 1;
+
+uint32_t curPV1 = 1;
+uint32_t curPV2 = 1;
+uint32_t curPV3 = 1;
+
+uint32_t temPV1 = 1;
+uint32_t temPV2 = 1;
+uint32_t temPV3 = 1;
+
 bool doControlFlag = 0; // Bandera de control en tiempo real 
+
+// Buffers para mandar información a la ESP32 onRequest
+bool message_defined = false;
 
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
+const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
 String mensaje_leido = "";       // Buffer para recibir el mensaje
-String mensaje_mandar = "";      // Indicador de qué mensaje se le debe mandar en callback a un request
+String mensaje_mandar = "PV";      // Indicador de qué mensaje se le debe mandar en callback a un request
 uint32_t i = 0;
 char data;
 
@@ -109,10 +137,22 @@ void CAN0IntHandler(void) {
         }
         
         // Visualización
+        int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
+        position_read = int(round(position_read/100.0));
         Serial.print("Mensaje recibido: ");
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 5; i++) {
+          if (i == 0){
             Serial.print(CANBUSReceive[i], HEX);
             Serial.print(" ");
+          }
+          else if (i == 4){
+            Serial.print(position_read, DEC);
+            Serial.print(" ");
+          }
+          else {
+            Serial.print(CANBUSReceive[i], DEC);
+            Serial.print(" ");
+          }
         }
         Serial.println();
     } else {
@@ -589,9 +629,9 @@ void onReceive(int len){
       }
   
       // Se extrae la información recibida
-      assitance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
+      assistance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
       Serial.print("Nivel de asistencia: ");
-      Serial.println(assitance_level);
+      Serial.println(assistance_level);
     }
     else if (strcmp(type, "B") == 0 || strcmp(type, "C") == 0 || strcmp(type, "D") == 0){ // Parámetros PI para cualquier motor
       // ------------- Parámetros de PI -------------
@@ -706,8 +746,8 @@ void onReceive(int len){
       SP_motor3 = jsonrec["motor3"].as<int>();
       
       // Control dependiendo del tipo 
-      const char* process_variable = jsonrec["monitoring"];
-      if (strcmp(process_variable, "pos") == 0){
+      process_variable = jsonrec["monitoring"].as<String>();
+      if (process_variable == "pos"){
         // Control de posición
         Serial.println("Control de posición");
         set_absolute_position(1, SP_motor1, max_speed, true);
@@ -717,7 +757,7 @@ void onReceive(int len){
         //set_absolute_position(3, SP_motor3, max_speed, true);
         //delay(CAN_DELAY); // delay 
       }
-      else if(strcmp(process_variable, "vel") == 0){
+      else if(process_variable == "vel"){
         // Control de velocidad
         Serial.println("Control de velocidad");
         set_speed(1, SP_motor1, true);
@@ -727,7 +767,7 @@ void onReceive(int len){
         //set_speed(3, SP_motor3, true);
         //delay(CAN_DELAY); // delay 
       }
-      else if (strcmp(process_variable, "cur") == 0){
+      else if (process_variable == "cur"){
         // Control de torque
         Serial.println("Control de torque");
         set_torque(1, SP_motor1, false);
@@ -769,20 +809,44 @@ void onRequest(){
   // Se debe de recibir primero el tipo de mensaje que se quiere mandar
 
   // --------- Diferentes tipos de mensaje ---------
-  // Se define el mensaje a mandar
-  if(mensaje_mandar == "PV"){
-    // Mensaje de prueba
-    String message = "Hello from Slave!\0";  // Mensaje con terminador '\0'
-    for (int i = 0; i < message.length(); i++) {
-      Serial.print(message[i]);
-      Wire.write(message[i]);
-    }
+
+  int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
+  Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
+  index_alt += bytesToSend;
+
+  if (index_alt >= stringsend_ESP32.length()) {
+    index_alt = 0;            // Reinicia el índice para el próximo ciclo
   }
 }
 
+void clearI2CBuffer() {
+  while (Wire.available()) {
+    Wire.read();  // Lee y descarta todos los bytes en el buffer
+  }
+}
+
+void read_angle(int8_t ID){
+  // Función para apagar el motor
+  
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
 // ----------------------------------------------------- Setup ----------------------------------------------------
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     // Enable peripherals
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -822,6 +886,8 @@ void setup() {
     IntMasterEnable();
     SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
+    
+    //stop_motor(1);
     CANInit(CAN0_BASE);
     CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
     CANEnable(CAN0_BASE);
@@ -829,9 +895,6 @@ void setup() {
     // CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
-    //SendParameters();
-    
-    //stop_motor(1);
     //reset_motor(1);
     //shutdown_motor(1);
     //set_acceleration(1,500,true);
@@ -849,4 +912,6 @@ void loop() {
   //set_speed(1, 360, true);
   //stop_motor(1);
   //reset_motor(1);
+  //read_angle(2);
+  delay(5000);
 }
