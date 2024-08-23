@@ -46,7 +46,7 @@ uint8_t velKI;
 uint8_t curKP; 
 uint8_t curKI; 
 
-// String stringsend_ESP32 = "ola1ola2ola3ola4ola5ola6ola7ola8ola9ola10ola11ola12ola13\n";   // Se debe agregar con terminador '\n'
+//String stringsend_ESP32 = "ola1ola2ola3ola4ola5ola6ola7ola8ola9ola10ola11ola12ola13\n";   // Se debe agregar con terminador '\n'
 String stringsend_ESP32 = "";   // Se inicializa el mensaje como vacío
 JsonDocument jsonsend_ESP32;
 int index_alt;
@@ -598,19 +598,23 @@ void onReceive(int len){
     // ----------- Se procesan diferentes JSON --------
     const char* type = jsonrec["T"];
     if (strcmp(type, "F") == 0){ // Se establece el tipo de mensaje a mandar
+      
       jsonsend_ESP32.clear();    // Se limpia el JSON anterior
       stringsend_ESP32 = "";     // Se reinicia el string anterior
 
       // Se define el mensaje con los valores de la variable de proceso
       jsonsend_ESP32["monitoring"] = process_variable;
-      jsonsend_ESP32["motor1"] = PV1;
-      jsonsend_ESP32["motor2"] = PV2;
-      jsonsend_ESP32["motor3"] = PV3;
+      jsonsend_ESP32["motor1"] = String(PV1);
+      jsonsend_ESP32["motor2"] = String(PV2);
+      jsonsend_ESP32["motor3"] = String(PV3);
 
       // Se construye el mensaje serializado
       serializeJson(jsonsend_ESP32, stringsend_ESP32);
       stringsend_ESP32 += '\n';                        // terminador '\n'
 
+      Serial.print("String ESP32: ");
+      Serial.println(stringsend_ESP32);
+      
     }
     else if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
@@ -805,9 +809,14 @@ void onReceive(int len){
 void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
 
-  // Se levanta la bandera para mandar el mensaje
-  flag_send_ESP32 = true;
+  // Se manda un fragmento del mensaje
+  int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
+  Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
+  index_alt += bytesToSend;
 
+  if (index_alt >= stringsend_ESP32.length()) { // Se llega al final del mensaje
+    index_alt = 0;            
+  }
 }
 
 void clearI2CBuffer() {
@@ -837,7 +846,7 @@ void read_angle(int8_t ID){
 }
 // ----------------------------------------------------- Setup ----------------------------------------------------
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     // Enable peripherals
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -893,25 +902,11 @@ void setup() {
     //set_speed(1, 360, true);
     //set_absolute_position(1, 90, 1000, true);
     //set_stposition(1,90,1000,0,true);
-
-    Serial.println("Listo: ");
 }
 
 // ----- Main Loop -----
 void loop() {
 
-  // ----------------- Manejo de la interrupción de I2C onRequest -----------------
-  if (flag_send_ESP32) {  
-    flag_send_ESP32 = false; // Se baja la bandera
 
-    // Se manda un fragmento del mensaje
-    int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
-    Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
-    index_alt += bytesToSend;
-
-    if (index_alt >= stringsend_ESP32.length()) { // Se llega al final del mensaje
-      index_alt = 0;            
-    }
-  }
 
 }

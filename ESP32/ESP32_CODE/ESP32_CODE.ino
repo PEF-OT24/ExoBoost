@@ -14,7 +14,7 @@
 
 // ----------------------------------- Declaración de funciones prototipo ------------------------------------------
 void sendI2CMessage(uint8_t slaveAddress, const char* message);
-String readI2CMessage(uint8_t slaveAddress, uint8_t len);
+String readI2CMessage(uint8_t slaveAddress);
 
 // --------------------------------------- Constantes de uso general -----------------------------------------------
 // ------- Constantes para BLE -------
@@ -451,7 +451,7 @@ void read_PV(){
   stringsend += '\n'; // Se añade el caracter terminador
   sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
-  delay(50); // Se espera a que la Tiva procese la información mandada
+  delay(100); // Se espera a que la Tiva procese la información mandada
 
   // Hace el request al esclavo
   String stringread = readI2CMessage(SLAVE_ADDRESS); // Se leen 100 bytes
@@ -494,7 +494,7 @@ void setup() {
   Serial.println("Iniciando el servidor BLE...");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
-  // Wire.setClock(400000);  // Establece la velocidad a 400 kHz
+  Wire.setClock(400000);  // Establece la velocidad a 400 kHz
 
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
@@ -599,5 +599,5 @@ void loop() {
   // Se notifica que se debe leer una característica
   // pCharacteristic_PV->notify();
   // Serial.println("leyendo");
-  // read_PV();
+  read_PV();
 }
