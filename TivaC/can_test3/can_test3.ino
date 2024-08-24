@@ -830,9 +830,9 @@ void onRequest(){
   }
 }
 
-void clearI2CBuffer() {
+void clearI2CBuffer() {      // Lee y descarta todos los bytes en el buffer para limpiarlo 
   while (Wire.available()) {
-    Wire.read();  // Lee y descarta todos los bytes en el buffer
+    Wire.read();  
   }
 }
 
