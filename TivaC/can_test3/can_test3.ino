@@ -853,12 +853,6 @@ void onRequest(){
   }
 }
 
-void clearI2CBuffer() {      // Lee y descarta todos los bytes en el buffer para limpiarlo 
-  while (Wire.available()) {
-    Wire.read();  
-  }
-}
-
 // ----------------------------------------------------- Setup ----------------------------------------------------
 void setup() {
     Serial.begin(9600);
