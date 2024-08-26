@@ -633,6 +633,7 @@ void onReceive(int len){
 
       // Se define el mensaje con los valores de la variable de proceso
       jsonsend_ESP32["monitoring"] = process_variable;
+      jsonsend_ESP32["limb"] = "Right leg";
       jsonsend_ESP32["motor1"] = String(PV1);
       jsonsend_ESP32["motor2"] = String(PV2);
       jsonsend_ESP32["motor3"] = String(PV3);
