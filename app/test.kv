@@ -25,10 +25,9 @@
 
 <CustomTextEntry>: # Clase predefinida para las entradas de texto con formato
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
-    #height: self.minimum_height
     height: dp(20)
     halign: "center"
-    font_size: dp(12)
+    font_size: "12sp"
     hint_text_color_normal: app.colors["Black"]  # En negro cuando no está seleccionado
     hint_text_color_focus: app.colors["Light Orange"]   # En naranja cuando está seleccionado 
     helper_text_mode: "on_focus"
@@ -62,13 +61,14 @@
     # on_release: self.md_bg_color = app.colors['Dark Blue']
 
 <ButtonParameters>:
-    # PERSONALIZACIÓN DE LOS BOTONES
-    pos_hint: {"center_x": 0.5}
+    # Personalización de tamaño
     size_hint: None, None
-    width: dp(100)
-    #font_size: "12sp"
+    width: dp(30)
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
     font_name: "Roboto"
     theme_text_color: "Custom"
+
+    # Personalización de color
     text_color: app.colors["White"]
     md_bg_color: app.colors["Cyan"]
     background_normal: app.colors['Cyan']
@@ -629,8 +629,8 @@ WindowManager:
                     GridLayout: # Distribución principal del menú como GridLayout de 9 filas
                         rows: 7
                         cols: 1
-                        padding: dp(20)
-                        spacing: dp(5)
+                        padding: dp(10)
+                        spacing: dp(15)
 
             # ---------------------------------- Título del Menú -------------------------------------------- 
                         BoxLayout: # ROW 1 Título general
@@ -638,7 +638,7 @@ WindowManager:
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             size_hint: None, None
                             size: (root.width, dp(50))
-                            
+
                             CustomLabelAD: 
                                 id: tuning_label
                                 text: "Tuning Mode"
@@ -650,7 +650,7 @@ WindowManager:
                         BoxLayout: # ROW 2 selección de la articulación
                             orientation: "vertical"
                             size_hint: None, None
-                            #size: (root.width*0.95, dp(50))
+                            size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
                             GridLayout: 
@@ -658,36 +658,40 @@ WindowManager:
                                 cols: 5
                                 padding: dp(5), dp(5)
                                 spacing: dp(5)
-                            
+                                
+                                BoxLayout: 
+                                # ---- Botón para cargar los parámetros ----
+                                # MDIconButton:
+                                #     id: load_params
+                                #     icon: "download"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
+                                    
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #     on_release: 
+                                #         self.md_bg_color = app.colors['Cyan']
+                                #         app.load_params()
+
+                                #     md_bg_color: app.colors['Cyan']
+
+                                # ---- Botón para subir los parámetros ----
                                 MDIconButton:
-                                    id: load_params
-                                    icon: "download"
+                                    id: upload_pid
+                                    icon: "upload-multiple"
                                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                                     theme_icon_color: "Custom"
                                     icon_color: app.colors['White']
                                     
                                     on_press: 
                                         self.md_bg_color = app.colors['Light Orange']
-                                    on_release: 
-                                        self.md_bg_color = app.colors['Cyan']
-                                        app.load_params()
+                                        app.send_params()
+                                    on_release: self.md_bg_color = app.colors['Cyan']
 
                                     md_bg_color: app.colors['Cyan']
 
-                                MDIconButton:
-                                    id: save_params
-                                    icon: "content-save-cog"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    theme_icon_color: "Custom"
-                                    icon_color: app.colors['White']
-                                    
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                    on_release: 
-                                        self.md_bg_color = app.colors['Cyan']
-                                        app.save_params()
-
-                                    md_bg_color: app.colors['Cyan']
+                                # ---- Dropdown menu para seleccionar la extremidad----
                                 Spinner:
                                     id: limb_dropdown
                                     text: "Right Leg"
@@ -710,20 +714,8 @@ WindowManager:
                                     option_cls: Factory.sp #Formato personalizado al inicio
                                 # BoxLayout:
                                 #     orientation: "vertical"
-                                MDIconButton:
-                                    id: upload_pid
-                                    icon: "upload-multiple"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    theme_icon_color: "Custom"
-                                    icon_color: app.colors['White']
-                                    
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                        app.send_params()
-                                    on_release: self.md_bg_color = app.colors['Cyan']
 
-                                    md_bg_color: app.colors['Cyan']
-
+                                # ---- Botón para subir el set point ----
                                 MDIconButton:
                                     id: upload_sp
                                     icon: "upload"
@@ -737,47 +729,41 @@ WindowManager:
                                     on_release: self.md_bg_color = app.colors['Cyan']
 
                                     md_bg_color: app.colors['Cyan']
-                                # BoxLayout:
-                                #     orientation: "vertical"
-                                #     size_hint: None, None
-                                #     width: dp(45)
 
-                        BoxLayout: #ROW 3 Selección del parámetro 
+                                BoxLayout:
+
+                        BoxLayout: # ROW 3 Selección del parámetro 
                             orientation: "horizontal"
-                            padding: dp(10)
-                            size_hint: None, None
-                            #size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                            height: dp(45)
-                            width: root.width
-                            spacing: dp(30)
-                            padding: dp(50),dp(5),dp(50),dp(5)
+                            size_hint: None, None
+                            size: (root.width, dp(45))
+                            # spacing: dp(15)
+                            # padding: (dp(10),dp(10))
 
-                            # Se agregan botones para seleccionar el parámetro de proceso deseado
-                            ButtonParameters: 
-                                id: process_button1
-                                group: "process_vars"
-                                text: "Position"
-                                pos_hint: {"center_x": .5, "center_y": .5}
-                                size_hint: None, None
-                                #width: dp(80)
-                                on_state: app.process_var_select(self, self.state)
+                            # ---------- Botones para seleccionar variable de proceso --------
+                            BoxLayout:
+                                ButtonParameters: 
+                                    id: process_button1
+                                    group: "process_vars"
+                                    text: "Position"
+                                    
+                                    on_state: app.process_var_select(self, self.state)
 
-                            ButtonParameters: 
-                                id: process_button2
-                                group: "process_vars"
-                                text: "Velocity"
-                                pos_hint: {"center_x": .5, "center_y": .5}
+                            BoxLayout:
+                                ButtonParameters: 
+                                    id: process_button2
+                                    group: "process_vars"
+                                    text: "Velocity"
 
-                                on_state: app.process_var_select(self, self.state)
+                                    on_state: app.process_var_select(self, self.state)
                                 
-                            ButtonParameters: 
-                                id: process_button3
-                                group: "process_vars"
-                                text: "Current"
-                                pos_hint: {"center_x": .5, "center_y": .5}
+                            BoxLayout:
+                                ButtonParameters: 
+                                    id: process_button3
+                                    group: "process_vars"
+                                    text: "Current"
 
-                                on_state: app.process_var_select(self, self.state)
+                                    on_state: app.process_var_select(self, self.state)
                             
                             # ButtonParameters: 
                             #     id: process_button4
@@ -984,6 +970,7 @@ WindowManager:
                     # pos_hint: {"center_x": 0.5, "center_y": 0.5}
                     # size_hint: None, None
                     # width: root.width*0.9
+
                     # Background color
                     canvas.before:
                         Color:
@@ -993,18 +980,18 @@ WindowManager:
                             size: self.size
                     
                     GridLayout: # Distribución principal del menú como GridLayout de 9 filas
-                        rows: 5
+                        rows: 9
                         cols: 1
                         padding: dp(10)
-                        spacing: dp(5)
+                        spacing: dp(10)
 
             # ---------------------------------- Título del Menú -------------------------------------------- 
                         BoxLayout: # ROW 1 Título general
                             orientation: "vertical"
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             size_hint: None, None
-                            size: (root.width, dp(50))
-                            
+                            size: (root.width, dp(35))
+
                             CustomLabelAD: 
                                 id: monitoring_title
                                 text: "Monitoring Tab"
@@ -1012,77 +999,80 @@ WindowManager:
                                 pos: self.pos
                                 pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
-            # ----------------------- Menú desplegable para la selección de la articulación ------------
-                        # BoxLayout: # PV1
-                        #     orientation: "vertical"
-                        #     size_hint: None, None
-                        #     #size: (root.width*0.95, dp(50))
-                        #     pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                            
-                        #     # GridLayout: 
-                        #     #     rows: 1
-                        #     #     cols: 5
-                        #     #     padding: dp(10), dp(10)
-                        #     #     spacing: dp(5)6
-                        BoxLayout: #ROW 2
+                        BoxLayout: #ROW 2 Text field 1
                             orientation: 'vertical'
                             padding: (dp(5), dp(5))
-                            size_hint: 0.5, None
+                            size_hint: None, None
+                            size: (root.width, dp(50))
                             pos_hint: {"center_x": 0.5,"center_y": 0.5}
-                            
+
                             CustomLabelRoboto: 
                                 id: pv1_label
                                 text: "Hip motor"
-                            
+
+                        BoxLayout: #ROW 2 Text field 1
+                            orientation: 'vertical'
+                            padding: (dp(5), dp(5))
+                            size_hint: None, None
+                            size: (root.width, dp(50))
+                            pos_hint: {"center_x": 0.5,"center_y": 0.5}
+
                             CustomTextEntry:
                                 id: pv_motor1
                                 size_hint: 0.2, None
-                                height: dp(20)
                                 pos_hint: {"center_x": 0.5}
                                 hint_text: "PV:"
                                 readonly: True
                         
-                        BoxLayout: #ROW 3
+                        BoxLayout: #ROW 3 Text field 2
                             orientation: 'vertical'
                             padding: (dp(5), dp(5))
-                            size_hint: 0.5, None
-                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            size_hint: None, None
+                            size: (root.width, dp(50))
+                            pos_hint: {"center_x": 0.5,"center_y": 0.5}
                             
                             CustomLabelRoboto: 
                                 id: pv2_label
                                 text: "Knee motor"
 
+                        BoxLayout: #ROW 2 Text field 1
+                            orientation: 'vertical'
+                            padding: (dp(5), dp(5))
+                            size_hint: None, None
+                            size: (root.width, dp(50))
+                            pos_hint: {"center_x": 0.5,"center_y": 0.5}
+
                             CustomTextEntry:
                                 id: pv_motor2
                                 size_hint: 0.2, None
-                                height: dp(20)
                                 pos_hint: {"center_x": 0.5}
                                 hint_text: "PV:"
                                 readonly: True
                         
-                        BoxLayout: #ROW 4
+                        BoxLayout: #ROW 4 Text field 3
                             orientation: 'vertical'
-                            size_hint: 0.5, None
-                            pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             padding: (dp(5), dp(5))
-                            #spacing: dp(5)
+                            size_hint: None, None
+                            size: (root.width, dp(50))
+                            pos_hint: {"center_x": 0.5,"center_y": 0.5}
                             
                             CustomLabelRoboto: 
                                 id: pv3_label
                                 text: "Ankle motor"
 
+                        BoxLayout: #ROW 2 Text field 1
+                            orientation: 'vertical'
+                            padding: (dp(5), dp(5))
+                            size_hint: None, None
+                            size: (root.width, dp(50))
+                            pos_hint: {"center_x": 0.5,"center_y": 0.5}
+
                             CustomTextEntry:
                                 id: pv_motor3
                                 size_hint: 0.2, None
-                                height: dp(20)
                                 pos_hint: {"center_x": 0.5}
                                 hint_text: "PV:"
                                 readonly: True
-
-                    # Elements on app
-            # -------------------- Título del menú --------------------------
-                    
-
     # -------------------------- Botón info de equipo -------------------------------------------
     FloatLayout: 
         MDIconButton:
