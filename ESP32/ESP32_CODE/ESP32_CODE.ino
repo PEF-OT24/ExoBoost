@@ -607,5 +607,5 @@ void loop() {
   delay(1500); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
   // Serial.println("leyendo");
-  // read_PV();
+  read_PV();
 }
