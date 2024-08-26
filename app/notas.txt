@@ -1,0 +1,16 @@
+Revisar si json[] contiene: 
+
+motor1 - address = 1
+motor2 - address = 2
+motor3 - address = 3
+
+
+Recibir parámetros de PI: 
+posKP = json["pos"]["kc"];
+posKI = json["pos"]["ti"];
+
+velKP = json["vel"]["kc"];
+velKI = json["vel"]["ti"];
+
+curKP = json["cur"]["kc"];
+curKI = json["cur"]["ti"];

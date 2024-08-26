@@ -19,7 +19,7 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message);
 // Definición de servicios y sus características
 // Servicio para los parámetros
 #define SERVICE_UUID_PARAMS "00000001-0000-1000-8000-00805f9b34fb"
-#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI 
+#define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI y SP
 #define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // Característica para el nivel de asistencia del motor
 
 // Servicio para las variables de proceso
