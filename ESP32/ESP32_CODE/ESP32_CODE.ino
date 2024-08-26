@@ -417,7 +417,7 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
       errorCode = Wire.endTransmission();
       // Se imprime el error si hay uno
       if (errorCode == 5){
-        Serial.println("Error, reintentando.");
+        Serial.println("retry");
         resetI2C();
       }
       
@@ -469,8 +469,8 @@ void read_PV(){
   String stringread = readI2CMessage(SLAVE_ADDRESS);
 
   // Se muestra el mensaje leído
-  Serial.print("I2C: ");
-  Serial.println(stringread);
+  // Serial.print("I2C: ");
+  // Serial.println(stringread);
   
   // Se deserializa el JSON
   StaticJsonDocument<100> jsonrec; 
@@ -604,7 +604,7 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(2000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  delay(1500); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
   // Serial.println("leyendo");
   // read_PV();
