@@ -54,9 +54,9 @@ uint16_t max_speed = 500; // Velocidad máxima al controlar posición
 
 // Variables de proceso para los motores
 String process_variable = "pos"; // Tipo de variable de proceso: pos, vel, cur, temp
-uint32_t PV1 = 1;
-uint32_t PV2 = 1;
-uint32_t PV3 = 1;
+int32_t PV1 = 1;
+int32_t PV2 = 1;
+int32_t PV3 = 1;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 // ----------------- Variables para I2C ------------------
@@ -120,27 +120,28 @@ void CAN0IntHandler(void) {
         // Visualización
         int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
         position_read = int(round(position_read/100.0));
-        Serial.print("Mensaje recibido: ");
-        for (int i = 0; i < 5; i++) {
-          if (i == 0){
-            Serial.print(CANBUSReceive[i], HEX);
-            Serial.print(" ");
-          }
-          else if (i == 4){
-            Serial.print(position_read, DEC);
-            Serial.print(" ");
-          }
-          else {
-            Serial.print(CANBUSReceive[i], DEC);
-            Serial.print(" ");
-          }
-        }
-        Serial.println();
+        PV1 = position_read; // Almacenar lectura de posición en variable de escritura I2C para Monitoring Tab en APP
+        //Serial.print("Mensaje recibido: ");
+        //for (int i = 0; i < 5; i++) {
+          //if (i == 0){
+            //Serial.print(CANBUSReceive[i], HEX);
+            //Serial.print(" ");
+          //}
+          //else if (i == 4){
+            //Serial.print(position_read, DEC);
+            //Serial.print(" ");
+          //}
+          //else {
+            //Serial.print(CANBUSReceive[i], DEC);
+            //Serial.print(" ");
+          //}
+        //}
+        //Serial.println();
     } else {
         // Handle unexpected interrupts
         CANIntClear(CAN0_BASE, ui32Status);
     }
-    Serial.println("Interrupt");
+    //Serial.println("Interrupt");
 }
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
@@ -858,25 +859,6 @@ void clearI2CBuffer() {      // Lee y descarta todos los bytes en el buffer para
   }
 }
 
-void read_angle(int8_t ID){
-  // Función para apagar el motor
-  
-  // Objetos para la comunicación CAN
-  uint8_t CAN_data_TX[8u];
-
-  // Reset del motor
-  CAN_data_TX[0] = 0x92;
-  CAN_data_TX[1] = 0x00;
-  CAN_data_TX[2] = 0x00;
-  CAN_data_TX[3] = 0x00;
-  CAN_data_TX[4] = 0x00;
-  CAN_data_TX[5] = 0x00;
-  CAN_data_TX[6] = 0x00;
-  CAN_data_TX[7] = 0x00;
-
-  // Se envía el mensaje
-  send_cmd(ID, CAN_data_TX, false);
-}
 // ----------------------------------------------------- Setup ----------------------------------------------------
 void setup() {
     Serial.begin(9600);
@@ -943,5 +925,8 @@ void loop() {
   //set_speed(1, 360, true);
   //stop_motor(1);
   //reset_motor(1);
-  read_angle(2);
+  //read_angle(1);
+  //delay(50);
+  //read_angle(2);
+  //delay(50);
 }
