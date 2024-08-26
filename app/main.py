@@ -1,8 +1,15 @@
 # Se establece el tamaño y posición de la pantalla
 from kivy.config import Config
+
+# width = 400
+# height = width*(9/20)
+# Config.set('graphics', 'width', width)
+# Config.set('graphics', 'height', height)
 Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
+
+# Config.set('graphics', 'dpi', '387')
 
 # Módulos internos
 from ColorManager import ColorManager
