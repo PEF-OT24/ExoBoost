@@ -901,8 +901,8 @@ void setup() {
     CANInit(CAN0_BASE);
     CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
     CANEnable(CAN0_BASE);
-    // CANIntEnable(CAN0_BASE, CAN_INT_MASTER);
-    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
+    CANIntEnable(CAN0_BASE, CAN_INT_MASTER);
+    // CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
     //reset_motor(1);
