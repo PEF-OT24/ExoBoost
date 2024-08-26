@@ -1,40 +1,58 @@
 # ExoBoost 🦿
 
-_Este proyecto se llevó a cabo desde Junio hasta Diciembre de 2024 como parte de un proyecto de evaluación final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz. Tiene el propósito de generar un exoesqueleto de asistencia motriz con articulación en cadera, rodilla y tobillo para usuarios con movilidad limitada._
+#### Este proyecto se llevó a cabo desde Junio hasta Diciembre de 2024 como parte del Proyecto de Evaluación Final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz, bajo la supervisión del Dr. Mario Jorge Claros Salgado en la Universidad de Monterrey.
+#### Tiene el propósito de generar un prototipo exoesqueleto de asistencia motriz con articulación en cadera, rodilla y tobillo para usuarios con movilidad limitada.
+#### Este repositortio describe las instrucciones para entender no profundamente el funcionamiento general del sistema, desde requerimentos necesarios (tanto de hardware como software) hasta el cómo colaborar. Se explica de manera general la lógica de la interfaz de comunicación, esquema de control y el funcionamiento del software del prototipo. Detalles específicos se cubrirían en cada sección respectiva. 
 
+## Funcionamiento general
+![alt text](diagrama.png)
 
-## Requerimientos ✅
+## Requerimientos de Software 
 
-* Windows 11
-* Ubuntu 22.04
+* Windows 10+
+* Ubuntu 22.04 
+* Android SDK (V. 31)
+* Python (v. 3.12)
+* Java JDK (v. 17)
+* Arduino IDE (v. 2.3.2)
+* Energia IDE (v. 1.8.1)
+
+## Requerimientos de Hardware 
+
+* Celular con Android 12 (con Android SDK v. 31) en modo de desarrollador. 
+* ESP32 Wroom development
+* TivaC con arquitectura TM4123C
+* CAN transceiver MCP 2551  
+* Servoactuador brushless RMD X8 Pro
+* MOTOR 2
+* MOTOR 3
 
 ## App Móvil 📱
 
-_Seguir las instrucciones dentro de [App_Compilation.md](linkdelarchivo) para configurar Windows y Linux, compilar la aplicación y generar el archivo .apk_
+#### Seguir las instrucciones dentro del directorio _app_. Interfaz gráfica con la que el usuario puede interactuar el dispositivo. Con ella puede controlar el prototipo, así como garantizar que esté funcionando correctamente. Se conecta por Bluetooth Low Energy (BLE) como cliente a un servidor generado en una ESP32. 
 
-## Construido con ⚙️
+## BLE Server en ESP32 
 
-_Menciona las herramientas que utilizaste para crear tu proyecto_
+#### Seguir las instrucciones dentro del directorio _server_. Este microcontrolador funge el rol de antena BLE para el resto del sistema de control y comunicación. Procesa y transmite los datos recibidos como un máster de I2C a una TivaC por extremidad. 
 
-* [KivyMD](http://www.dropwizard.io/1.0.2/docs/) - Framework usado para la app móvil
-* [Android Developer Tools](https://maven.apache.org/) - Herramientas de Android para el desarrollo de servicio BLE
-* [Buildozer](https://rometools.github.io/rome/) - Usado para generar apk
-* [Energia IDE](linkenergiaide) - Usado para programación de Tiva C
-* [Arduino IDE](linkdownload) - Usado para generar server BLE desde tarjeta ESP32
+## Sistema de control en tiempo real en TivaC 
 
-## Wiki 📖
+#### Seguir las instrucciones dentro del directorio _control_. Este microcontrolador es reponsable de controlar cada motor dentro de una extremidad. Recibe comandos específicos y set points a través de un BUS I2C configurado como esclavo y ejecuta los comandos específicos de control a través de un BUS de CAN en el cual están conectados los motores.
 
-Puedes encontrar mucho más de cómo utilizar este proyecto en nuestra [Wiki](https://github.com/tu/proyecto/wiki)
+## Documentación 📖
+
+#### Puedes encontrar información más específica del proyecto en la [Tesis](https://github.com/tu/proyecto/wiki) de la UDEM.
 
 ## Autores ✒️
 
-_Menciona a todos aquellos que ayudaron a levantar el proyecto desde sus inicios_
+#### Miembros del equipo de PEF OT24
 
-* **Carlos Reyes** - *IMT* - [reyesgithub](https://github.com/carlosreyesb)
-* **David Villanueva** - *IMT* - [villagithub](https://github.com/david-villanueva-02)
-* **Eduardo Martinez** - *IDA / IMT* - [lalogithub](#lalogithub)
-* **Itzel Martinez** - *IBI / IMT* - [itzelgithub](#itzelgithub)
-* **Teresa Hernandez** - *IMT* - [teregithub](https://github.com/Teresa-hdz)
+* **Carlos Reyes** - *IMT* - [LinkedIn](https://www.linkedin.com/in/carlos-reyes-00a297175/)
+* **David Villanueva** - *IMT* - [LinkedIn](https://www.linkedin.com/in/david-adrian-villanueva-guzmán-071350246/)
+* **Eduardo Martinez** - *IDA / IMT* - [LinkedIn](https://www.linkedin.com/in/eng-edmtzm/)
+* **Itzel Martinez** - *IBI / IMT* - [LinkedIn](https://www.linkedin.com/in/maría-itzel-martínez-ibarra-0981b4279/)
+* **Teresa Hernandez** - *IMT* - [LinkedIn](https://www.linkedin.com/in/teresa-berenice-hernandez-reyes/)
 
-
+#### Asesor del proyecto
+* **Mario Jorge Claros Salgado** - *PhD* - [LinkedIn](https://www.linkedin.com/in/mario-jorge-claros-salgado-1a848513b/)
 ---
