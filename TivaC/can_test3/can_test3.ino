@@ -37,7 +37,7 @@
 // Delay entre mensajes de CAN en ms
 #define CAN_DELAY 130
 // ----------------- Variables globales ------------------
-int8_t assitance_level = 0; // Nivel de asistencia
+int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
 uint8_t posKP; 
 uint8_t posKI; 
@@ -46,19 +46,28 @@ uint8_t velKI;
 uint8_t curKP; 
 uint8_t curKI; 
 
-uint16_t SP_motor1; // Set Point para el motor 1
-uint32_t SP_motor2; // Set Point para el motor 2
-uint32_t SP_motor3; // Set Point para el motor 3
+// Parámetros de Set Point para los motores
+uint16_t SP_motor1;
+uint32_t SP_motor2;
+uint32_t SP_motor3;
 uint16_t max_speed = 500; // Velocidad máxima al controlar posición
 
-bool doControlFlag = 0; // Bandera de control en tiempo real 
+// Variables de proceso para los motores
+String process_variable = "pos"; // Tipo de variable de proceso: pos, vel, cur, temp
+uint32_t PV1 = 1;
+uint32_t PV2 = 1;
+uint32_t PV3 = 1;
 
+bool doControlFlag = 0; // Bandera de control en tiempo real 
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
+const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
 String mensaje_leido = "";       // Buffer para recibir el mensaje
-String mensaje_mandar = "";      // Indicador de qué mensaje se le debe mandar en callback a un request
-uint32_t i = 0;
-char data;
+
+// Variables para la transmisión de mensajes por I2C
+String stringsend_ESP32 = "";   // Se inicializa el mensaje como vacío
+JsonDocument jsonsend_ESP32;
+int index_alt;
 
 // ----------------- Variables para CAN ------------------
 tCANMsgObject Message_Rx; // Objeto para leer mensajes
@@ -110,7 +119,7 @@ void CAN0IntHandler(void) {
         
         // Visualización
         int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
-        position_read = round(position_read/100.0);
+        position_read = int(round(position_read/100.0));
         Serial.print("Mensaje recibido: ");
         for (int i = 0; i < 5; i++) {
           if (i == 0){
@@ -568,6 +577,14 @@ void read_angle(int8_t ID){
 }
 
 // ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
+// Función para reiniciar el bus I2C ante algún error
+void clearI2C() {
+  while (Wire.available()) {
+    Wire.read();  // Lee y desecha cualquier dato restante en el buffer
+  }
+  mensaje_leido = "";
+}
+
 void onReceive(int len){
   // Función de callback que se ejecuta al recibir un mensaje por I2C
 
@@ -592,21 +609,40 @@ void onReceive(int len){
     if (error) { // Error al deserializar
       Serial.print("Error al analizar JSON: ");
       Serial.println(error.c_str());
+      clearI2C();
       return;
     }
     else if (!jsonrec.containsKey("T")){ // Si no contiene el tipo
       Serial.println("Tipo no encontrado en el JSON");
+      clearI2C();
       return;
     }
     else if (!jsonrec["T"].is<const char*>()){
       Serial.println("Tipo de dato erróneo");
+      clearI2C();
       return;  
     }
   
     // ----------- Se procesan diferentes JSON --------
     const char* type = jsonrec["T"];
     if (strcmp(type, "F") == 0){ // Se establece el tipo de mensaje a mandar
-      mensaje_mandar = "PV";
+      
+      jsonsend_ESP32.clear();    // Se limpia el JSON anterior
+      stringsend_ESP32 = "";     // Se reinicia el string anterior
+
+      // Se define el mensaje con los valores de la variable de proceso
+      jsonsend_ESP32["monitoring"] = process_variable;
+      jsonsend_ESP32["motor1"] = String(PV1);
+      jsonsend_ESP32["motor2"] = String(PV2);
+      jsonsend_ESP32["motor3"] = String(PV3);
+
+      // Se construye el mensaje serializado
+      serializeJson(jsonsend_ESP32, stringsend_ESP32);
+      stringsend_ESP32 += '\n';                        // terminador '\n'
+
+      Serial.print("String ESP32: ");
+      Serial.println(stringsend_ESP32);
+      
     }
     else if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
@@ -615,17 +651,19 @@ void onReceive(int len){
       // Se revisan errores en el JSON
       if (!jsonrec.containsKey("assistance_level")){ // Si si no contiene el tipo
         Serial.print("Información no encontrada");
+        clearI2C();
         return;
       }
       else if (!jsonrec["assistance_level"].is<String>()){
         Serial.println("Información en formato incorrcto");
+        clearI2C();
         return;
       }
   
       // Se extrae la información recibida
-      assitance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
+      assistance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
       Serial.print("Nivel de asistencia: ");
-      Serial.println(assitance_level);
+      Serial.println(assistance_level);
     }
     else if (strcmp(type, "B") == 0 || strcmp(type, "C") == 0 || strcmp(type, "D") == 0){ // Parámetros PI para cualquier motor
       // ------------- Parámetros de PI -------------
@@ -659,12 +697,14 @@ void onReceive(int len){
       }
       else {
         Serial.print("Información no encontrada");
+        clearI2C();
         return;  
       }
 
       // Revisión de errores dentro del nuevo archivo JSON
       if (!json_motor.containsKey("pos") || !json_motor.containsKey("vel") || !json_motor.containsKey("cur")){
         Serial.print("Error en los datos encontrados");
+        clearI2C();
         return;
       }
       
@@ -673,6 +713,7 @@ void onReceive(int len){
       json_parametros = json_motor["pos"];
       if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
         Serial.println("Parámetros no encontrados");
+        clearI2C();
         return;
       }
       posKP = json_parametros["kc"].as<int>();
@@ -683,6 +724,7 @@ void onReceive(int len){
       json_parametros = json_motor["vel"];
       if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
         Serial.println("Parámetros no encontrados");
+        clearI2C();
         return;
       }
       velKP = json_parametros["kc"].as<int>();
@@ -693,6 +735,7 @@ void onReceive(int len){
       json_parametros = json_motor["cur"];
       if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
         Serial.println("Parámetros no encontrados");
+        clearI2C();
         return;
       }
       curKP = json_parametros["kc"].as<int>();
@@ -700,17 +743,14 @@ void onReceive(int len){
       json_parametros.clear();
 
       // Se mandan los parámetros
-      Serial.println("Parámetros de posición: ");
       Serial.print("kc: "); 
       Serial.println(posKP);
       Serial.print("ti: ");
       Serial.println(posKI);
-      Serial.println("Parámetros de velocidad: ");
       Serial.print("kc: "); 
       Serial.println(velKP);
       Serial.print("ti: ");
       Serial.println(velKI);
-      Serial.println("Parámetros de corriente: ");
       Serial.print("kc: "); 
       Serial.println(curKP);
       Serial.print("ti: ");
@@ -731,6 +771,7 @@ void onReceive(int len){
       // Se revisan errores
       if (!jsonrec.containsKey("monitoring") || !jsonrec.containsKey("motor1") || !jsonrec.containsKey("motor2") || !jsonrec.containsKey("motor3")){
         Serial.print("Información no encontrada");
+        clearI2C();
         return;
       }
 
@@ -740,8 +781,8 @@ void onReceive(int len){
       SP_motor3 = jsonrec["motor3"].as<int>();
       
       // Control dependiendo del tipo 
-      const char* process_variable = jsonrec["monitoring"];
-      if (strcmp(process_variable, "pos") == 0){
+      process_variable = jsonrec["monitoring"].as<String>();
+      if (process_variable == "pos"){
         // Control de posición
         Serial.println("Control de posición");
         set_absolute_position(1, SP_motor1, max_speed, true);
@@ -751,7 +792,7 @@ void onReceive(int len){
         //set_absolute_position(3, SP_motor3, max_speed, true);
         //delay(CAN_DELAY); // delay 
       }
-      else if(strcmp(process_variable, "vel") == 0){
+      else if(process_variable == "vel"){
         // Control de velocidad
         Serial.println("Control de velocidad");
         set_speed(1, SP_motor1, true);
@@ -761,7 +802,7 @@ void onReceive(int len){
         //set_speed(3, SP_motor3, true);
         //delay(CAN_DELAY); // delay 
       }
-      else if (strcmp(process_variable, "cur") == 0){
+      else if (process_variable == "cur"){
         // Control de torque
         Serial.println("Control de torque");
         set_torque(1, SP_motor1, false);
@@ -800,20 +841,42 @@ void onReceive(int len){
 
 void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
-  // Se debe de recibir primero el tipo de mensaje que se quiere mandar
 
-  // --------- Diferentes tipos de mensaje ---------
-  // Se define el mensaje a mandar
-  if(mensaje_mandar == "PV"){
-    // Mensaje de prueba
-    String message = "Hello from Slave!\0";  // Mensaje con terminador '\0'
-    for (int i = 0; i < message.length(); i++) {
-      Serial.print(message[i]);
-      Wire.write(message[i]);
-    }
+  // Se manda un fragmento del mensaje
+  int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
+  Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
+  index_alt += bytesToSend;
+
+  if (index_alt >= stringsend_ESP32.length()) { // Se llega al final del mensaje
+    index_alt = 0;            
   }
 }
 
+void clearI2CBuffer() {      // Lee y descarta todos los bytes en el buffer para limpiarlo 
+  while (Wire.available()) {
+    Wire.read();  
+  }
+}
+
+void read_angle(int8_t ID){
+  // Función para apagar el motor
+  
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
 // ----------------------------------------------------- Setup ----------------------------------------------------
 void setup() {
     Serial.begin(9600);
@@ -849,13 +912,15 @@ void setup() {
     SysTickEnable();
 
     // ------ Configuración de I2C ------
-    Wire.begin((uint8_t)I2C_DEV_ADDR);                // Inicializa el protocolo I2C
+    Wire.begin(I2C_DEV_ADDR);               // Inicializa el protocolo I2C
     Wire.onReceive(onReceive); // Se registra el evento de onreceive
     Wire.onRequest(onRequest); // register event
 
     IntMasterEnable();
     SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
     while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
+    
+    //stop_motor(1);
     CANInit(CAN0_BASE);
     CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
     CANEnable(CAN0_BASE);
@@ -863,9 +928,6 @@ void setup() {
     // CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
-    //SendParameters();
-    
-    //stop_motor(1);
     //reset_motor(1);
     //shutdown_motor(1);
     //set_acceleration(1,500,true);
@@ -873,8 +935,6 @@ void setup() {
     //set_speed(1, 360, true);
     //set_absolute_position(1, 90, 1000, true);
     //set_stposition(1,90,1000,0,true);
-
-    Serial.println("Listo: ");
 }
 
 // ----- Main Loop -----
