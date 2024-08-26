@@ -613,12 +613,17 @@ WindowManager:
 
             # ------------------------------------ Fondo del menú --------------------------------------
                 # Elements
-                FloatLayout:
+                BoxLayout:
                     orientation: "vertical"
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
-                    halign: "center"
-                    valign: "center"
+                    #size_hint: None, None
+                    width: root.width
+                    height: root.height
+                    #halign: "center"
+                    #valign: "center"
+                    padding: dp(10), dp(0), dp(10), dp(10)
                     spacing: dp(5)
+
 
                     canvas.before:
                         Color:
@@ -627,9 +632,9 @@ WindowManager:
                             pos: self.pos
                             size: self.size
                     GridLayout: # Distribución principal del menú como GridLayout de 9 filas
-                        rows: 7
+                        rows: 6
                         cols: 1
-                        padding: dp(20)
+                        padding: dp(0), dp(5), dp(0), dp(30)
                         spacing: dp(5)
 
             # ---------------------------------- Título del Menú -------------------------------------------- 
@@ -637,7 +642,15 @@ WindowManager:
                             orientation: "vertical"
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             size_hint: None, None
-                            size: (root.width, dp(50))
+                            size: (root.width, dp(40))
+                            #spacing: dp(5)
+                            #padding: dp(10)
+                            canvas.before:
+                                Color:
+                                    rgba: app.colors["Dark Blue"]
+                                Rectangle:
+                                    pos: self.pos
+                                    size: self.size
                             
                             CustomLabelAD: 
                                 id: tuning_label
@@ -650,93 +663,95 @@ WindowManager:
                         BoxLayout: # ROW 2 selección de la articulación
                             orientation: "vertical"
                             size_hint: None, None
-                            #size: (root.width*0.95, dp(50))
+                            size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
+                            padding: dp(5), dp(5)
+                            spacing: dp(5)
                             
-                            GridLayout: 
-                                rows: 1
-                                cols: 5
-                                padding: dp(5), dp(5)
-                                spacing: dp(5)
+                            # GridLayout: 
+                            #     rows: 1
+                            #     cols: 5
+                            #     padding: dp(5), dp(5)
+                            #     spacing: dp(5)
                             
-                                MDIconButton:
-                                    id: load_params
-                                    icon: "download"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    theme_icon_color: "Custom"
-                                    icon_color: app.colors['White']
+                                # MDIconButton:
+                                #     id: load_params
+                                #     icon: "download"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
                                     
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                    on_release: 
-                                        self.md_bg_color = app.colors['Cyan']
-                                        app.load_params()
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #     on_release: 
+                                #         self.md_bg_color = app.colors['Cyan']
+                                #         app.load_params()
 
-                                    md_bg_color: app.colors['Cyan']
+                                #     md_bg_color: app.colors['Cyan']
 
-                                MDIconButton:
-                                    id: save_params
-                                    icon: "content-save-cog"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    theme_icon_color: "Custom"
-                                    icon_color: app.colors['White']
+                                # MDIconButton:
+                                #     id: save_params
+                                #     icon: "content-save-cog"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
                                     
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                    on_release: 
-                                        self.md_bg_color = app.colors['Cyan']
-                                        app.save_params()
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #     on_release: 
+                                #         self.md_bg_color = app.colors['Cyan']
+                                #         app.save_params()
 
-                                    md_bg_color: app.colors['Cyan']
-                                Spinner:
-                                    id: limb_dropdown
-                                    text: "Right Leg"
-                                    values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
-                                    
-                                    # Personalización
-                                    size_hint: None, None
-                                    size: (dp(100), dp(45))
-                                    
-                                    pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
-                                    sync_height: True
-                                    #height: dp(45)
+                                #     md_bg_color: app.colors['Cyan']
+                            Spinner:
+                                id: limb_dropdown
+                                text: "Right Leg"
+                                values: ["Right leg", "Left leg", "Right arm", "Left arm"] # Valores del menú desplegable
+                                
+                                # Personalización
+                                size_hint: None, None
+                                size: (dp(200), dp(45))
+                                
+                                pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Se centra
+                                sync_height: True
+                                #height: dp(45)
 
-                                    # Definición de colores
-                                    background_color: app.colors["Dark Blue"]
-                                    color: app.colors["Cyan"]
-                                    
-                                    # Acciones
-                                    on_text: app.limb_dropdown_clicked(limb_dropdown.text)
-                                    option_cls: Factory.sp #Formato personalizado al inicio
+                                # Definición de colores
+                                background_color: app.colors["Dark Blue"]
+                                color: app.colors["Cyan"]
+                                
+                                # Acciones
+                                on_text: app.limb_dropdown_clicked(limb_dropdown.text)
+                                option_cls: Factory.sp #Formato personalizado al inicio
                                 # BoxLayout:
                                 #     orientation: "vertical"
-                                MDIconButton:
-                                    id: upload_pid
-                                    icon: "upload-multiple"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    theme_icon_color: "Custom"
-                                    icon_color: app.colors['White']
+                                # MDIconButton:
+                                #     id: upload_pid
+                                #     icon: "upload-multiple"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
                                     
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                        app.send_params()
-                                    on_release: self.md_bg_color = app.colors['Cyan']
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #         app.send_params()
+                                #     on_release: self.md_bg_color = app.colors['Cyan']
 
-                                    md_bg_color: app.colors['Cyan']
+                                #     md_bg_color: app.colors['Cyan']
 
-                                MDIconButton:
-                                    id: upload_sp
-                                    icon: "upload"
-                                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                    theme_icon_color: "Custom"
-                                    icon_color: app.colors['White']
+                                # MDIconButton:
+                                #     id: upload_sp
+                                #     icon: "upload"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
                                     
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                        app.send_sp()
-                                    on_release: self.md_bg_color = app.colors['Cyan']
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #         app.send_sp()
+                                #     on_release: self.md_bg_color = app.colors['Cyan']
 
-                                    md_bg_color: app.colors['Cyan']
+                                #     md_bg_color: app.colors['Cyan']
                                 # BoxLayout:
                                 #     orientation: "vertical"
                                 #     size_hint: None, None
@@ -744,7 +759,7 @@ WindowManager:
 
                         BoxLayout: #ROW 3 Selección del parámetro 
                             orientation: "horizontal"
-                            padding: dp(10)
+                            #padding: dp(10)
                             size_hint: None, None
                             #size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
@@ -961,10 +976,10 @@ WindowManager:
                         #         #size_hint_x: None
                         #         width: root.width*0.95
                         #         pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                        BoxLayout:
-                            orientation: "vertical"
-                            size_hint: None, None
-                            width: dp(45)
+                        # BoxLayout:
+                        #     orientation: "vertical"
+                        #     size_hint: None, None
+                        #     width: dp(45)
                                 
     # ------------------------------------------- Menú de Monitoreo -------------------------------------------------            
             MDBottomNavigationItem:
