@@ -14,7 +14,7 @@
 
 // ----------------------------------- Declaración de funciones prototipo ------------------------------------------
 void sendI2CMessage(uint8_t slaveAddress, const char* message);
-String readI2CMessage(uint8_t slaveAddress, uint8_t len);
+String readI2CMessage(uint8_t slaveAddress);
 
 // --------------------------------------- Constantes de uso general -----------------------------------------------
 // ------- Constantes para BLE -------
@@ -43,6 +43,8 @@ String readI2CMessage(uint8_t slaveAddress, uint8_t len);
 #define I2C_BUFFER_LENGTH 128  // Tamaño máximo del buffer modificado en la ESP32
 // ------------------------------------------ Set up para BLE ------------------------------------------
 // ------- Variables para BLE -------
+bool client_connected = false;
+
 // Variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
@@ -84,13 +86,14 @@ class ServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) { // Cuando se conecta
     digitalWrite(LED_PIN, HIGH); 
     Serial.println("Cliente conectado");
+    client_connected = true;
   }
 
   void onDisconnect(BLEServer* pServer) { // Cuando se desconecta
     digitalWrite(LED_PIN, LOW);  
-    Serial.print("Cliente desconectado ... ");
+    client_connected = false;
+    Serial.println("Cliente desconectado.");
     delay(100); // Delay para reiniciar advertising
-    Serial.println("Reiniciando advertising.");
     pAdvertising->start();               // Reinicia el advertisement
   }
 };
@@ -382,6 +385,13 @@ char receivedData[BUFFER_SIZE]; // Buffer para almacenar los datos recibidos
 uint8_t dataLength = 0; // Longitud de los datos recibidos
 
 // ------- funciones para I2C -------
+// Función para reiniciar el bus I2C ante algún error
+void resetI2C() {
+  Wire.end();     // Finaliza la comunicación I2C actual
+  delay(5);       // Ligero delay
+  Wire.begin();   // Reinicia la comunicación I2C
+}
+
 // Función para mandar un mensaje a través de I2C
 void sendI2CMessage(uint8_t slaveAddress, const char* message) {
   int length = strlen(message);  // Calcular el tamaño del mensaje
@@ -391,48 +401,61 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
 
   Serial.print("Sending message: "); // Fragmentar el mensaje y enviarlo en partes
   Serial.println(message);
-  for (int i = 0; i < length; i += buffer_size) { 
-    Wire.beginTransmission(slaveAddress);  // Iniciar transmisión con la dirección del esclavo
-    
-    // Cantidad de bytes a mandar
-    int bytes_to_send = min(buffer_size, length - i);
 
-    // Envía el fragmento del mensaje
-    for (int j = 0; j < bytes_to_send; j++) {
-      Wire.write(message[i + j]);
-    }
+  do { // Intento de mandar información por I2C
+    for (int i = 0; i < length; i += buffer_size) { 
+      Wire.beginTransmission(slaveAddress);  // Iniciar transmisión con la dirección del esclavo
+      
+      // Cantidad de bytes a mandar
+      int bytes_to_send = min(buffer_size, length - i);
 
-    errorCode = Wire.endTransmission();
-    // Se imprime el error si hay uno
-    if (errorCode != 0){
-      Serial.print("Código de error: ");
-      Serial.println(errorCode);
+      // Envía el fragmento del mensaje
+      for (int j = 0; j < bytes_to_send; j++) {
+        Wire.write(message[i + j]);
+      }
+      
+      errorCode = Wire.endTransmission();
+      // Se imprime el error si hay uno
+      if (errorCode == 5){
+        Serial.println("retry");
+        resetI2C();
+      }
+      
+      delay(10);  // delay para evitar saturación del bus I2C
     }
-    
-    delay(10);  // delay para evitar saturación del bus I2C
-  }
+  } while (errorCode == 5); // Se repite si encontró un erro
 } //  fin de la función
 
-String readI2CMessage(uint8_t slaveAddress, uint8_t len){
-  Wire.requestFrom(slaveAddress, len);
+String readI2CMessage(uint8_t slaveAddress) {
+  String message = "";
+  bool messageComplete = false;
 
-  // Leer los datos recibidos y almacenarlos en el buffer
-  String mensaje_leido = "";
-
-  // Lee los bytes recibidos
-  while (Wire.available()) {
-    char rec_data = Wire.read();
-    if (rec_data == '\0'){break;}
-    mensaje_leido += rec_data;
+  while (!messageComplete) {
+    Wire.requestFrom(slaveAddress, 32);  // Solicita hasta 32 bytes
+    while (Wire.available()) {
+      char receivedChar = Wire.read();
+      if (receivedChar == '\n') {
+        messageComplete = true;
+        break;
+      }
+      message += receivedChar;
+    }
   }
 
-  return mensaje_leido;
+  return message;
 }
 
 void read_PV(){
-  // Función que se ejecuta cada 1000 ms para leer la variable de proceso del motor
+  /* Función que lee la variable de proceso de la Tiva y la manda por BLE
+  1 - Manda un indicador en formato JSON de qué información se quiere leer {"T":"F"} 
+  2 - Manda un request de lectura en buffers de 32 bytes por I2C
+  3 - Termina la lectura de información cuando se recibe un caracter terminador \n
+  4 - Recibe el JSON stirng, lo convierte a JSON file y se asegura de haya llegado correctamente 
+  (Formato de ejemplo en la característica PV)
+  5 - Serializa el JSON, se asigna el valor a la característica y se notifica al cliente 
+  */ 
 
-  // Se indica que se desea leer
+  // Se indica qué se desea leer
   DynamicJsonDocument jsonsend(15);
   String stringsend = "";
   jsonsend["T"] = "F"; // {"T":"F"}
@@ -440,11 +463,38 @@ void read_PV(){
   stringsend += '\n'; // Se añade el caracter terminador
   sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
-  delay(100); // Se espera a que la Tiva procese la información mandada
+  delay(50); // Pequeño delay para que la Tiva procese el JSON
 
   // Hace el request al esclavo
-  String strread = readI2CMessage(SLAVE_ADDRESS, 100); // Se leen 100 bytes
+  String stringread = readI2CMessage(SLAVE_ADDRESS);
 
+  // Se muestra el mensaje leído
+  // Serial.print("I2C: ");
+  // Serial.println(stringread);
+  
+  // Se deserializa el JSON
+  StaticJsonDocument<100> jsonrec; 
+  DeserializationError error = deserializeJson(jsonrec, stringread);
+
+  // Se revisan errores
+  if (error) {
+    Serial.print("Error al analizar JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+  else if (!jsonrec.containsKey("monitoring") || !jsonrec.containsKey("motor1") || !jsonrec.containsKey("motor2") || !jsonrec.containsKey("motor3")){
+      Serial.print("Información no encontrada");
+      return;
+  }
+
+  if (client_connected){ // Se mandan los datos a la app si está conectada
+    String stringsend = "";
+    serializeJson(jsonrec, stringsend);
+    pCharacteristic_PV->setValue(stringsend.c_str()); // Se mandan los valores por BLE
+
+    // Se notifica sobre la característica al cliente
+    pCharacteristic_PV->notify();
+  }
 }
 
 void setup() {
@@ -453,11 +503,11 @@ void setup() {
   Serial.println("Iniciando el servidor BLE...");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
-  Wire.setClock(400000);  // Establece la velocidad a 400 kHz
+  Wire.setClock(100000);  // Establece la velocidad del I2C a 100 kHz
 
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);  // Asegúrate de que el LED esté apagado al inicio
+  digitalWrite(LED_PIN, LOW);  
 
   // Inicializa el dispositivo BLE y el servidor
   BLEDevice::init(DEVICE_NAME);
@@ -519,13 +569,14 @@ void setup() {
   pCharacteristic_MODE->setCallbacks(new BLECallback_MODE());
 
   // Inicialización de las características
-  StaticJsonDocument<200> doc;
-  doc["mensaje"] = "Hola, cliente!";
+  StaticJsonDocument<20> doc;
+  doc["init"] = "0";
   char buffer[200];
   serializeJson(doc, buffer);
   pCharacteristic_PI->setValue(buffer);
   pCharacteristic_MODE->setValue(buffer);
   
+  // Inicialización de la característica PI
   StaticJsonDocument<200> values_doc;
   char values_buffer[200];
   values_doc["limb"] = "Right leg";
@@ -536,31 +587,25 @@ void setup() {
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
 
-  // Se muestra el valor inicial
-  Serial.println("----------------");
-  Serial.print("Valor inicial: ");
-  Serial.println(values_buffer);
-  Serial.println("----------------");
-
   // Inicia el servicio BLE
   pService_PARAMS->start();
   pService_PV->start();
   pService_MODE->start();
 
-  // Habilita la publicidad del servidor BLE
+  // Habilita la publicidad del servidor BLE y sus servicios
   pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID_PARAMS);
   pAdvertising->addServiceUUID(SERVICE_UUID_PROCESS);
   pAdvertising->addServiceUUID(SERVICE_UUID_COMMAND);
   pAdvertising->start();
   
-  Serial.println("Servidor BLE iniciado y esperando conexiones...");
+  Serial.println("Servidor BLE iniciado.");
 }
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(1000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  delay(1500); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
-  // pCharacteristic_PV->notify();
+  // Serial.println("leyendo");
   // read_PV();
 }
