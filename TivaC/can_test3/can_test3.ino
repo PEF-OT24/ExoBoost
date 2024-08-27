@@ -121,6 +121,7 @@ void CAN0IntHandler(void) {
         int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
         position_read = int(round(position_read/100.0));
         PV1 = position_read; // Almacenar lectura de posición en variable de escritura I2C para Monitoring Tab en APP
+        Serial.println(PV1);
         //Serial.print("Mensaje recibido: ");
         //for (int i = 0; i < 5; i++) {
           //if (i == 0){
@@ -165,10 +166,10 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para en
   Message_Rx.pui8MsgData = CAN_data_RX;
 
   // Envío por CAN
-  CANMessageSet(CAN0_BASE, 1, &Message_Tx, MSG_OBJ_TYPE_TX);
+  CANMessageSet(CAN0_BASE, ID, &Message_Tx, MSG_OBJ_TYPE_TX);
 
   // Lee el mensaje de respuesta
-  CANMessageSet(CAN0_BASE, 1, &Message_Rx, MSG_OBJ_TYPE_RX);
+  CANMessageSet(CAN0_BASE, ID, &Message_Rx, MSG_OBJ_TYPE_RX);
 
   // Imprime el mensaje si el usuario lo indica
   if (show && false){
@@ -599,7 +600,7 @@ void onReceive(int len){
     mensaje_leido.trim();
     JsonDocument jsonrec;            // Archivo json para recibir información 
     
-    Serial.print("Datos recibidos: ");
+    Serial.print("REC: ");
     Serial.println(mensaje_leido);
   
     // ----- Procesamiento del mensaje recibido -----
@@ -640,10 +641,10 @@ void onReceive(int len){
 
       // Se construye el mensaje serializado
       serializeJson(jsonsend_ESP32, stringsend_ESP32);
-      stringsend_ESP32 += '\n';                        // terminador '\n'
+      stringsend_ESP32 += '\n';  // terminador '\n'
 
-      Serial.print("String ESP32: ");
-      Serial.println(stringsend_ESP32);
+      //Serial.print("String ESP32: ");
+      //Serial.println(stringsend_ESP32);
       
     }
     else if (strcmp(type, "A") == 0){ 
@@ -847,10 +848,11 @@ void onRequest(){
   // Se manda un fragmento del mensaje
   int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
   Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
+  //Serial.println(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str());
   index_alt += bytesToSend;
 
   if (index_alt >= stringsend_ESP32.length()) { // Se llega al final del mensaje
-    index_alt = 0;            
+    index_alt = 0;       
   }
 }
 
@@ -920,8 +922,10 @@ void loop() {
   //set_speed(1, 360, true);
   //stop_motor(1);
   //reset_motor(1);
-  //read_angle(1);
-  //delay(50);
+  read_angle(1);
+  delay(500);
+  Serial.print("PV1: ");
+  Serial.println(PV1);
   //read_angle(2);
-  //delay(50);
+  delay(150);
 }
