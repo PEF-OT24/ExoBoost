@@ -70,7 +70,8 @@ JsonDocument jsonsend_ESP32;
 int index_alt;
 
 // ----------------- Variables para CAN ------------------
-tCANMsgObject Message_Rx; // Objeto para leer mensajes
+tCANMsgObject Message_Rx;   // Objeto para leer mensajes
+uint8_t motor_selected = 0; // Indicador del motor seleccionado para lectura
 
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {
@@ -119,9 +120,17 @@ void CAN0IntHandler(void) {
         
         // Visualización
         int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
-        position_read = int(round(position_read/100.0));
-        PV1 = position_read; // Almacenar lectura de posición en variable de escritura I2C para Monitoring Tab en APP
-        Serial.println(PV1);
+
+        if (motor_selected == 1){
+          PV1 = int(round(position_read/100));
+        } else if (motor_selected == 2){
+          PV2 = int(round(position_read/100));  
+        } else if (motor_selected == 3){
+          PV3 = int(round(position_read/100));  
+        } else {Serial.println("no");}
+        
+        Serial.print("PV: ");
+        Serial.println(position_read);
         //Serial.print("Mensaje recibido: ");
         //for (int i = 0; i < 5; i++) {
           //if (i == 0){
@@ -142,7 +151,7 @@ void CAN0IntHandler(void) {
         // Handle unexpected interrupts
         CANIntClear(CAN0_BASE, ui32Status);
     }
-    //Serial.println("Interrupt");
+    Serial.println("Int");
 }
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
@@ -170,18 +179,6 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para en
 
   // Lee el mensaje de respuesta
   CANMessageSet(CAN0_BASE, ID, &Message_Rx, MSG_OBJ_TYPE_RX);
-
-  // Imprime el mensaje si el usuario lo indica
-  if (show && false){
-    char buffer[50];
-    while (CANStatusGet(CAN0_BASE, CAN_STS_TXREQUEST)) {
-      Serial.println("waiting");
-    }
-    sprintf(buffer, "Received: %02X %02X %02X %02X %02X %02X %02X %02X",
-            CAN_data_RX[0], CAN_data_RX[1], CAN_data_RX[2], CAN_data_RX[3],
-            CAN_data_RX[4], CAN_data_RX[5], CAN_data_RX[6], CAN_data_RX[7]);
-    Serial.println(buffer);
-  }
 }
 
 void send_cmd_multiple(char Q, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
@@ -560,7 +557,8 @@ void reset_all_motors(bool show){
 
 void read_angle(int8_t ID){
   // Función para apagar el motor
-  
+
+  motor_selected = ID;
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
 
@@ -903,17 +901,10 @@ void setup() {
     CANInit(CAN0_BASE);
     CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
     CANEnable(CAN0_BASE);
-    CANIntEnable(CAN0_BASE, CAN_INT_MASTER);
-    // CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
+    //CANIntEnable(CAN0_BASE, CAN_INT_MASTER);
+    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
-    //reset_motor(1);
-    //shutdown_motor(1);
-    //set_acceleration(1,500,true);
-    //set_incremental_position(1, 90, 360, true);
-    //set_speed(1, 360, true);
-    //set_absolute_position(1, 90, 1000, true);
-    //set_stposition(1,90,1000,0,true);
 }
 
 // ----- Main Loop -----
@@ -922,10 +913,8 @@ void loop() {
   //set_speed(1, 360, true);
   //stop_motor(1);
   //reset_motor(1);
-  read_angle(1);
-  delay(500);
-  Serial.print("PV1: ");
-  Serial.println(PV1);
+  //read_angle(1);
+  //delay(2000);
   //read_angle(2);
-  delay(150);
+  //delay(150);
 }
