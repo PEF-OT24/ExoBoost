@@ -45,6 +45,11 @@ import uuid
 import webbrowser
 from time import sleep
 
+# Clase para mostrar el teclado en los text fields
+from kivy.core.window import Window
+Window.keyboard_anim_args = {'d': .2, 't': 'in_out_expo'}
+Window.softinput_mode = 'pan'
+
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
 
