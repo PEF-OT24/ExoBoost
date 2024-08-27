@@ -1,8 +1,15 @@
 # Se establece el tamaño y posición de la pantalla
 from kivy.config import Config
+
+# width = 400
+# height = width*(9/20)
+# Config.set('graphics', 'width', width)
+# Config.set('graphics', 'height', height)
 Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
+
+# Config.set('graphics', 'dpi', '387')
 
 # Módulos internos
 from ColorManager import ColorManager
@@ -37,6 +44,11 @@ import json
 import uuid
 import webbrowser
 from time import sleep
+
+# Clase para mostrar el teclado en los text fields
+from kivy.core.window import Window
+Window.keyboard_anim_args = {'d': .2, 't': 'in_out_expo'}
+Window.softinput_mode = 'pan'
 
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
@@ -136,7 +148,7 @@ class ExoBoostApp(MDApp):
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
         # Se inicializa el hilo secundario de la lectura de datos
-        self.read_thread = Thread(target=self.read_pv_cycle, args=(100,))
+        self.read_thread = Thread(target=self.read_pv_cycle, args=(1000,))
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
