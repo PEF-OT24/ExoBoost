@@ -63,6 +63,7 @@ bool doControlFlag = 0; // Bandera de control en tiempo real
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
 const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
 String mensaje_leido = "";       // Buffer para recibir el mensaje
+byte commandCAN = 0x00;          // Guarda el comando mandado para lectura de comandos de CAN
 
 // Variables para la transmisión de mensajes por I2C
 String stringsend_ESP32 = "";   // Se inicializa el mensaje como vacío
@@ -88,6 +89,19 @@ void split16bits(int16_t number, uint8_t *byteArray) {
     byteArray[1] = number & 0xFF;  // byte menos significativo
 }
 
+void delayMS(uint32_t milliseconds){
+    uint32_t delay_cycles;
+    
+    // Get the system clock frequency in Hz
+    uint32_t sysClock = SysCtlClockGet();
+
+    // Calculate the number of delay cycles needed for the given milliseconds
+    // Avoid overflow by dividing first
+    delay_cycles = (sysClock / 3000) * milliseconds;
+
+    // Call SysCtlDelay to create the delay
+    SysCtlDelay(delay_cycles);
+}
 // ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real (NO SE USA)
     doControlFlag = true;
@@ -117,6 +131,20 @@ void CAN0IntHandler(void) {
         else if (Message_Rx.ui32Flags == MSG_OBJ_DATA_LOST){
           Serial.println("Info perdida");  
         }
+
+        // Validación del mensaje
+        if (commandCAN != CANBUSReceive[0]){
+          return;
+        }
+
+        /*
+        // Se imprime el mensaje para debuggear
+        Serial.print("Mensaje recibido: ");
+        for (int i = 0; i < 8; i++){
+          Serial.print(" ");
+          Serial.print(CANBUSReceive[i], HEX);
+        }
+        */
         
         // Visualización
         int32_t position_read = (CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4];
@@ -129,29 +157,13 @@ void CAN0IntHandler(void) {
           PV3 = int(round(position_read/100));  
         } else {Serial.println("no");}
         
-        Serial.print("PV: ");
-        Serial.println(position_read);
-        //Serial.print("Mensaje recibido: ");
-        //for (int i = 0; i < 5; i++) {
-          //if (i == 0){
-            //Serial.print(CANBUSReceive[i], HEX);
-            //Serial.print(" ");
-          //}
-          //else if (i == 4){
-            //Serial.print(position_read, DEC);
-            //Serial.print(" ");
-          //}
-          //else {
-            //Serial.print(CANBUSReceive[i], DEC);
-            //Serial.print(" ");
-          //}
-        //}
-        //Serial.println();
+        //Serial.print("PV: ");
+        //Serial.println(position_read);
+    
     } else {
         // Handle unexpected interrupts
         CANIntClear(CAN0_BASE, ui32Status);
     }
-    Serial.println("Int");
 }
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
@@ -559,6 +571,7 @@ void read_angle(int8_t ID){
   // Función para apagar el motor
 
   motor_selected = ID;
+  commandCAN = 0x92; // comando de lectura
   // Objetos para la comunicación CAN
   uint8_t CAN_data_TX[8u];
 
@@ -905,16 +918,23 @@ void setup() {
     CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
+
+    //set_speed(1, 360, false);
+    //stop_motor(1, false);
 }
 
 // ----- Main Loop -----
 void loop() {
   //set_stposition(1,90,5000,1,true);
   //set_speed(1, 360, true);
-  //stop_motor(1);
+  //stop_motor(1, false);
   //reset_motor(1);
   //read_angle(1);
-  //delay(2000);
-  //read_angle(2);
+  //delay(200);
+  //Serial.println(".");
+  delayMS(100);
+  read_angle(1);
   //delay(150);
+  //stop_motor(1, false);
+  //set_speed(1, 360, true);
 }

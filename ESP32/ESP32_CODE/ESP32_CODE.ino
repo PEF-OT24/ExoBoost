@@ -489,6 +489,7 @@ void read_PV(){
   }
 
   if (client_connected){ // Se mandan los datos a la app si está conectada
+    Serial.println("Mandando info a app.")
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     pCharacteristic_PV->setValue(stringsend.c_str()); // Se mandan los valores por BLE
