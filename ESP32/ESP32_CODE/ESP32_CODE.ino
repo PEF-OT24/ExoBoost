@@ -606,7 +606,7 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(4000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  delay(600); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
   // Serial.println("leyendo");
   read_PV();

@@ -683,7 +683,7 @@ class ExoBoostApp(MDApp):
         Este método se llama mientras se encuentre en modo sintonización.
         Entrada: time interval int -> Periodo de lectura de datos en ms'''
 
-        sleep(2) # Espera un momento antes de comenzar la lectura
+        sleep(1) # Espera un momento antes de comenzar la lectura
         while True:
 
             # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
