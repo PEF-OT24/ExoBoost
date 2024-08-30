@@ -728,6 +728,12 @@ WindowManager:
                                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                                     theme_icon_color: "Custom"
                                     icon_color: app.colors['White']
+                                    
+                                    on_press: 
+                                        self.md_bg_color = app.colors['Light Orange']
+                                        app.send_sp()
+                                    on_release: self.md_bg_color = app.colors['Cyan']
+                                    
                                 # MDIconButton:
                                 #     id: upload_pid
                                 #     icon: "upload-multiple"
@@ -739,20 +745,7 @@ WindowManager:
                                 #         self.md_bg_color = app.colors['Light Orange']
                                 #         app.send_params()
                                 #     on_release: self.md_bg_color = app.colors['Cyan']
-
                                 #     md_bg_color: app.colors['Cyan']
-
-                                # MDIconButton:
-                                #     id: upload_sp
-                                #     icon: "upload"
-                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                #     theme_icon_color: "Custom"
-                                #     icon_color: app.colors['White']
-                                    
-                                #     on_press: 
-                                #         self.md_bg_color = app.colors['Light Orange']
-                                #         app.send_sp()
-                                #     on_release: self.md_bg_color = app.colors['Cyan']
 
                                     md_bg_color: app.colors['Cyan']
 
