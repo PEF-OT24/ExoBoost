@@ -690,7 +690,8 @@ class ExoBoostApp(MDApp):
             if not self.ble: continue
             if not self.ble.connected: continue
             if not self.reading: continue
-
+            
+            print("Lectura PV")
             # Se realiza la lectura si está conectado y en lectura activa
             service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
             char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
@@ -712,14 +713,15 @@ class ExoBoostApp(MDApp):
                 monitoring_read = json_dict["monitoring"]      
                 motor1pv_read = json_dict["motor1"]            
                 motor2pv_read = json_dict["motor2"]            
-                motor3pv_read = json_dict["motor3"]       
+                motor3pv_read = json_dict["motor3"]    
+                print("Lectura PV correcta")   
             except Exception as e:
                 print("Error al leer los datos")
                 print(e)  
 
             # Si es la variable de proceso de interés, se despliega la información 
-            if not monitoring_read == self.motor_parameters_pv["monitoring"]: continue
-
+            if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
+            
             # Se guardan los valores en el diccionario
             self.motor_parameters_pv["motor1"] = motor1pv_read
             self.motor_parameters_pv["motor2"] = motor2pv_read
@@ -732,6 +734,7 @@ class ExoBoostApp(MDApp):
             sleep(float(time/1000))
 
     def update_process_variable(self, *args):
+        print("Desplegando valores PV")
         '''Método para actualizar la variable de proceso en la app'''
         self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
         self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
