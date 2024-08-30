@@ -114,6 +114,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
     uint8_t CANBUSReceive[8u];
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
 
+    Serial.print("int");
     // Check if the interrupt is caused by a status change
     if (ui32Status == CAN_INT_INTID_STATUS) {
         // Read the full status of the CAN controller
@@ -137,8 +138,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             return;
           }
           PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-
-          
+          Serial.println(PV1);
         } else if (motor_selected == 2){           // motor 2
           // Se obtiene el mensaje
           Message_Rx_2.pui8MsgData = CANBUSReceive;
@@ -149,7 +149,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             return;
           }
           PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100)); 
-
+          Serial.println(PV2);
         } else if (motor_selected == 3){           // motor 3
           // Se obtiene el mensaje
           Message_Rx_3.pui8MsgData = CANBUSReceive;
@@ -903,38 +903,11 @@ void setup() {
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
     Serial.println("Listo");
 }
-void read_pos(){
-  delayMS(50);
-  read_angle(1);
-  delayMS(50);
-  read_angle(2);  
-}
+
 // ----- Main Loop -----
 void loop() {
-  set_absolute_position(1, 100, max_speed, true);
-  delayMS(CAN_DELAY);
-  set_absolute_position(2, 100, max_speed, true);
-  delayMS(CAN_DELAY);
-/*
-  set_absolute_position(1, 200, max_speed, true);
-  delayMS(CAN_DELAY);
-  set_absolute_position(2, 200, max_speed, true);
-
-  // lectura de posición por 100 ms * 8
-  for (int i = 0; i < 8; i++){
-    read_pos();
-  }
-  Serial.print("test");
-  delayMS(2000);
-  
-  set_absolute_position(1, 0, max_speed, true);
-  delayMS(CAN_DELAY);
-  set_absolute_position(2, 0, max_speed, true);
-
-  // lectura de posición por 100 ms * 8
-  for (int i = 0; i < 8; i++){
-    read_pos();
-  }
-  delayMS(2000);
-*/
+  delayMS(80);
+  read_angle(1);
+  delayMS(80);
+  read_angle(2); 
 }
