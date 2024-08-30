@@ -438,6 +438,8 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text = "Disconnected"
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
+            self.read_thread.join() # Stops reading thread
+
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
     # ---------------- Valor del slider ----------------
     def on_slider_value(self, value):
@@ -614,14 +616,14 @@ class ExoBoostApp(MDApp):
         if not self.ble.connected: return
         self.ble.write_json(service_uuid, char_uuid, json_data) 
     
-    def process_var_select(self, instance, value) -> None:
+    def process_var_select(self, instance, state) -> None:
         '''
         Método para establecer la variable de processo seleccionada.
         Dicha variable está ligada tanto al monitoreo de su valor como variable de proceso, 
         los valores de PI para la sintonización y su punto de set point para el control.
         '''
-        if value == 'down': # Cuando un botón es presionado	
-            print(f'Seleccionaste: {instance.text}')
+        if state == 'down': # Cuando un botón es presionado	
+            print(instance.text)
 
             # Se establece el parámetro a sintonizar según la selección        
             match instance.text:
@@ -684,7 +686,10 @@ class ExoBoostApp(MDApp):
         Entrada: time interval int -> Periodo de lectura de datos en ms'''
 
         sleep(1) # Espera un momento antes de comenzar la lectura
+
         while True:
+            # Espera el tiempo indicado para cada lectura
+            sleep(float(time/1000))
 
             # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
             if not self.ble: continue
@@ -699,7 +704,7 @@ class ExoBoostApp(MDApp):
 
             ''' Estructura deseada del json
             json_dict = {
-                "limb": "Rigth leg", " {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+                "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
                 "monitoring": "pos", # {"pos", "vel", "cur"}
                 "motor1": "100",
                 "motor2": "100",
@@ -714,24 +719,20 @@ class ExoBoostApp(MDApp):
                 motor1pv_read = json_dict["motor1"]            
                 motor2pv_read = json_dict["motor2"]            
                 motor3pv_read = json_dict["motor3"]    
-                print("Lectura PV correcta")   
             except Exception as e:
                 print("Error al leer los datos")
                 print(e)  
 
             # Si es la variable de proceso de interés, se despliega la información 
-            if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
-            
-            # Se guardan los valores en el diccionario
-            self.motor_parameters_pv["motor1"] = motor1pv_read
-            self.motor_parameters_pv["motor2"] = motor2pv_read
-            self.motor_parameters_pv["motor3"] = motor3pv_read
+            if monitoring_read == self.motor_parameters_pv["monitoring"]:
+                
+                # Se guardan los valores en el diccionario
+                self.motor_parameters_pv["motor1"] = motor1pv_read
+                self.motor_parameters_pv["motor2"] = motor2pv_read
+                self.motor_parameters_pv["motor3"] = motor3pv_read
 
-            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-            if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
-            
-            # Se espera el tiempo indicado para la siguiente lectura
-            sleep(float(time/1000))
+                # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+                if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
 
     def update_process_variable(self, *args):
         print("Desplegando valores PV")

@@ -432,24 +432,21 @@ class BluetoothManager_App:
 
             # Se configura la lectura del mensaje
             self.python_gatt_callback.CharToRead(service_uuid, characteristic_uuid)
-            status: bool = self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
-            print(f"Característica leída: {status}")
+            self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
 
             # Espera hasta que la característica se pueda leer
-            self.connected_gatt.show_info = True # Se establece que se pueda ver el debug
-            ready: bool = self.python_gatt_callback.isReady_to_read() 
-            while not(ready): ready = self.python_gatt_callback.isReady_to_read()
-            self.python_gatt_callback.characteristicRead()
+            self.python_gatt_callback.show_info = False # Mensaje no mostrado 
+            while not(self.python_gatt_callback.isReady_to_read()): pass # Espera hasta que la lectura esté disponible
+            self.python_gatt_callback.reset_reading()                    # Reinicia la bandera
 
-            valor = self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string
-            print("Valor recibido en python: ", valor)
-            return valor
+            # Se devuelve el valor de la característica
+            return self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string
 
         except Exception as e:
-            print("Característica no encontrada")
+            print("Error encontrado")
             print(f"Error: {e}")
 
-            return
+            return "NULL"
 
     def read_json(self, service_uuid: str, characteristic_uuid: str) -> dict: 
         '''Método que convierte el un string en un archivo JSON y llama al método read()

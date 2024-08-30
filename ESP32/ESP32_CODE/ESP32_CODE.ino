@@ -102,13 +102,13 @@ class ServerCallbacks: public BLEServerCallbacks {
 class BLECallback_PI: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
-    Serial.println("Característica PI leída por el cliente");
+    Serial.println("Característica PI leída");
   } // fin de onRead
 
   void onWrite(BLECharacteristic *pCharacteristic) {
     // Método que recibe un nuevo valor de la característica
     std::string value = std::string(pCharacteristic->getValue().c_str());
-    Serial.println("Característica escrita: " + String(value.c_str()));
+    Serial.println("Característica PI escrita: " + String(value.c_str()));
 
     // Procesa los datos recibidos en formato JSON
     StaticJsonDocument<450> jsonrec; // Longitud para procesar el JSON
@@ -206,7 +206,7 @@ class BLECallback_PI: public BLECharacteristicCallbacks {
 class BLECallback_SP: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
-    Serial.println("Característica SP leída por el cliente");
+    Serial.println("Característica SP leída");
   } // fin de onRead
 
   void onWrite(BLECharacteristic *pCharacteristic) {
@@ -264,7 +264,7 @@ class BLECallback_SP: public BLECharacteristicCallbacks {
 class BLECallback_LEVEL: public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
-    Serial.println("Característica LEVELleída por el cliente");
+    Serial.println("Característica LEVEL leída");
   } // fin de onRead
 
   void onWrite(BLECharacteristic *pCharacteristic) {
@@ -317,12 +317,12 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
 class BLECallback_PV : public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
-    Serial.println("Característica leída por el cliente");
+    Serial.println("Característica PV leída");
   } // fin de onRead
   void onWrite(BLECharacteristic *pCharacteristic) {
     // Método que recibe un nuevo valor de la característica
     std::string value = std::string(pCharacteristic->getValue().c_str());
-    Serial.println("Característica escrita: " + String(value.c_str()));
+    Serial.println("Característica PV escrita: " + String(value.c_str()));
     pCharacteristic->notify();
   }
 };
@@ -399,9 +399,6 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
   int buffer_size = 32;          // Número máximo de bytes a transmitir (por protocolo)
   int errorCode;
 
-  Serial.print("Sending message: "); // Fragmentar el mensaje y enviarlo en partes
-  Serial.println(message);
-
   do { // Intento de mandar información por I2C
     for (int i = 0; i < length; i += buffer_size) { 
       Wire.beginTransmission(slaveAddress);  // Iniciar transmisión con la dirección del esclavo
@@ -469,10 +466,6 @@ void read_PV(){
   // Hace el request al esclavo
   String stringread = readI2CMessage(SLAVE_ADDRESS);
 
-  // Se muestra el mensaje leído
-  Serial.print("I2C: ");
-  Serial.println(stringread);
-  
   // Se deserializa el JSON
   StaticJsonDocument<100> jsonrec; 
   DeserializationError error = deserializeJson(jsonrec, stringread);
@@ -489,7 +482,7 @@ void read_PV(){
   }
 
   if (client_connected){ // Se mandan los datos a la app si está conectada
-    Serial.println("Mandando info a app.");
+    Serial.println("Notificación");
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     pCharacteristic_PV->setValue(stringsend.c_str()); // Se mandan los valores por BLE
@@ -502,7 +495,7 @@ void read_PV(){
 void setup() {
   // Inicializa el puerto serie para la depuración
   Serial.begin(115200);
-  Serial.println("Iniciando el servidor BLE...");
+  Serial.println("Iniciando BLE");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
   Wire.setClock(400000);  // Establece la velocidad del I2C a 100 kHz
@@ -605,9 +598,12 @@ void setup() {
 }
 
 void loop() {
-  // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(100); // Cada segundo se hace la lectura de la variable de proceso y se guarda
-  // Se notifica que se debe leer una característica
-  // Serial.println("leyendo");
-  read_PV();
+  // delay(100); // Lectuda de PV cada 100 ms
+  // read_PV();
+
+  // Intento de notificaciones cada 500 ms
+  delay(500);
+  if (client_connected){
+    pCharacteristic_PV->notify();
+  }
 }
