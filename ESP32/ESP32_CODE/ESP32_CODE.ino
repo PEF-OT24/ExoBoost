@@ -440,6 +440,7 @@ String readI2CMessage(uint8_t slaveAddress) {
       }
       message += receivedChar;
     }
+    delay(50);
   }
 
   return message;
@@ -469,8 +470,8 @@ void read_PV(){
   String stringread = readI2CMessage(SLAVE_ADDRESS);
 
   // Se muestra el mensaje leído
-  // Serial.print("I2C: ");
-  // Serial.println(stringread);
+  Serial.print("I2C: ");
+  Serial.println(stringread);
   
   // Se deserializa el JSON
   StaticJsonDocument<100> jsonrec; 
@@ -488,6 +489,7 @@ void read_PV(){
   }
 
   if (client_connected){ // Se mandan los datos a la app si está conectada
+    Serial.println("Mandando info a app.")
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     pCharacteristic_PV->setValue(stringsend.c_str()); // Se mandan los valores por BLE
@@ -503,7 +505,7 @@ void setup() {
   Serial.println("Iniciando el servidor BLE...");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
-  Wire.setClock(100000);  // Establece la velocidad del I2C a 100 kHz
+  Wire.setClock(400000);  // Establece la velocidad del I2C a 100 kHz
 
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
@@ -604,7 +606,7 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(1500); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  delay(4000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
   // Serial.println("leyendo");
   read_PV();
