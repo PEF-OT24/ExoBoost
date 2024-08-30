@@ -1,72 +1,69 @@
 # Compilación de App
+## Set Up
 
-## Windows
-_Instrucciones para ejecutar la aplicación en Windows_
+### Construido con: ⚙️
 
-1. Descargar el archivo requirements_windows.txt
-2. Crear un virtual environment usando el siguiente comando:
+* [Python 3.12](https://www.python.org/downloads/release/python-3125/) - Lenguaje de programación principal.
+* [KivyMD](https://kivymd.readthedocs.io/en/latest/) - Framework usado para la app móvil.
+* [Java JDK 17](https://techkrowd.com/programacion/java/como-instalar-jdk-17-en-windows-10-y-11/) - Lenguaje de programación usado para interactuar con Android SDK.
+* [Android Developer Tools (Android SKD)](https://developer.android.com/tools?hl=es-419) - Herramientas de Android para el desarrollo de servicio BLE.
+* [Android Developer Tools (Android NDK)](https://developer.android.com/ndk/downloads?hl=es-419) - Herramientas auxiliares de Android para acceder a la API de android.
+* [Buildozer 1.5.0](https://pypi.org/project/buildozer/) - Usado para generar apk con python.
+* [Energia IDE](https://energia.nu) - Usado para programación de Tiva C.
+* [Arduino IDE](https://support.arduino.cc/hc/en-us/articles/360019833020-Download-and-install-Arduino-IDE) - Usado para la programación de la ESP32 en C++.
+
+#### El diseño de la aplicación se puede modificar tanto en Windows como en Ubuntu puesto que solo depende de python. Para compilar la aplicación y generar las dependencias de Java se utiliza un entorno Ubuntu.
+
+### Windows
+#### Instrucciones para establecer el entorno de desarrollo en Windows.
+
+1. Crear y activar virtual environment:
 
 ```
-python -m venv /path/to/new/virtual/environment
+python -m venv /path_to_venv
+cd /path_to_venv/Scripts
+activate
 ```
-2. continuacion se debe activar para instalar los requerimientos necesarios_
+2. Instalar requerimentos de software
+```
+pip install -r requirements_windows.txt
+```
+
+#### Con estas dependencias se puede modificar el diseño de la aplicación con python. 
+
+### Linux
+
+#### Instrucciones para establecer el entorno de desarrollo en Linux.
+
+1. Crear y activar virtual environment:
 
 ```
-source activate
+python -m venv /path_to_venv
+cd /path_to_venv
+source bin/activate
 ```
-5. Instalar los requerimientos
+2. Instalar requerimentos de software
 ```
 pip install -r requirements_linux.txt
 ```
 
+### Instalación de Java JDK 17 
 
-## Linux
+#### A partir de este punto la instalación se realiza en Ubutnu 22.04. El Java JDK 17 es el lenguaje utilizado para usar la API de Android v. 31 y tener acceso a BLE.
 
-### Setup
-
-_Instrucciones para instalación de requerimientos en Linux haciendo un venv_
-
-1. Descargar archivo requirements_linux.txt
-2. Crear una carpeta dentro de Documents destinada al environment
-3. Seguir los siguientes pasos en orden para crear el environment
-```
-mkdir directory_env
-sudo apt install python3-venv
-python3 -m venv venvname
-cd /bin
-```
-4. Activar el environment creado
-
-```
-source activate
-```
-5. Instalar los requerimientos
-```
-pip install -r requirements_linux.txt
-```
-
-### Compilación de apk usando Buildozer
-
-_Instrucciones para generar el apk dentro de Ubuntu usando Buildozer_
-
-_Aqui podemos poner que vayan a leer el archivo de steps_linux.txt o hacer otro readme lol nose o hacer un video explicativo como los de ebike_
-
-_pondré las instrucciones aqui por mientras_
-
-##### Instalación de Java 17 en Linux
-
+#### Se abre una nueva terminal en Ubuntu 22.04
 ```
 sudo apt update
+sudo apt upgrade
 sudo apt install openjdk-17-jdk
 sudo update-alternatives --config java
 sudo update-alternatives --config javac
 ```
-#### Instalación de Android SKD al entorno de desarrollo Linux
 
-_Descargar las herramientas necesarias desde el [Sitio Oficial de Android](https://developer.android.com/studio?hl=es-419#downloads)_
+### Instalación de Android SDK al entorno de desarrollo Linux
+#### El Android SDK es necesario para poder accesder a la API que ofrece Android Developer para acceder a software y hardware especializado del celular. 
 
-_Seguir las siguientes lineas de código para instalar las herramientas descargadas_
-
+#### Instalar _command line tools_ marcado al inicio.
 ```
 sudo apt install sdkmanager
 mkdir -p ~/android-sdk/cmdline-tools
@@ -76,19 +73,17 @@ mv cmdline-tools latest
 cd
 sdkmanager "platform-tools"
 ```
-#### Instalación de Android NDK al entorno de desarrollo Linux
+### Instalación de Android NDK al entorno de desarrollo Linux
+#### Es necesario haber descargado Android NDK mostrado al inicio del documento
 
-_Descargar las herramientas necesarias desde el [Sitio Oficial de Android](https://developer.android.com/ndk/downloads?hl=es-419)_
-
-_Seguir las siguientes líneas de código para instalar las herramientas descargadas_
-
+#### Se descomprime el archivo.
 ```
 cd ~/Downloads
 unzip android-ndk-version.zip -d ~/android-ndk
 ```
-#### Configuraciones adicionales para el entorno de desarrollo
+### Configuraciones adicionales para el entorno de desarrollo
 
-_Abrir .bashrc desde un editor de texto y agregar las siguientes líneas_
+#### Abrir .bashrc desde un editor de texto y agregar las siguientes líneas al final:
 
 ```
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
@@ -99,28 +94,56 @@ export ANDROID_SDK_ROOT=$HOME/android-sdk
 export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
 export PATH=$PATH:$ANDROID_HOME/platform-tools
 ```
-_Cerrar el .bashrc_
+#### Cerrar el .bashrc_ y actualizaro
 
 ```
 source ~/.bashrc
 ```
-#### Compilar apk usando buildozer
+## Compilar apk usando buildozer
 
-_Inicializar Buildozer previamente instalado en el virtual environment_
+#### Al momento de clonar el repo, se agrega un archivo _buildozer.spec_ que describe las características de la compilación del apk. Si se desea generar uno desde cero:
 
 ```
-cd /path/to/your/project
+cd ExoBoost/app
 buildozer init
 ```
-_Posteriormente se debe editar el archivo .spec de Buildozer a preferencia del usuario, accediendo al mismo mediante el shell de Linux o bien, usando un editor de texto. A continuación se deben seguir los siguientes pasos para compilar el apk:_
+
+#### Para compilar la app se ejecuta:
 
 ```
+cd ExoBoost/app
 buildozer android clean
 buildozer -v android debug
 ```
-_Cabe mencionar que esto se debe realizar en la misma ruta donde se encuentran los archivos de la aplicación móvil y con el virtual environment activado_
+#### Es importante mencionar que _buildozer android clean_ solamente es necesario cuando se modifica el archivo _buildozer.spec_ o ocurre algún error durante la compilación.
 
+## Android SDK
+#### Cuando se compila la aplicación para generar el instalador apk se utiliza Python for Android (P4A), así como las herramientas de desarrollo de Android (Android SDK). La API de [Android v. 31](https://developer.android.com/reference/android/bluetooth/BluetoothGattCallback#onCharacteristicChanged(android.bluetooth.BluetoothGatt,%20android.bluetooth.BluetoothGattCharacteristic,%20byte[])) permite acceder a funciones tanto de software como en hardware, la cual está almacenada en clases de Java o Kotlin. Para esta aplicación se utilizaron las clases de Java. 
+#### Bajo el directorio _javadev_, en el paquete _test_pkg_, se encuentran clases personalizadas de Java las cuales se importan a python utilizando ```pyjnius```.
 
+## Debugger
+#### Es necesario habilitar las opciones de desarrollador en el celular Android desde las configuraciones, así como el debugger por USB. Esto dependerá del fabricante y es necesario otorgar permisos especiales. 
 
+#### Para debuggear la aplicación durante su desarrollo se utiliza la herramienta Android Debug Bridge (adb). 
+#### Instalación: 
+```
+sudo apt install adb
+```
+#### Esta herramienta permite ver el logger de Android conecatado a la computadora. Para comprobar que esté correctamente instalado, conecta el celular por USB y ejecuta el siguiente comando:
+```
+adb devices
+```
+#### El dispositivo debería aparecer en la terminal. 
+#### Durante la compilación, el celular se puede conectar y ejecutar este comando: 
+```
+adb logcat | grep python
+```
+#### Esto filtrará el logger por la palabra clave "python" y permitirá recibir mensajes para debuggera la aplicación. Adicionalmente, es posible compilar la aplicación e instalarla directamente por medio de adb: 
+```
+buildozer android debug deploy run
+```
 
+#### Si está corriente Ubuntu 22.04 en Virtual Box: 
+
+INSTRUCCIONES TERE
 ***

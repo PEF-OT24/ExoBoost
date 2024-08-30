@@ -613,12 +613,17 @@ WindowManager:
 
             # ------------------------------------ Fondo del menú --------------------------------------
                 # Elements
-                FloatLayout:
+                BoxLayout:
                     orientation: "vertical"
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
-                    halign: "center"
-                    valign: "center"
+                    #size_hint: None, None
+                    width: root.width
+                    height: root.height
+                    #halign: "center"
+                    #valign: "center"
+                    padding: dp(10), dp(0), dp(10), dp(10)
                     spacing: dp(5)
+
 
                     canvas.before:
                         Color:
@@ -627,7 +632,7 @@ WindowManager:
                             pos: self.pos
                             size: self.size
                     GridLayout: # Distribución principal del menú como GridLayout de 9 filas
-                        rows: 7
+                        rows: 6
                         cols: 1
                         padding: dp(10)
                         spacing: dp(15)
@@ -650,6 +655,7 @@ WindowManager:
                         BoxLayout: # ROW 2 selección de la articulación
                             orientation: "vertical"
                             size_hint: None, None
+                            size: (root.width*0.95, dp(50))
                             size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
@@ -722,11 +728,31 @@ WindowManager:
                                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                                     theme_icon_color: "Custom"
                                     icon_color: app.colors['White']
+                                # MDIconButton:
+                                #     id: upload_pid
+                                #     icon: "upload-multiple"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
                                     
-                                    on_press: 
-                                        self.md_bg_color = app.colors['Light Orange']
-                                        app.send_sp()
-                                    on_release: self.md_bg_color = app.colors['Cyan']
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #         app.send_params()
+                                #     on_release: self.md_bg_color = app.colors['Cyan']
+
+                                #     md_bg_color: app.colors['Cyan']
+
+                                # MDIconButton:
+                                #     id: upload_sp
+                                #     icon: "upload"
+                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                #     theme_icon_color: "Custom"
+                                #     icon_color: app.colors['White']
+                                    
+                                #     on_press: 
+                                #         self.md_bg_color = app.colors['Light Orange']
+                                #         app.send_sp()
+                                #     on_release: self.md_bg_color = app.colors['Cyan']
 
                                     md_bg_color: app.colors['Cyan']
 
@@ -738,7 +764,8 @@ WindowManager:
                             size_hint: None, None
                             size: (root.width, dp(45))
                             # spacing: dp(15)
-                            # padding: (dp(10),dp(10))
+                            #          left   top    right  bottom
+                            padding: (dp(60),dp(30),dp(50),dp(10))
 
                             # ---------- Botones para seleccionar variable de proceso --------
                             BoxLayout:
@@ -947,10 +974,10 @@ WindowManager:
                         #         #size_hint_x: None
                         #         width: root.width*0.95
                         #         pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                        BoxLayout:
-                            orientation: "vertical"
-                            size_hint: None, None
-                            width: dp(45)
+                        # BoxLayout:
+                        #     orientation: "vertical"
+                        #     size_hint: None, None
+                        #     width: dp(45)
                                 
     # ------------------------------------------- Menú de Monitoreo -------------------------------------------------            
             MDBottomNavigationItem:
