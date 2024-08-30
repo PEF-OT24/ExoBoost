@@ -613,15 +613,11 @@ WindowManager:
 
             # ------------------------------------ Fondo del menú --------------------------------------
                 # Elements
-                BoxLayout:
+                FloatLayout:
                     orientation: "vertical"
                     pos_hint: {"center_y": 0.5, "center_x": 0.5}
-                    #size_hint: None, None
-                    width: root.width
-                    height: root.height
-                    #halign: "center"
-                    #valign: "center"
-                    padding: dp(10), dp(0), dp(10), dp(10)
+                    halign: "center"
+                    valign: "center"
                     spacing: dp(5)
 
 
@@ -632,7 +628,7 @@ WindowManager:
                             pos: self.pos
                             size: self.size
                     GridLayout: # Distribución principal del menú como GridLayout de 9 filas
-                        rows: 6
+                        rows: 7
                         cols: 1
                         padding: dp(10)
                         spacing: dp(15)
@@ -655,7 +651,6 @@ WindowManager:
                         BoxLayout: # ROW 2 selección de la articulación
                             orientation: "vertical"
                             size_hint: None, None
-                            size: (root.width*0.95, dp(50))
                             size: (root.width*0.95, dp(50))
                             pos_hint: {"center_x": 0.5, "center_y": 0.5}
                             
@@ -971,6 +966,10 @@ WindowManager:
                         #     orientation: "vertical"
                         #     size_hint: None, None
                         #     width: dp(45)
+                        BoxLayout:
+                            orientation: "vertical"
+                            size_hint: None, None
+                            width: dp(45)
                                 
     # ------------------------------------------- Menú de Monitoreo -------------------------------------------------            
             MDBottomNavigationItem:
