@@ -489,7 +489,7 @@ void read_PV(){
   }
 
   if (client_connected){ // Se mandan los datos a la app si está conectada
-    Serial.println("Mandando info a app.")
+    Serial.println("Mandando info a app.");
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     pCharacteristic_PV->setValue(stringsend.c_str()); // Se mandan los valores por BLE
@@ -606,7 +606,7 @@ void setup() {
 
 void loop() {
   // El loop está vacío ya que los eventos son manejados por las clases de callbacks
-  delay(4000); // Cada segundo se hace la lectura de la variable de proceso y se guarda
+  delay(100); // Cada segundo se hace la lectura de la variable de proceso y se guarda
   // Se notifica que se debe leer una característica
   // Serial.println("leyendo");
   read_PV();
