@@ -600,6 +600,6 @@ void setup() {
 }
 
 void loop() {
-  delay(100); // Lectuda de PV cada 100 ms
+  delay(150); // Lectuda de PV cada 100 ms
   read_PV();
 }

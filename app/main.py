@@ -309,7 +309,7 @@ class ExoBoostApp(MDApp):
             self.reading = False
         elif tab == "Tuning mode": 
             self.mode = "tuning"
-            self.reading = False
+            self.reading = True
         elif tab == "Monitoring tab": 
             self.mode = "monitoring"
             self.reading = True
