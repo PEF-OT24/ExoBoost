@@ -504,7 +504,7 @@ class BluetoothManager_App:
             if descriptor_UUID == "": 
                 print("No se se encontró un descriptor")
                 return False
-            CCCD = characteristic.getDescriptor(UUIDClass.fromSrting(descriptor_UUID)) # Descriptor de la característica
+            CCCD = characteristic.getDescriptor(UUIDClass.fromString(descriptor_UUID)) # Descriptor de la característica
 
             # Se habilita la notificación
             success: bool = self.connected_gatt.setCharacteristicNotification(characteristic, enable) # Se revisa de errores
