@@ -401,7 +401,7 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
 
   do { // Intento de mandar información por I2C
     for (int i = 0; i < length; i += buffer_size) { 
-      Wire.beginTransmission(slaveAddress);  // Iniciar transmisión con la dirección del esclavo
+      Wire.beginTransmission(slaveAddress);                   // Iniciar transmisión con la dirección del esclavo
       
       // Cantidad de bytes a mandar
       int bytes_to_send = min(buffer_size, length - i);
