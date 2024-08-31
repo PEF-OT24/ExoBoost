@@ -5,6 +5,7 @@
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEServer.h>
+#include <BLE2902.h>  
 #include <ArduinoJson.h>
 #include "Wire.h"
 
@@ -550,6 +551,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic_PV->setCallbacks(new BLECallback_PV());
+  pCharacteristic_PV->addDescriptor(new BLE2902()); // Se añade un descriptor
 
   // Crea el servicio de envío de valor del estado
   BLEService *pService_MODE = pServer->createService(SERVICE_UUID_COMMAND);

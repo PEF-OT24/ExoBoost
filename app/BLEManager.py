@@ -496,7 +496,7 @@ class BluetoothManager_App:
                 return False
 
             # Se obtiene el descriptor de la característica
-            descriptor_UUID = ""
+            descriptor_UUID: str = ""
             descriptors: BluetoothGattDescriptor = characteristic.getDescriptors() # type: ignore
             for i, descriptor in enumerate(descriptors): # CUÁL DESCRIPTOR AGARRAR? SE TOMA EL ÚLTIMO POR DEFAULT
                 print(i)
@@ -504,7 +504,7 @@ class BluetoothManager_App:
             if descriptor_UUID == "": 
                 print("No se se encontró un descriptor")
                 return False
-            CCCD = characteristic.getDescriptor(descriptor_UUID); # Descriptor de la característica
+            CCCD = characteristic.getDescriptor(UUIDClass.fromSrting(descriptor_UUID)) # Descriptor de la característica
 
             # Se habilita la notificación
             success: bool = self.connected_gatt.setCharacteristicNotification(characteristic, enable) # Se revisa de errores
