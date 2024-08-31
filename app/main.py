@@ -407,7 +407,14 @@ class ExoBoostApp(MDApp):
         def perform_connection():
             '''Método para realizar la conexión'''
             self.connection_successful = self.ble.connect(self.selected_device)
-            Clock.schedule_once(update_label)
+
+            # Si se conectó, se habilitan notificaciones para la característica PV
+            if self.connection_successful:
+                service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+                char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
+                notifications_enabled = self.ble.set_notifications(service_uuid, char_uuid, True)
+                self.ble.connected = notifications_enabled # Comprueba el estado de la conexión dependiente del estado de la notificación
+                Clock.schedule_once(update_label)
 
         def update_label(*args):
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
@@ -431,7 +438,6 @@ class ExoBoostApp(MDApp):
         else:
             # Se realiza desconexión y se limpia el dispositivo seleccionado
             self.ble.disconnect()
-            self.selected_device = None
             # Se cambia el texto del boton
             self.root.get_screen('Main Window').ids.bluetooth_connect.text = "Connect"
             # Se ambia el texto del label

@@ -1,7 +1,8 @@
 '''
 Módulo de manejo de BLE para Android desde P4A. 
 Este módulo tiene dependencias en pyjnius v. 1.6.1.
-Se importan clases de Android SDK (API v. 31) en el paquete javadev/test_pkg
+Se importan clases de Android SDK (API v. 18 a v. 32) en el paquete javadev/test_pkg. Se emplea las APIs de Android SDK v. 31.
+Funciona para Android 12 (no apto para Android 13).
 
 Este módulo es parte del Proyecto de Evaluación Final para la Carrera de Ingeniería en Mecatrónica en la UDEM. 
 
@@ -35,6 +36,7 @@ BluetoothDevice = autoclass('android.bluetooth.BluetoothDevice') # Dispositvos e
 BluetoothGatt = autoclass('android.bluetooth.BluetoothGatt')     # GATT del dispositivo encontrado
 BluetoothGattService = autoclass('android.bluetooth.BluetoothGattService') # Clase de los servicios descubiertos
 BluetoothGattCharacteristic = autoclass('android.bluetooth.BluetoothGattCharacteristic') # Clase de las características de los servicios
+BluetoothGattDescriptor = autoclass('android.bluetooth.BluetoothGattDescriptor') # Clase de los descriptores de características
 ScanResult = autoclass('android.bluetooth.le.ScanResult') # Resultado
 UUIDClass = autoclass('java.util.UUID') 
 
@@ -266,7 +268,7 @@ class BluetoothManager_App:
         try: 
             if self.connected:
                 self.connected_gatt.disconnect()
-                self.connected_gatt.close()
+                # self.connected_gatt.close()
 
                 # Se limpian los atributos después de desconectarse
                 self.connected = False
@@ -460,3 +462,68 @@ class BluetoothManager_App:
         dict_json = json.loads(valor)
 
         return dict_json # Devuelve el diccionario JSON leído
+    
+    def set_notifications(self, service_uuid: str, characteristic_uuid: str, enable: bool) -> bool:
+        '''
+        Método para habilitar/deshabilitar notificaciones de una característica del gatt conectado.
+        Entradas: service_uuid str -> UUID del servicio de la característica a habilitar/deshabilitar notificaciones
+                  characteristic_uuid str -> UUID de la característica a habilitar/deshabilitar notificaciones
+                  enable bool -> True para habilitar, False para deshabilitar
+
+        Salida: True de operación ejecutada con éxito, False en caso contrario
+        '''
+        try: 
+            if not self.connected: return False # Error si no hay dispositivo conectado
+            if not self.connected_gatt: return False # Error si no hay gatt conectado
+        
+            # Atributo para habilitar/deshabilitar notificaciones
+            if enable:
+                payload = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            else:
+                payload = BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+
+            # Identifica la característica de interés del servicio de interés con los UUID's
+            for i, char in enumerate(self.discovered_characteristics[service_uuid]):
+                if char.getUuid().toString() == characteristic_uuid: # CUAL DESCRIPTOR AGARRAR? SE TOMA EL ÚLTIMO POR DEFAULT
+                    characteristic = char
+                    index = i
+                    break
+            
+            # Verifica si la característica es notificable
+            car_analyzer = Characteristic_Info(characteristic)
+            if not car_analyzer.isNotifiable(): 
+                print("Característica no notificable")
+                return False
+
+            # Se obtiene el descriptor de la característica
+            descriptor_UUID = ""
+            descriptors: BluetoothGattDescriptor = characteristic.getDescriptors() # type: ignore
+            for descriptor in enumerate(i, descriptors):
+                print(i)
+                descriptor_UUID = descriptor.getUuid().toString() # Se obtiene el UUID del descriptor
+            if descriptor_UUID == "": 
+                print("No se se encontró un descriptor")
+                return False
+            CCCD = characteristic.getDescriptor(descriptor_UUID); # Descriptor de la característica
+
+            # Se habilita la notificación
+            success: bool = self.connected_gatt.setCharacteristicNotification(characteristic, enable) # Se revisa de errores
+
+            if not success: 
+                print("Error al habilitar notificaciones")
+                return False
+            
+            # Se escribe el valor del descriptor
+            CCCD.setValue(payload)
+            self.connected_gatt.writeDescriptor(CCCD) 
+            
+            sleep(0.1) # Pequeña espera para el callback
+
+            # Operación terminada con éxito
+            success = self.python_gatt_callback.notification_flag()
+            if success: print("Notificaciones habilitadas")
+            else: print("Error al habilitar notificaciones")
+            return success
+
+        except Exception as e:
+            print(f"Error: {e}")

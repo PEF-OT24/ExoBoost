@@ -604,6 +604,7 @@ void loop() {
   // Intento de notificaciones cada 500 ms
   delay(500);
   if (client_connected){
+    Serial.println("Notificando");
     pCharacteristic_PV->notify();
   }
 }

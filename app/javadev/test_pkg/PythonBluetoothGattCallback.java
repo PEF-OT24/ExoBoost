@@ -26,17 +26,21 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public boolean ready_to_read = false;
     public boolean show_info = true;
 
-    // Atributos para guardar el UUID del servicio y la característica a leer y
-    // escribir
+    // UUID del servicio y la característica a leer
     public String serviceToRead = "";
     public String characteristicToRead = "";
 
+    // UUID del servicio y la característica a escribir
     public String serviceToWrite = "";
     public String characteristicToWrite = "";
 
+    // UUID del servicio y la característica notificada para leer
     public String serviceNotified = "";
     public String characteristicNotified = "";
     public boolean ReadIndicated = false;
+
+    // Bandera de notificaciones habilitada exitosamente
+    public boolean notification_enabled = false;
 
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
@@ -145,6 +149,12 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
         super.onDescriptorWrite(gatt, descriptor, status);
         System.out.println("onDescriptorWrite (python)");
+
+        // Verifica si se activó la notificación con éxito
+        if (status == BluetoothGatt.GATT_SUCCESS) { // GATT_SUCESS = 0
+            this.notification_enabled = true;
+            System.out.println("Notificación activada (python)");
+        }
     }
 
     @Override
@@ -248,5 +258,10 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         if (this.ReadIndicated) {
             this.ReadIndicated = false;
         }
+    }
+
+    public boolean notification_flag() {
+        // Método para obtener el estado de la notificación (exitosa no exitosa)
+        return this.notification_enabled;
     }
 }
