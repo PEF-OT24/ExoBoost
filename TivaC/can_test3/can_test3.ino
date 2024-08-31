@@ -53,7 +53,7 @@ uint32_t SP_motor3;
 uint16_t max_speed = 500; // Velocidad máxima al controlar posición
 
 // Variables de proceso para los motores
-String process_variable = "pos"; // Tipo de variable de proceso: pos, vel, cur, temp
+String process_variable = "vel"; // Tipo de variable de proceso: pos, vel, cur, temp
 int32_t PV1 = 1;
 int32_t PV2 = 1;
 int32_t PV3 = 999;
@@ -113,8 +113,7 @@ void ISRSysTick(void) { // Función de interrupción para tiempo real
 void CAN0IntHandler(void) { // Función de interrupción para recepción de mensajes de CAN
     uint8_t CANBUSReceive[8u];
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
-
-    Serial.print("int");
+    
     // Check if the interrupt is caused by a status change
     if (ui32Status == CAN_INT_INTID_STATUS) {
         // Read the full status of the CAN controller
@@ -137,8 +136,16 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (commandCAN != CANBUSReceive[0]){
             return;
           }
-          PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-          Serial.println(PV1);
+
+          // Se formatea la información dependiendo del comando recibido
+          if (process_variable == "pos"){ // Formateo para posición
+            PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
+          } else if (process_variable == "vel"){ // Formateo para velocidad
+            PV1 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+          } else if (process_variable == "cur"){ // Formateo para corriente
+            PV1 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
+          }
+
         } else if (motor_selected == 2){           // motor 2
           // Se obtiene el mensaje
           Message_Rx_2.pui8MsgData = CANBUSReceive;
@@ -148,8 +155,15 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (commandCAN != CANBUSReceive[0]){
             return;
           }
-          PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100)); 
-          Serial.println(PV2);
+          
+          // Se formatea la información dependiendo del comando recibido
+          if (process_variable == "pos"){ // Formateo para posición
+            PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
+          } else if (process_variable == "vel"){ // Formateo para velocidad
+            PV2 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+          } else if (process_variable == "cur"){ // Formateo para corriente
+            PV2 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
+          }
         } else if (motor_selected == 3){           // motor 3
           // Se obtiene el mensaje
           Message_Rx_3.pui8MsgData = CANBUSReceive;
@@ -160,9 +174,15 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             return;
           }
           
-          PV3 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));   
-
-        } else {Serial.println("no");}             // error en el motor seleccionado
+          // Se formatea la información dependiendo del comando recibido
+          if (process_variable == "pos"){ // Formateo para posición
+            PV3 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
+          } else if (process_variable == "vel"){ // Formateo para velocidad
+            PV3 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+          } else if (process_variable == "cur"){ // Formateo para corriente
+            PV3 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
+          }
+        } else {Serial.println("Error");}             // error en el motor seleccionado
 
     } else {
         // Handle unexpected interrupts
@@ -577,6 +597,50 @@ void read_angle(int8_t ID){
   send_cmd(ID, CAN_data_TX, false);
 }
 
+void read_velocity(int8_t ID){
+  // Función para apagar el motor
+
+  motor_selected = ID;
+  commandCAN = 0x9C; // comando de lectura de velocidad (también hay otros parámetros)
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
+
+void read_current(int8_t ID){
+  // Función para apagar el motor
+
+  motor_selected = ID;
+  commandCAN = 0x9C; // comando de lectura de velocidad (también hay otros parámetros)
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
+
 // ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
 // Función para reiniciar el bus I2C ante algún error
 void clearI2C() {
@@ -906,8 +970,21 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
-  delayMS(80);
-  read_angle(1);
-  delayMS(80);
-  read_angle(2); 
+
+  if (process_variable == "pos"){
+    delayMS(80);
+    read_angle(1);
+    delayMS(80);
+    read_angle(2); 
+  } else if (process_variable == "vel"){
+    delayMS(80);
+    read_velocity(1);
+    delayMS(80);
+    read_velocity(2); 
+  } else if (process_variable == "cur"){
+    delayMS(80);
+    read_current(1);
+    delayMS(80);
+    read_current(2); 
+  }
 }

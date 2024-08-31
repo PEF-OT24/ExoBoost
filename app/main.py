@@ -698,6 +698,7 @@ class ExoBoostApp(MDApp):
             sleep(float(time/1000))
 
             # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+            print(f'{self.ble}, {self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
             if not self.ble: continue
             if not self.ble.connected: continue
             if not self.reading: continue
@@ -710,10 +711,14 @@ class ExoBoostApp(MDApp):
             # char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
             service_uuid, char_uuid = self.ble.get_uuids_notified()
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
+
+            print("Información leida por noti: ")
+            print(json_dict) # Ver información recibida
+
             '''
             Nota: De momento solamente se desea leer el parámetro PV.
 
-            Estructura deseada del json para PV
+            Ejemplo de estructura deseada del json para PV
             json_dict = {
                 "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
                 "monitoring": "pos", # {"pos", "vel", "cur"}

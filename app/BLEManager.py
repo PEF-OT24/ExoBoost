@@ -423,8 +423,6 @@ class BluetoothManager_App:
             for i, char in enumerate(self.discovered_characteristics[service_uuid]):
                 if char.getUuid().toString() == characteristic_uuid: 
                     characteristic = char
-                    print(f"Característica encontrada: {characteristic_uuid}")
-                    index = i
                     break
 
             car_analyzer = Characteristic_Info(characteristic)
