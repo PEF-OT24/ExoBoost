@@ -484,7 +484,7 @@ class BluetoothManager_App:
 
             # Identifica la característica de interés del servicio de interés con los UUID's
             for i, char in enumerate(self.discovered_characteristics[service_uuid]):
-                if char.getUuid().toString() == characteristic_uuid: # CUAL DESCRIPTOR AGARRAR? SE TOMA EL ÚLTIMO POR DEFAULT
+                if char.getUuid().toString() == characteristic_uuid: 
                     characteristic = char
                     index = i
                     break
@@ -498,7 +498,7 @@ class BluetoothManager_App:
             # Se obtiene el descriptor de la característica
             descriptor_UUID = ""
             descriptors: BluetoothGattDescriptor = characteristic.getDescriptors() # type: ignore
-            for descriptor in enumerate(i, descriptors):
+            for i, descriptor in enumerate(descriptors): # CUÁL DESCRIPTOR AGARRAR? SE TOMA EL ÚLTIMO POR DEFAULT
                 print(i)
                 descriptor_UUID = descriptor.getUuid().toString() # Se obtiene el UUID del descriptor
             if descriptor_UUID == "": 
