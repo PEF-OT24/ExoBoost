@@ -64,10 +64,13 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         // Se recorren los servicios para encontrar el correspondiente
         for (BluetoothGattService servicio : services) {
             String UUID_servicio = servicio.getUuid().toString();
+            System.out.println("UUID_servicio (python): " + UUID_servicio);
+
             // Para cada servicio se descubren características
             List<BluetoothGattCharacteristic> characteristics = servicio.getCharacteristics();
             for (BluetoothGattCharacteristic characteristic_for : characteristics) {
                 String UUID_caracteristica = characteristic_for.getUuid().toString();
+                System.out.println("UUID_caracteristica (python): " + UUID_caracteristica);
                 if (UUID_caracteristica == this.characteristicNotified) {
                     this.serviceNotified = UUID_servicio;
                     break;
