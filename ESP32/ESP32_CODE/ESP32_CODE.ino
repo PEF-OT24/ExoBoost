@@ -600,13 +600,6 @@ void setup() {
 }
 
 void loop() {
-  // delay(100); // Lectuda de PV cada 100 ms
-  // read_PV();
-
-  // Intento de notificaciones cada 500 ms
-  delay(500);
-  if (client_connected){
-    Serial.println("Notificando");
-    pCharacteristic_PV->notify();
-  }
+  delay(100); // Lectuda de PV cada 100 ms
+  read_PV();
 }

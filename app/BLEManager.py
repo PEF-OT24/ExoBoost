@@ -527,3 +527,18 @@ class BluetoothManager_App:
 
         except Exception as e:
             print(f"Error: {e}")
+    
+    def notification_received(self) -> bool:
+        '''Devuelve True si el gatt recibió una notificación'''
+        return self.python_gatt_callback.ReadIndicated
+    
+    def get_uuids_notified(self) -> tuple[str]:
+        '''Devuelve una tupla de los UUIDs de las características notificadas. 
+        El primer elemento corresponde al servicio y el segundo elemento a la característica
+        '''
+        if not self.connected_gatt: return ("", "") # Comprobación de errores
+
+        self.python_gatt_callback.ReadFlag() # Se baja la bandera para la siguiente notificación
+
+        uuids = (self.python_gatt_callback.serviceNotified, self.python_gatt_callback.characteristicNotified)
+        return uuids

@@ -148,7 +148,7 @@ class ExoBoostApp(MDApp):
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
         # Se inicializa el hilo secundario de la lectura de datos
-        self.read_thread = Thread(target=self.read_pv_cycle, args=(1000,))
+        self.read_thread = Thread(target=self.read_pv_cycle, args=(20,))
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
@@ -301,17 +301,17 @@ class ExoBoostApp(MDApp):
     #----------------------------------------------------- Métodos generales ----------------------------------------------------
     def on_tab_select(self, tab: str): 
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
-        if tab == "Assistance mode": 
-            self.mode = "assistance"
-            self.reading = True
-        elif tab == "Bluetooth settings": 
+        if tab == "Bluetooth settings": 
             self.mode = "bluetooth"
+            self.reading = False
+        elif tab == "Assistance mode": 
+            self.mode = "assistance"
+            self.reading = False
+        elif tab == "Tuning mode": 
+            self.mode = "tuning"
             self.reading = False
         elif tab == "Monitoring tab": 
             self.mode = "monitoring"
-            self.reading = True
-        elif tab == "Tuning mode": 
-            self.mode = "tuning"
             self.reading = True
 
     def is_valid(self, var: str, tipo) -> bool:
@@ -693,7 +693,7 @@ class ExoBoostApp(MDApp):
 
         sleep(1) # Espera un momento antes de comenzar la lectura
 
-        while True:
+        while True: # Este ciclo nunca debería detenerse en el thread secundario 
             # Espera el tiempo indicado para cada lectura
             sleep(float(time/1000))
 
@@ -702,13 +702,18 @@ class ExoBoostApp(MDApp):
             if not self.ble.connected: continue
             if not self.reading: continue
             
-            print("Lectura PV")
-            # Se realiza la lectura si está conectado y en lectura activa
-            service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
-            char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
-            json_dict = self.ble.read_json(service_uuid, char_uuid) 
+            # Si no hay notificaciones pendientes continua comprobando
+            if not self.ble.notification_received(): continue
 
-            ''' Estructura deseada del json
+            # Se realiza la lectura si está conectado y en lectura activa
+            # service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+            # char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
+            service_uuid, char_uuid = self.ble.get_uuids_notified()
+            json_dict = self.ble.read_json(service_uuid, char_uuid) 
+            '''
+            Nota: De momento solamente se desea leer el parámetro PV.
+
+            Estructura deseada del json para PV
             json_dict = {
                 "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
                 "monitoring": "pos", # {"pos", "vel", "cur"}
@@ -725,13 +730,10 @@ class ExoBoostApp(MDApp):
                 motor1pv_read = json_dict["motor1"]            
                 motor2pv_read = json_dict["motor2"]            
                 motor3pv_read = json_dict["motor3"]    
-            except Exception as e:
-                print("Error al leer los datos")
-                print(e)  
-
-            # Si es la variable de proceso de interés, se despliega la información 
-            if monitoring_read == self.motor_parameters_pv["monitoring"]:
-                
+  
+                # Si es la variable de proceso de interés, se despliega la información 
+                if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
+                    
                 # Se guardan los valores en el diccionario
                 self.motor_parameters_pv["motor1"] = motor1pv_read
                 self.motor_parameters_pv["motor2"] = motor2pv_read
@@ -739,6 +741,10 @@ class ExoBoostApp(MDApp):
 
                 # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
                 if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
+
+            except Exception as e:
+                print("Error al leer los datos")
+                print(e)
 
     def update_process_variable(self, *args):
         print("Desplegando valores PV")

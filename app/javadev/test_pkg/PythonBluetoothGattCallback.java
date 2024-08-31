@@ -64,24 +64,18 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         // Se recorren los servicios para encontrar el correspondiente
         for (BluetoothGattService servicio : services) {
             String UUID_servicio = servicio.getUuid().toString();
-            System.out.println("UUID_servicio (python): " + UUID_servicio);
 
             // Para cada servicio se descubren características
             List<BluetoothGattCharacteristic> characteristics = servicio.getCharacteristics();
             for (BluetoothGattCharacteristic characteristic_for : characteristics) {
                 String UUID_caracteristica = characteristic_for.getUuid().toString();
-                System.out.println("UUID_caracteristica (python): " + UUID_caracteristica);
                 if (UUID_caracteristica.equals(this.characteristicNotified)) {
-                    System.out.println("Servicio correspondiente encontrado (python): " + UUID_servicio);
                     this.serviceNotified = UUID_servicio;
                     break;
                 }
             }
         }
 
-        System.out.println(this.serviceNotified);
-        System.out.println("Notificación recibida: (python): "
-                + this.serviceNotified + "::" + this.characteristicNotified);
         this.ReadIndicated = true; // Se indica que se debe leer una característica
     }
 
@@ -259,7 +253,8 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     }
 
     public void ReadFlag() {
-        // Método que resetea la bandera de lectura
+        // Método que resetea la bandera de lectura.
+        // Se debe ejecutar después de que se recibe una notificación
         if (this.ReadIndicated) {
             this.ReadIndicated = false;
         }
