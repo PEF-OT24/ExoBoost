@@ -694,62 +694,66 @@ class ExoBoostApp(MDApp):
         sleep(1) # Espera un momento antes de comenzar la lectura
 
         while True: # Este ciclo nunca debería detenerse en el thread secundario 
-            # Espera el tiempo indicado para cada lectura
-            sleep(float(time/1000))
-
-            # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-            print(f'{self.ble}, {self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
-            if not self.ble: continue
-            if not self.ble.connected: continue
-            if not self.reading: continue
-            
-            # Si no hay notificaciones pendientes continua comprobando
-            if not self.ble.notification_received(): continue
-
-            # Se realiza la lectura si está conectado y en lectura activa
-            # service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
-            # char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
-            service_uuid, char_uuid = self.ble.get_uuids_notified()
-            json_dict = self.ble.read_json(service_uuid, char_uuid) 
-
-            print("Información leida por noti: ")
-            print(json_dict) # Ver información recibida
-
-            '''
-            Nota: De momento solamente se desea leer el parámetro PV.
-
-            Ejemplo de estructura deseada del json para PV
-            json_dict = {
-                "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
-                "monitoring": "pos", # {"pos", "vel", "cur"}
-                "motor1": "100",
-                "motor2": "100",
-                "motor3": "100"
-            }
-            '''
-
-            # Se obtienen los valores del diccionario
             try: 
-                limb_read = json_dict["limb"]      
-                monitoring_read = json_dict["monitoring"]      
-                motor1pv_read = json_dict["motor1"]            
-                motor2pv_read = json_dict["motor2"]            
-                motor3pv_read = json_dict["motor3"]    
-  
-                # Si es la variable de proceso de interés, se despliega la información 
-                if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
-                    
-                # Se guardan los valores en el diccionario
-                self.motor_parameters_pv["motor1"] = motor1pv_read
-                self.motor_parameters_pv["motor2"] = motor2pv_read
-                self.motor_parameters_pv["motor3"] = motor3pv_read
+                # Espera el tiempo indicado para cada lectura
+                sleep(float(time/1000))
 
-                # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-                if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
+                # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+                print(f'{self.ble}, {self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
+                if not self.ble: continue
+                if not self.ble.connected: continue
+                if not self.reading: continue
+                
+                # Si no hay notificaciones pendientes continua comprobando
+                if not self.ble.notification_received(): continue
+
+                # Se realiza la lectura si está conectado y en lectura activa
+                # service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+                # char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
+                service_uuid, char_uuid = self.ble.get_uuids_notified()
+                json_dict = self.ble.read_json(service_uuid, char_uuid) 
+
+                print("Información leida por noti: ")
+                print(json_dict) # Ver información recibida
+
+                '''
+                Nota: De momento solamente se desea leer el parámetro PV.
+
+                Ejemplo de estructura deseada del json para PV
+                json_dict = {
+                    "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+                    "monitoring": "pos", # {"pos", "vel", "cur"}
+                    "motor1": "100",
+                    "motor2": "100",
+                    "motor3": "100"
+                }
+                '''
+
+                # Se obtienen los valores del diccionario
+                try: 
+                    limb_read = json_dict["limb"]      
+                    monitoring_read = json_dict["monitoring"]      
+                    motor1pv_read = json_dict["motor1"]            
+                    motor2pv_read = json_dict["motor2"]            
+                    motor3pv_read = json_dict["motor3"]    
+    
+                    # Si es la variable de proceso de interés, se despliega la información 
+                    if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
+                        
+                    # Se guardan los valores en el diccionario
+                    self.motor_parameters_pv["motor1"] = motor1pv_read
+                    self.motor_parameters_pv["motor2"] = motor2pv_read
+                    self.motor_parameters_pv["motor3"] = motor3pv_read
+
+                    # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+                    if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
+
+                except Exception as e:
+                    print("Error al leer los datos")
+                    print(e)
 
             except Exception as e:
-                print("Error al leer los datos")
-                print(e)
+                print(f"Error en el hilo de lectura: {e}")
 
     def update_process_variable(self, *args):
         print("Desplegando valores PV")

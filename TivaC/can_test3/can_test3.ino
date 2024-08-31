@@ -160,6 +160,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (process_variable == "pos"){ // Formateo para posición
             PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
           } else if (process_variable == "vel"){ // Formateo para velocidad
+            Serial.println("vel");
             PV2 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
           } else if (process_variable == "cur"){ // Formateo para corriente
             PV2 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
@@ -606,7 +607,7 @@ void read_velocity(int8_t ID){
   uint8_t CAN_data_TX[8u];
 
   // Reset del motor
-  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[0] = 0x9C;
   CAN_data_TX[1] = 0x00;
   CAN_data_TX[2] = 0x00;
   CAN_data_TX[3] = 0x00;
@@ -628,7 +629,7 @@ void read_current(int8_t ID){
   uint8_t CAN_data_TX[8u];
 
   // Reset del motor
-  CAN_data_TX[0] = 0x92;
+  CAN_data_TX[0] = 0x9C;
   CAN_data_TX[1] = 0x00;
   CAN_data_TX[2] = 0x00;
   CAN_data_TX[3] = 0x00;
@@ -975,7 +976,7 @@ void loop() {
     delayMS(80);
     read_angle(1);
     delayMS(80);
-    read_angle(2); 
+    read_angle(2);
   } else if (process_variable == "vel"){
     delayMS(80);
     read_velocity(1);
@@ -987,4 +988,9 @@ void loop() {
     delayMS(80);
     read_current(2); 
   }
+  Serial.print(process_variable);
+  Serial.print(": ");
+  Serial.print(PV1);
+  Serial.print(", ");
+  Serial.println(PV2);
 }
