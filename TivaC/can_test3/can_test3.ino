@@ -141,9 +141,13 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (process_variable == "pos"){ // Formateo para posición
             PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
           } else if (process_variable == "vel"){ // Formateo para velocidad
-            PV1 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+            int16_t PV1_read;
+            PV1_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+            PV1 = PV1_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            PV1 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
+            int16_t PV1_read;
+            PV1_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
+            PV1 = PV1_read;
           }
 
         } else if (motor_selected == 2){           // motor 2
@@ -160,11 +164,15 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (process_variable == "pos"){ // Formateo para posición
             PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
           } else if (process_variable == "vel"){ // Formateo para velocidad
-            Serial.println("vel");
-            PV2 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+            int16_t PV2_read;
+            PV2_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+            PV2 = PV2_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            PV2 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
+            int16_t PV2_read;
+            PV2_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
+            PV2 = PV2_read;
           }
+          
         } else if (motor_selected == 3){           // motor 3
           // Se obtiene el mensaje
           Message_Rx_3.pui8MsgData = CANBUSReceive;
@@ -179,9 +187,13 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (process_variable == "pos"){ // Formateo para posición
             PV3 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
           } else if (process_variable == "vel"){ // Formateo para velocidad
-            PV3 = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+            int16_t PV3_read;
+            PV3_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+            PV3 = PV3_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            PV3 = int(round((CANBUSReceive[3] << 8) | CANBUSReceive[2]));
+            int16_t PV3_read;
+            PV3_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
+            PV3 = PV3_read;
           }
         } else {Serial.println("Error");}             // error en el motor seleccionado
 
