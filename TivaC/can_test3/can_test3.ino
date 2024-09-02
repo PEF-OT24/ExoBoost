@@ -111,6 +111,9 @@ void ISRSysTick(void) { // Función de interrupción para tiempo real
 }
 
 void CAN0IntHandler(void) { // Función de interrupción para recepción de mensajes de CAN
+ if (doControlFlag) {
+    doControlFlag = false;
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
     uint8_t CANBUSReceive[8u];
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
     
@@ -201,6 +204,8 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
         // Handle unexpected interrupts
         CANIntClear(CAN0_BASE, ui32Status);
     }
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
+ }
 }
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN

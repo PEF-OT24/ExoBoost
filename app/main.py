@@ -35,7 +35,7 @@ from kivymd.uix.behaviors.toggle_behavior import MDToggleButton
 
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
-Clock.max_iteration = 1000  # Increase this value if necessary
+Clock.max_iteration = 2000  # Increase this value if necessary
 
 # Importar librerías secundarias
 from threading import Thread, Timer
