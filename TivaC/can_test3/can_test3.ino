@@ -959,7 +959,7 @@ void setup() {
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
     SysTickIntRegister(ISRSysTick);
-    SysTickPeriodSet(11200);
+    SysTickPeriodSet(160000);
     SysTickIntEnable();
     SysTickEnable();
 
@@ -983,6 +983,9 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
+ if (doControlFlag) {
+    doControlFlag = false;
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
 
   if (process_variable == "pos"){
     delayMS(80);
@@ -1000,6 +1003,8 @@ void loop() {
     delayMS(80);
     read_current(2); 
   }
+   GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
+ }
   Serial.print(process_variable);
   Serial.print(": ");
   Serial.print(PV1);
