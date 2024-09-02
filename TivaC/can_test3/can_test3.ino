@@ -983,9 +983,9 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
- if (doControlFlag) {
-    doControlFlag = false;
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
+ //if (doControlFlag) {
+    //doControlFlag = false;
+    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
 
   if (process_variable == "pos"){
     delayMS(20);
@@ -1003,8 +1003,8 @@ void loop() {
     delayMS(20);
     read_current(2); 
   }
-   GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
- }
+   //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
+ //}
   //Serial.print(process_variable);
   //Serial.print(": ");
   //Serial.print(PV1);
