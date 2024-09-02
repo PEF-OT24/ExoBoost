@@ -959,7 +959,7 @@ void setup() {
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
     SysTickIntRegister(ISRSysTick);
-    SysTickPeriodSet(24000000);
+    SysTickPeriodSet(16777215);
     SysTickIntEnable();
     SysTickEnable();
 
