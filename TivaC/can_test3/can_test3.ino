@@ -988,19 +988,19 @@ void loop() {
     GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
 
   if (process_variable == "pos"){
-    delayMS(80);
+    delayMS(20);
     read_angle(1);
-    delayMS(80);
+    delayMS(20);
     read_angle(2);
   } else if (process_variable == "vel"){
-    delayMS(80);
+    delayMS(20);
     read_velocity(1);
-    delayMS(80);
+    delayMS(20);
     read_velocity(2); 
   } else if (process_variable == "cur"){
-    delayMS(80);
+    delayMS(20);
     read_current(1);
-    delayMS(80);
+    delayMS(20);
     read_current(2); 
   }
    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
