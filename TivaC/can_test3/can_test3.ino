@@ -1005,9 +1005,9 @@ void loop() {
   }
    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
  }
-  Serial.print(process_variable);
-  Serial.print(": ");
-  Serial.print(PV1);
-  Serial.print(", ");
-  Serial.println(PV2);
+  //Serial.print(process_variable);
+  //Serial.print(": ");
+  //Serial.print(PV1);
+  //Serial.print(", ");
+  //Serial.println(PV2);
 }
