@@ -29,6 +29,10 @@
 #define BLUE_LED GPIO_PIN_2
 #define GREEN_LED GPIO_PIN_3
 
+// Conversión de unidades
+#define DEG_TO_RAD (3.141592653589793 / 180.0)  // Degrees to radians conversion factor
+#define RAD_TO_DEG (180.0 / 3.141592653589793)  // Radians to degrees conversion factor
+
 // Define CAN_INT_INTID_STATUS if not defined
 #ifndef CAN_INT_INTID_STATUS
 #define CAN_INT_INTID_STATUS 0x8000
@@ -233,6 +237,55 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para en
   } else if (ID == 3){ // Establecimiento de mensajes para el motor 3
     // Define el mensaje para leer por CAN
     Message_Rx_3.ui32MsgID = 0x243;
+    Message_Rx_3.ui32MsgIDMask = 0xFFFFFFFF; 
+    Message_Rx_3.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
+    Message_Rx_3.ui32MsgLen = 8u;
+    Message_Rx_3.pui8MsgData = CAN_data_RX;
+  }
+
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, ID, &Message_Tx, MSG_OBJ_TYPE_TX);
+
+  // Configura los objetos de mensajes
+  if (ID == 1){
+    CANMessageSet(CAN0_BASE, 1, &Message_Rx_1, MSG_OBJ_TYPE_RX);
+  } else if (ID == 2){
+    CANMessageSet(CAN0_BASE, 2, &Message_Rx_2, MSG_OBJ_TYPE_RX);
+  } else if (ID == 3){
+    CANMessageSet(CAN0_BASE, 3, &Message_Rx_3, MSG_OBJ_TYPE_RX);
+  }
+}
+
+void motion_send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  
+  uint8_t CAN_data_RX[8u];
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x400 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  Message_Tx.ui32Flags = MSG_OBJ_TX_INT_ENABLE; // Habilita interrupciones en el envío de mensaje
+  Message_Tx.pui8MsgData = messageArray;
+
+  if (ID == 1){       // Establecimiento de mensajes para el motor 1
+    // Define el mensaje para leer por CAN
+    Message_Rx_1.ui32MsgID = 0x501;
+    Message_Rx_1.ui32MsgIDMask = 0xFFFFFFFF; // Lee todos los mensajes
+    Message_Rx_1.ui32Flags = MSG_OBJ_RX_INT_ENABLE; // Habilita interrupciones en la recepción del mensaje
+    Message_Rx_1.ui32MsgLen = 8u;
+    Message_Rx_1.pui8MsgData = CAN_data_RX;
+  } else if (ID == 2){ // Establecimiento de mensajes para el motor 2
+    // Define el mensaje para leer por CAN
+    Message_Rx_2.ui32MsgID = 0x502;
+    Message_Rx_2.ui32MsgIDMask = 0xFFFFFFFF; 
+    Message_Rx_2.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
+    Message_Rx_2.ui32MsgLen = 8u;
+    Message_Rx_2.pui8MsgData = CAN_data_RX;
+  } else if (ID == 3){ // Establecimiento de mensajes para el motor 3
+    // Define el mensaje para leer por CAN
+    Message_Rx_3.ui32MsgID = 0x503;
     Message_Rx_3.ui32MsgIDMask = 0xFFFFFFFF; 
     Message_Rx_3.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
     Message_Rx_3.ui32MsgLen = 8u;
@@ -652,6 +705,49 @@ void read_current(int8_t ID){
 
   // Se envía el mensaje
   send_cmd(ID, CAN_data_TX, false);
+}
+
+void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, uint16_t kp, uint16_t kd, float t_ff, bool show) {
+    uint16_t p_des_hex, v_des_hex, kp_hex, kd_hex, t_ff_hex;
+
+    // Convert position from degrees to radians and normalize
+    float p_des_rad = p_des_deg * DEG_TO_RAD;
+    p_des_hex = (uint16_t)(((p_des_rad + 12.5) / 25.0) * 65535);
+
+    // Convert velocity from degrees/second to radians/second and normalize
+    float v_des_rad_per_s = v_des_deg_per_s * DEG_TO_RAD;
+    v_des_hex = (uint16_t)(((v_des_rad_per_s + 45.0) / 90.0) * 4095);
+    v_des_hex &= 0x0FFF; //Mask para asegurar que la variable entra en 12 bits
+
+    // Normalize kp to the range 0 to 500
+    kp_hex = (uint16_t)((kp / 500.0) * 4095);
+    kp_hex &= 0x0FFF;
+
+    // Normalize kd to the range 0 to 5
+    kd_hex = (uint16_t)((kd / 5.0) * 4095);
+    kd_hex &= 0x0FFF;
+
+    // Normalize feedforward torque to the range -24 to 24 Nm
+    t_ff_hex = (uint16_t)(((t_ff + 24.0) / 48.0) * 4095);
+    t_ff_hex &= 0x0FFF; 
+
+    // Pack the CAN data into an 8-byte array
+    uint8_t CAN_message[8];
+
+    // Packing into CAN_message array
+    CAN_message[0] = (p_des_hex >> 8) & 0xFF;         // High byte of p_des
+    CAN_message[1] = p_des_hex & 0xFF;                // Low byte of p_des
+    CAN_message[2] = ((v_des_hex >> 4) & 0xFF);       // High 8 bits of v_des
+    CAN_message[3] = ((v_des_hex & 0x0F) << 4)        // Low 4 bits of v_des
+                     | ((kp_hex >> 8) & 0x0F);        // High 4 bits of kp
+    CAN_message[4] = kp_hex & 0xFF;                   // Low byte of kp
+    CAN_message[5] = ((kd_hex >> 4) & 0xFF);          // High 8 bits of kd
+    CAN_message[6] = ((kd_hex & 0x0F) << 4)           // Low 4 bits of kd
+                     | ((t_ff_hex >> 8) & 0x0F);      // High 4 bits of t_ff
+    CAN_message[7] = t_ff_hex & 0xFF;                 // Low byte of t_ff
+
+    // Send the CAN message (replace send_CAN with your CAN send function)
+    motion_send_cmd(ID, CAN_message , true);
 }
 
 // ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
