@@ -1082,7 +1082,7 @@ void loop() {
  //if (doControlFlag) {
     //doControlFlag = false;
     //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
-
+  motion_mode_command(2,0,0,1,0.1,0,true);
   if (process_variable == "pos"){
     delayMS(20);
     read_angle(1);
@@ -1090,7 +1090,7 @@ void loop() {
     read_angle(2);
   } else if (process_variable == "vel"){
     delayMS(20);
-    read_velocity(1);
+    read_velocity(1); 
     delayMS(20);
     read_velocity(2); 
   } else if (process_variable == "cur"){
