@@ -33,6 +33,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.behaviors.toggle_behavior import MDToggleButton 
 
+
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
 Clock.max_iteration = 1000  # Increase this value if necessary
@@ -40,7 +41,8 @@ Clock.max_iteration = 1000  # Increase this value if necessary
 # Importar librerías secundarias
 from threading import Thread, Timer
 import platform
-import json 
+import json
+import os 
 import uuid
 import webbrowser
 from time import sleep
@@ -81,6 +83,11 @@ class ErrorPopup(Popup):
     '''Clase para mostrar un error genérico'''
     def __init__(self, **kwargs):
         super(ErrorPopup, self).__init__(**kwargs)
+
+class MotorPopup(Popup):
+    '''Clase para mostrar un error genérico'''
+    def __init__(self, **kwargs):
+        super(MotorPopup, self).__init__(**kwargs)
 
 class ExoBoostApp(MDApp):
     #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
@@ -751,6 +758,58 @@ class ExoBoostApp(MDApp):
             grid.add_widget(ImageTeam(source = person["image"]))
             grid.add_widget(LabelTeam(text = person["info"]))
 
+    def show_error_popup(self):
+        self.popup = ErrorPopup()
+        self.popup.open()
+    
+    def load_motor_info(self):
+        with open(os.path.join(os.getcwd(), 'motor_info.json'), 'r') as file:
+            motor_data = json.load(file)
+        return motor_data
+    
+    def show_motor_popup(self):
+    # Load motor data from JSON
+        motor_data = self.load_motor_info()
+
+        # Create a popup
+        self.popup = MotorPopup()
+
+        # Populate popup with data
+        self.popup.ids.hip_motor_label.text = f"Modelo: {motor_data['hip_motor']['modelo']}\n"
+        self.popup.ids.hip_motor_label.text += f"Gear Ratio: {motor_data['hip_motor']['gear_ratio']}\n"
+        self.popup.ids.hip_motor_label.text += f"Rango de Voltaje: {motor_data['hip_motor']['rango_de_voltaje']}\n"
+        # And similarly for knee_motor and ankle_motor...
+
+        # Open popup
+        self.popup.open()
+
+
+    # def show_motor_popup(self):
+    #     self.popup = MotorPopup() # type: ignore
+    #     self.popup.open()
+
+    # def show_motor_popup(self):
+    #     try:
+    #         with open('info_motores.txt', 'r') as file:
+    #             motor_data = file.read().split('\n\n')  # Split by two newlines
+    #     except FileNotFoundError:
+    #         print("Motor info file not found!")
+    #         return
+
+    #     # Create the popup
+    #     self.popup = MotorPopup()
+
+    #     # Ensure the text data corresponds with the defined ids in the kv file
+    #     if len(motor_data) >= 3:
+    #         self.popup.ids.motor_0_label.text = motor_data[0].replace("\n", "\n")
+    #         self.popup.ids.motor_1_label.text = motor_data[1].replace("\n", "\n")
+    #         self.popup.ids.motor_2_label.text = motor_data[2].replace("\n", "\n")
+    #     else:
+    #         print("Motor data is incomplete!")
+
+    #     # Open the popup
+    #     self.popup.open()
+        
     def open_repo(self) -> None: 
         '''
         Función para abrir el repositorio del código fuente

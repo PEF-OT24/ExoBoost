@@ -1,0 +1,26 @@
+Hip Motor
+Model: XYZ-123
+Gear Ratio: 10:1
+Input Voltage: 24V - 48V
+Peak Torque: 500 Nm
+Peak Current: 10 A
+Peak Velocity: 3000 RPM
+Ideal Temperature: 25°C
+
+Knee Motor
+Model: ABC-456
+Gear Ratio: 15:1
+Input Voltage: 12V - 24V
+Peak Torque: 300 Nm
+Peak Current: 8 A
+Peak Velocity: 2500 RPM
+Ideal Temperature: 30°C
+
+Ankle Motor
+Model: DEF-789
+Gear Ratio: 5:1
+Input Voltage: 12V - 36V
+Peak Torque: 400 Nm
+Peak Current: 12 A
+Peak Velocity: 3500 RPM
+Ideal Temperatura: 27°C
