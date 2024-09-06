@@ -93,7 +93,8 @@ class ExoBoostApp(MDApp):
 
         # -------------------------- Atributos internos --------------------------
         self.kv_loaded: bool = False
-        self.mode: str = None # Modo de operación la app: {assistance, tuning}
+        self.mode: str = None                  # Modo de operación la app: {assistance, tuning}
+        self.assistance_state: str = "sitting down" # Modo de operación de la asistencia: {walking, sitting down, standing up}
         
         # Detecta el sistema operativo
         self.os_name = self.detect_os()
@@ -465,12 +466,23 @@ class ExoBoostApp(MDApp):
     def sit_down_stand_up(self):
         '''Método para enviar el estado de sentarse/pararse'''
         
-        # Acción de submit parámetros
-        print("Acción de sentado/parado")
+        # Validación de BLE
         if not self.ble_found: return
+        
+        # Validación del estado de acuerdo con el actual
+        if self.assistance_state == "sitting down": # Para pararse debe estar sentado
+            self.assistance_state = "standing up"
+            json_data = {"state": "stand up"}
+            self.root.get_screen('Main Window').ids.standup_sitdown_mode.text = "SIT DOWN"
+        elif self.assistance_state == "standing up":    # Para sentarse debe estar parado/detenido
+            self.assistance_state = "sitting down"
+            json_data = {"state": "sit down"}
+            self.root.get_screen('Main Window').ids.standup_sitdown_mode.text = "STAND UP"
+        else:
+            print("Error en el estado de asistencia")
+            return
 
         # Se define la información a mandar con la limb
-        json_data = {"state": "sit_down_stand_up"}
         json_data["limb"] = self.selected_limb
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
@@ -484,10 +496,15 @@ class ExoBoostApp(MDApp):
     def walk(self):
         '''Método para enviar el estado de caminar'''
         
-        # Acción de submit parámetros
-        print("Acción de caminar")
+        # Validación de BLE
         if not self.ble_found: return
 
+        # Validación de máquina de estados
+        if not self.assistance_state == "standing up": # Debe estar parado para poder caminar
+            print("Debe pararse para poder caminar")
+            return
+        self.assistance_state = "walking"
+        
         # Se define la información a mandar con la limb
         json_data = {"state": "walk"}
         json_data["limb"] = self.selected_limb
@@ -503,9 +520,12 @@ class ExoBoostApp(MDApp):
     def stop(self):
         '''Método para enviar el estado de detenerse'''
         
-        # Acción de submit parámetros
-        print("Acción de detenerse")
+        # Validación de BLE
         if not self.ble_found: return
+
+        # Para fines prácticos se puede detenerse en cualquier momento
+        if self.assistance_state == "walking": # Se ajusta el diagrama de estados si está caminando
+            self.assistance_state = "standing up"
 
         # Se define la información a mandar con la limb
         json_data = {"state": "stop"}
