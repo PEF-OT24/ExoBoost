@@ -7,7 +7,8 @@
     color: app.colors['White']
     background_color: app.colors['Dark Blue']
 
-<CustomLabelRoboto>: # Case predefinida para los subtítulos con formato
+# Clase predefinida para los subtítulos con formato
+<CustomLabelRoboto>: 
     font_name: "Roboto" # Roboto para texto y subtítulos
     font_size: "15sp" 
     halign: "center"
@@ -15,7 +16,8 @@
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
-<CustomLabelAD>: # Clase predefinida para los títulos con formato
+# Clase predefinida para los títulos con formato
+<CustomLabelAD>: 
     font_name: "fonts/ADLaMDisplay-Regular.ttf" # ADLaMdisplay para títulos
     font_size: "30sp" # 30sp para títulos
     halign: "center"
@@ -23,7 +25,8 @@
     theme_text_color: "Custom"
     text_color: app.colors["White"]
 
-<CustomTextEntry>: # Clase predefinida para las entradas de texto con formato
+# Clase predefinida para las entradas de texto con formato
+<CustomTextEntry>: 
     pos_hint: {"center_x": 0.5, "center_y": 0.5}  # Centrado
     height: dp(20)
     halign: "center"
@@ -36,7 +39,8 @@
     mode: "fill"
     fill_color: app.colors["Light Gray"]
 
-<ButtonDevices>: # Clase para dar formato a dispositivos desplegados y que funcionen como botones
+# Clase para dar formato a dispositivos desplegados configurados como botones
+<ButtonDevices>: 
     text: ""
     #size_hint_y: None
     size_hint_x: None
@@ -61,6 +65,7 @@
     on_press: self.md_bg_color = app.colors['Light Orange']
     # on_release: self.md_bg_color = app.colors['Dark Blue']
 
+# Clase predefinida para dar formato a botones que seleccionan el parámetro de operación 
 <ButtonParameters>:
     # Personalización de tamaño
     size_hint: None, None
@@ -77,7 +82,8 @@
     font_color_normal: app.colors['White']
     font_color_down: app.colors['White']
 
-<ErrorPopup>: # Ventana de PopUp de Error
+# Ventana de pop-up de Error
+<ErrorPopup>: 
     title: 'Error'
     size_hint: None, None
     size: 400, 200
@@ -99,33 +105,70 @@
             height: '48dp'
             on_release: root.dismiss()
 
+# Pop-up de información sobre los motores
 <MotorPopup>:
+    auto_dismiss: False
+    title: 'Información del motor'
+    title_align: "center"
+    title_font: 'fonts/ADLaMDisplay-Regular.ttf'
+    title_size: dp(20)
+    title_color: app.colors["White"]
+    pos_hint: {'center_x': 0.5, 'center_y': 0.5} # Se centra el pop up
+    
+    background_color: app.colors["Blue"]
+    separator_color: 0,0,0,0
+
+    size_hint: None, None
+    size: dp(300), dp(600)
+    canvas.before:
+        Color:
+            rgba: app.colors["Cyan"] # Fondo blanco
+        RoundedRectangle: # Con esquinas redondeadas
+            pos: self.pos
+            size: self.size
+            radius: [10, 10, 10, 10]  
+
     BoxLayout:
         orientation: 'vertical'
-        padding: dp(10)
+        padding: (dp(10), dp(10))
         spacing: dp(10)
+        canvas.before:
+            Color:
+                rgba: app.colors["Dark Cyan"] 
+            RoundedRectangle: # Con esquinas redondeadas
+                pos: self.pos
+                size: self.size
+                radius: [10, 10, 10, 10]  
+        
+    # --- Características técnicas ---
+        ScrollView: # Menú de los participantes
+            size_hint: 1, 1
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            GridLayout: 
+                id: motors_grid
+                cols: 2
+                padding: dp(10)
+                spacing: dp(15)
+                size_hint_y: None
+                minimum_height: self.minimum_height
 
-        MDLabel:
-            id: hip_motor_label
-            text: ""
-            font_style: "Body1"
-            halign: "center"
-
-        MDLabel:
-            id: knee_motor_label
-            text: ""
-            font_style: "Body1"
-            halign: "center"
-
-        MDLabel:
-            id: ankle_motor_label
-            text: ""
-            font_style: "Body1"
-            halign: "center"
-
+        # Botón de exit
         MDFillRoundFlatButton:
-            text: 'Close'
-            on_release: root.dismiss()
+            id: exit_button
+            text: 'Cerrar'
+            text_color: app.colors['Black']
+            size_hint: None, None
+            size: '100dp','30dp'
+            ripple_effect: False
+            ripple_color: app.colors['Cyan']
+            md_bg_color: app.colors["Cyan"]
+            pos_hint: {'center_x':0.5,'center_y':0.5}
+                
+            on_press: 
+                self.md_bg_color = app.colors["Light Orange"]
+            on_release: 
+                self.md_bg_color = app.colors["Cyan"]
+                root.dismiss()
 
 
             
@@ -146,10 +189,11 @@
     pos_hint: {"center_x": 0.5, "center_y": 0.5}
 
 <InfoPopUp>: # Estructura del popup
-    title: 'Información'
+    auto_dismiss: False
+    title: 'Información del equipo'
     title_align: "center"
     title_font: 'fonts/ADLaMDisplay-Regular.ttf'
-    title_size: dp(25)
+    title_size: dp(20)
     title_color: app.colors["White"]
     pos_hint: {'center_x': 0.5, 'center_y': 0.5} # Se centra el pop up
     

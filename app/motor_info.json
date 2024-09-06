@@ -2,28 +2,28 @@
     "hip_motor": {
       "modelo": "Modelo X",
       "gear_ratio": "5:1",
-      "rango_de_voltaje": "12-24V",
-      "torque_maximo": "40 Nm",
-      "corriente_maxima": "15 A",
-      "velocidad_maxima": "5000 RPM",
-      "temperatura_ideal": "25°C"
+      "voltage_range": "12-24 V",
+      "max_toqrue": "40 Nm",
+      "max_current": "15 A",
+      "max_velocity": "5000 RPM",
+      "ideal_temp": "25°C"
     },
     "knee_motor": {
       "modelo": "Modelo Y",
       "gear_ratio": "10:1",
-      "rango_de_voltaje": "12-36V",
-      "torque_maximo": "50 Nm",
-      "corriente_maxima": "20 A",
-      "velocidad_maxima": "6000 RPM",
-      "temperatura_ideal": "30°C"
+      "voltage_range": "12-36 V",
+      "max_toqrue": "50 Nm",
+      "max_current": "20 A",
+      "max_velocity": "6000 RPM",
+      "ideal_temp": "30°C"
     },
     "ankle_motor": {
       "modelo": "Modelo Z",
       "gear_ratio": "8:1",
-      "rango_de_voltaje": "12-24V",
-      "torque_maximo": "45 Nm",
-      "corriente_maxima": "18 A",
-      "velocidad_maxima": "5500 RPM",
-      "temperatura_ideal": "28°C"
+      "voltage_range": "12-24 V",
+      "max_toqrue": "45 Nm",
+      "max_current": "18 A",
+      "max_velocity": "5500 RPM",
+      "ideal_temp": "28°C"
     }
   }

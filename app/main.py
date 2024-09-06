@@ -23,6 +23,7 @@ from kivy.uix.image import Image
 from kivy.uix.gridlayout import GridLayout as Grid
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
+from kivy.uix.widget import Widget 
 
 # Importar librerías de kivymd
 from kivymd.app import MDApp
@@ -49,6 +50,7 @@ from time import sleep
 
 # Clase para mostrar el teclado en los text fields
 from kivy.core.window import Window
+from kivy.metrics import dp
 Window.keyboard_anim_args = {'d': .2, 't': 'in_out_expo'}
 Window.softinput_mode = 'pan'
 
@@ -79,15 +81,9 @@ class LabelTeam(MDLabel): pass                # Clase para formatear los datos d
 class ButtonDevices(MDFlatButton): pass       # Clase para crear botones de los dispositivos encontrados
 class ButtonParameters(MDFlatButton, MDToggleButton): pass  # Clase para crear botones para seleccionar los parámetros a procesar
 
-class ErrorPopup(Popup):
-    '''Clase para mostrar un error genérico'''
-    def __init__(self, **kwargs):
-        super(ErrorPopup, self).__init__(**kwargs)
-
-class MotorPopup(Popup):
-    '''Clase para mostrar un error genérico'''
-    def __init__(self, **kwargs):
-        super(MotorPopup, self).__init__(**kwargs)
+# Clases para el manejo de popups
+class ErrorPopup(Popup): pass      # Pop-up de error
+class MotorPopup(Popup): pass
 
 class ExoBoostApp(MDApp):
     #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
@@ -749,67 +745,54 @@ class ExoBoostApp(MDApp):
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
-        self.popup = InfoPopUp()
-        self.popup.open()
+        '''Método que despliega la pop-up de información del equipo'''
+        self.info_popup = InfoPopUp()
+        self.info_popup.open()
         
         # Se agrega la información de cada miembro al layout
-        grid: Grid = self.popup.ids.team_grid
+        grid: Grid = self.info_popup.ids.team_grid
         for person in self.team_info: 
             grid.add_widget(ImageTeam(source = person["image"]))
             grid.add_widget(LabelTeam(text = person["info"]))
 
+    def close_popup(self):
+        '''Función para cerra el pop up de información'''
+        self.info_popup.dismiss()
+
     def show_error_popup(self):
-        self.popup = ErrorPopup()
-        self.popup.open()
-    
-    def load_motor_info(self):
-        with open(os.path.join(os.getcwd(), 'motor_info.json'), 'r') as file:
-            motor_data = json.load(file)
-        return motor_data
+        '''Método que despliega la pop-up de error'''
+        self.error_popup = ErrorPopup()
+        self.error_popup.open()
     
     def show_motor_popup(self):
-    # Load motor data from JSON
-        motor_data = self.load_motor_info()
+        '''Método que despliega la pop-up de información sobre los motores'''
+        self.motor_popup = MotorPopup()
+        self.motor_popup.open()
 
-        # Create a popup
-        self.popup = MotorPopup()
+        # Cargar datos del archivo JSON
+        with open('motor_info.json', 'r') as file:
+            motor_info = json.load(file)
 
-        # Populate popup with data
-        self.popup.ids.hip_motor_label.text = f"Modelo: {motor_data['hip_motor']['modelo']}\n"
-        self.popup.ids.hip_motor_label.text += f"Gear Ratio: {motor_data['hip_motor']['gear_ratio']}\n"
-        self.popup.ids.hip_motor_label.text += f"Rango de Voltaje: {motor_data['hip_motor']['rango_de_voltaje']}\n"
-        # And similarly for knee_motor and ankle_motor...
+        # Se agrega la información de cada motor en el Layout
+        layout: Grid = self.motor_popup.ids.motors_grid
+        layout.bind(minimum_height=layout.setter('height'))
+        for motor, specs in motor_info.items():
+            layout.add_widget(MDLabel(text=f'[b]{motor}[/b]', 
+                                      markup=True, 
+                                      size_hint_y=None, 
+                                      height=dp(50)))
+            layout.add_widget(MDLabel(text="",
+                                      size_hint_y=None, 
+                                      height=dp(50)))
 
-        # Open popup
-        self.popup.open()
+            for spec, value in specs.items():
+                layout.add_widget(MDLabel(text=spec, size_hint_y=None, height=dp(35)))
+                layout.add_widget(MDLabel(text=value, size_hint_y=None, height=dp(35)))
 
+            # Se agregan espacios en blanco entre cada motor
+            layout.add_widget(Widget(size_hint_y=None, height=dp(30))) 
+            layout.add_widget(Widget(size_hint_y=None, height=dp(30))) 
 
-    # def show_motor_popup(self):
-    #     self.popup = MotorPopup() # type: ignore
-    #     self.popup.open()
-
-    # def show_motor_popup(self):
-    #     try:
-    #         with open('info_motores.txt', 'r') as file:
-    #             motor_data = file.read().split('\n\n')  # Split by two newlines
-    #     except FileNotFoundError:
-    #         print("Motor info file not found!")
-    #         return
-
-    #     # Create the popup
-    #     self.popup = MotorPopup()
-
-    #     # Ensure the text data corresponds with the defined ids in the kv file
-    #     if len(motor_data) >= 3:
-    #         self.popup.ids.motor_0_label.text = motor_data[0].replace("\n", "\n")
-    #         self.popup.ids.motor_1_label.text = motor_data[1].replace("\n", "\n")
-    #         self.popup.ids.motor_2_label.text = motor_data[2].replace("\n", "\n")
-    #     else:
-    #         print("Motor data is incomplete!")
-
-    #     # Open the popup
-    #     self.popup.open()
-        
     def open_repo(self) -> None: 
         '''
         Función para abrir el repositorio del código fuente
@@ -826,10 +809,6 @@ class ExoBoostApp(MDApp):
                 buttons=[MDFlatButton(text="Cerrar", on_release=lambda *args: dialog.dismiss())]
             )
             dialog.open()
-
-    def close_popup(self):
-        '''Función para cerra el pop up de información'''
-        self.popup.dismiss()
 
 if __name__ == '__main__':
     """Función principal que lanza la aplicación"""
