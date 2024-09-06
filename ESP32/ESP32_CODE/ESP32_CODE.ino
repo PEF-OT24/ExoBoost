@@ -309,6 +309,9 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
     stringsend += '\n'; // Se añade el caracter terminador
     sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
 
+    Serial.print("Info: ");
+    Serial.print(stringsend);
+
     // Enviar notificación de éxito en formato JSON
     pCharacteristic_LEVEL->notify();
   } // fin de onWrite

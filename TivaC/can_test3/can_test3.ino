@@ -738,8 +738,8 @@ void onReceive(int len){
   
       // Se extrae la información recibida
       assistance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
-      //Serial.print("Nivel de asistencia: ");
-      //Serial.println(assistance_level);
+      Serial.print("Nivel de asistencia: ");
+      Serial.println(assistance_level);
     }
     else if (strcmp(type, "B") == 0 || strcmp(type, "C") == 0 || strcmp(type, "D") == 0){ // Parámetros PI para cualquier motor
       // ------------- Parámetros de PI -------------
@@ -959,7 +959,7 @@ void setup() {
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
     SysTickIntRegister(ISRSysTick);
-    SysTickPeriodSet(16777215);
+    SysTickPeriodSet(11200);
     SysTickIntEnable();
     SysTickEnable();
 
@@ -983,6 +983,7 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
+  /*
  //if (doControlFlag) {
     //doControlFlag = false;
     //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
@@ -1010,4 +1011,5 @@ void loop() {
   //Serial.print(PV1);
   //Serial.print(", ");
   //Serial.println(PV2);
+  */
 }
