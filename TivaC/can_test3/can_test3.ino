@@ -61,6 +61,7 @@ String process_variable = "vel"; // Tipo de variable de proceso: pos, vel, cur, 
 int32_t PV1 = 1;
 int32_t PV2 = 1;
 int32_t PV3 = 999;
+bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 // ----------------- Variables para I2C ------------------
@@ -997,20 +998,89 @@ void onReceive(int len){
       const char* state_command = jsonrec["state"];
       if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
         //Serial.println("Deteniendo motores");
+        walk_flag = 0;
         stop_motor(1, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(2, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(3, false);
+        delayMS(CAN_DELAY); // delay
+      }
+       else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
+        walk_flag = 1;
+      }
+       else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
+        walk_flag = 0;
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
+        delayMS(CAN_DELAY);
+        motion_mode_command(1,PV1+90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
         delayMS(CAN_DELAY); // delay 
+        motion_mode_command(2,PV2-90,0,1,0.1,0,true);
+        delayMS(CAN_DELAY);
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
+      }
+       else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
+        walk_flag = 0;
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
+        delayMS(CAN_DELAY);
+        motion_mode_command(1,PV1-90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+        delayMS(CAN_DELAY); // delay 
+        motion_mode_command(2,PV2+90,0,1,0.1,0,true);
+        delayMS(500); // delay
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
       }
     }
-  
     // Se limpia el buffer y el archivo json receptor
     mensaje_leido = "";
   }
 }
 
+void walk_mode_sequence(){
+  motion_mode_command(1,PV1+0,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+0,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+25,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+25,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+50,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+50,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+75,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+75,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+100,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+100,0,1,0.1,0,true);
+  delayMS(500); // delay 
+  motion_mode_command(1,PV1+75,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD REGRESO
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+75,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+50,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+50,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+25,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+25,0,1,0.1,0,true);
+  delayMS(500); // delay
+  motion_mode_command(1,PV1+0,0,1,0.1,0,true);
+  delayMS(CAN_DELAY); // delay 
+  motion_mode_command(2,PV2+0,0,1,0.1,0,true);
+  delayMS(500); // delay 
+}
 void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
 
@@ -1054,7 +1124,7 @@ void setup() {
     GPIOPinConfigure(GPIO_PB5_CAN0TX);
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
-    SysTickIntRegister(ISRSysTick);
+    SysTickIntRegister(ISRSysTick);  
     SysTickPeriodSet(16777215);
     SysTickIntEnable();
     SysTickEnable();
@@ -1082,7 +1152,10 @@ void loop() {
  //if (doControlFlag) {
     //doControlFlag = false;
     //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
-  motion_mode_command(2,0,0,1,0.1,0,true);
+
+  if (walk_flag){
+    walk_mode_sequence();
+  }
   if (process_variable == "pos"){
     delayMS(20);
     read_angle(1);
