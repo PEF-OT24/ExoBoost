@@ -958,10 +958,12 @@ void setup() {
     GPIOPinConfigure(GPIO_PB5_CAN0TX);
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
+    /*
     //SysTickIntRegister(ISRSysTick);
     SysTickPeriodSet(11200);
     SysTickIntEnable();
     SysTickEnable();
+    */
 
     // ------ Configuración de I2C ------
     Wire.begin(I2C_DEV_ADDR);               // Inicializa el protocolo I2C
@@ -984,32 +986,21 @@ void setup() {
 // ----- Main Loop -----
 void loop() {
   /*
- //if (doControlFlag) {
-    //doControlFlag = false;
-    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
-
   if (process_variable == "pos"){
-    delayMS(20);
+    delayMS(80);
     read_angle(1);
-    delayMS(20);
+    delayMS(80);
     read_angle(2);
   } else if (process_variable == "vel"){
-    delayMS(20);
+    delayMS(80);
     read_velocity(1);
-    delayMS(20);
+    delayMS(80);
     read_velocity(2); 
   } else if (process_variable == "cur"){
-    delayMS(20);
+    delayMS(80);
     read_current(1);
-    delayMS(20);
+    delayMS(80);
     read_current(2); 
   }
-   //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
- //}
-  //Serial.print(process_variable);
-  //Serial.print(": ");
-  //Serial.print(PV1);
-  //Serial.print(", ");
-  //Serial.println(PV2);
   */
 }
