@@ -751,24 +751,8 @@ WindowManager:
                                 padding: dp(5), dp(5)
                                 spacing: dp(5)
                                 
-                                BoxLayout: 
-                                # ---- Botón para cargar los parámetros ----
-                                # MDIconButton:
-                                #     id: load_params
-                                #     icon: "download"
-                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                #     theme_icon_color: "Custom"
-                                #     icon_color: app.colors['White']
-                                    
-                                #     on_press: 
-                                #         self.md_bg_color = app.colors['Light Orange']
-                                #     on_release: 
-                                #         self.md_bg_color = app.colors['Cyan']
-                                #         app.load_params()
+                                BoxLayout: # Espacio en blanco
 
-                                #     md_bg_color: app.colors['Cyan']
-
-                                # ---- Botón para subir los parámetros ----
                                 MDIconButton:
                                     id: upload_pid
                                     icon: "upload-multiple"
@@ -819,20 +803,6 @@ WindowManager:
                                         self.md_bg_color = app.colors['Light Orange']
                                         app.send_sp()
                                     on_release: self.md_bg_color = app.colors['Cyan']
-                                    
-                                # MDIconButton:
-                                #     id: upload_pid
-                                #     icon: "upload-multiple"
-                                #     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                                #     theme_icon_color: "Custom"
-                                #     icon_color: app.colors['White']
-                                    
-                                #     on_press: 
-                                #         self.md_bg_color = app.colors['Light Orange']
-                                #         app.send_params()
-                                #     on_release: self.md_bg_color = app.colors['Cyan']
-                                #     md_bg_color: app.colors['Cyan']
-
                                     md_bg_color: app.colors['Cyan']
 
                                 BoxLayout: # Espacio en blanco 
@@ -852,6 +822,8 @@ WindowManager:
                                     id: process_button1
                                     group: "process_vars"
                                     text: "Position"
+                                    state: "down"   # Inicialmente seleccionado
+                                    # md_bg_color: app.colors["Light Orange"] # Inicialmente seleccionado
                                     
                                     on_state: app.process_var_select(self, self.state)
 
