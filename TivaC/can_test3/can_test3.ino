@@ -708,7 +708,7 @@ void read_current(int8_t ID){
   send_cmd(ID, CAN_data_TX, false);
 }
 
-void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, uint16_t kp, uint16_t kd, float t_ff, bool show) {
+void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, float kp, float kd, float t_ff, bool show) {
     uint16_t p_des_hex, v_des_hex, kp_hex, kd_hex, t_ff_hex;
 
     // Convert position from degrees to radians and normalize
@@ -1043,44 +1043,24 @@ void onReceive(int len){
   }
 }
 
-void walk_mode_sequence(){
-  motion_mode_command(1,PV1+0,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+0,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+25,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+25,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+50,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+50,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+75,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+75,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+100,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+100,0,1,0.1,0,true);
-  delayMS(500); // delay 
-  motion_mode_command(1,PV1+75,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD REGRESO
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+75,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+50,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+50,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+25,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+25,0,1,0.1,0,true);
-  delayMS(500); // delay
-  motion_mode_command(1,PV1+0,0,1,0.1,0,true);
-  delayMS(CAN_DELAY); // delay 
-  motion_mode_command(2,PV2+0,0,1,0.1,0,true);
-  delayMS(500); // delay 
+void walk_mode_sequence(float kp, float kd){
+  angle_sim = {0,25,50,75,100};
+
+  for (int i = 0; i<=4; i++){
+    motion_mode_command(1,PV1+angle_sim[i],0,kp,kd,0,true);
+    delayMS(CAN_DELAY); // delay 
+    motion_mode_command(2,PV2+angle_sim[i],0,kp,kd,0,true);
+    delayMS(500); // delay
+  }
+  
+  for (int i = 4; i>=0; i--){
+    motion_mode_command(1,PV1+angle_sim[i],0,kp,kd,0,true);
+    delayMS(CAN_DELAY); // delay 
+    motion_mode_command(2,PV2+angle_sim[i],0,kp,kd,0,true);
+    delayMS(500); // delay
+  }
 }
+
 void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
 
@@ -1154,7 +1134,7 @@ void loop() {
     //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
 
   if (walk_flag){
-    walk_mode_sequence();
+    walk_mode_sequence(1,0.1);
   }
   if (process_variable == "pos"){
     delayMS(20);
