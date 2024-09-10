@@ -1044,7 +1044,7 @@ void onReceive(int len){
 }
 
 void walk_mode_sequence(float kp, float kd){
-  angle_sim = {0,25,50,75,100};
+  int angle_sim[5] = {0,25,50,75,100};
 
   for (int i = 0; i<=4; i++){
     motion_mode_command(1,PV1+angle_sim[i],0,kp,kd,0,true);
