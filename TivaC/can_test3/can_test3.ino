@@ -39,7 +39,7 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 130
+#define CAN_DELAY 15
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
@@ -1044,20 +1044,26 @@ void onReceive(int len){
 }
 
 void walk_mode_sequence(float kp, float kd){
-  int angle_sim[5] = {0,25,50,75,100};
-
-  for (int i = 0; i<=4; i++){
-    motion_mode_command(1,PV1+angle_sim[i],0,kp,kd,0,true);
-    delayMS(CAN_DELAY); // delay 
-    motion_mode_command(2,PV2+angle_sim[i],0,kp,kd,0,true);
-    delayMS(500); // delay
-  }
+  int angle_sim_hip[8] = {30, 22, 3, 10, 3, 17, 27, 30};
+  int angle_sim_knee[8] = {3, 12, 3, 3, 35, 55, 25, 3};
+  int angle_sim_ankle[8] = {0, 7, 7, 10, 20, 7, 0, 0};
   
-  for (int i = 4; i>=0; i--){
-    motion_mode_command(1,PV1+angle_sim[i],0,kp,kd,0,true);
+  for (int i = 0; i<=7; i++){
+    read_angle(1);
+    delayMS(CAN_DELAY);
+    read_angle(2);
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,PV1+angle_sim_hip[i],0,kp,kd,0,true);
     delayMS(CAN_DELAY); // delay 
-    motion_mode_command(2,PV2+angle_sim[i],0,kp,kd,0,true);
-    delayMS(500); // delay
+    motion_mode_command(2,PV2+angle_sim_knee[i],0,kp,kd,0,true);
+    read_angle(1);
+    delayMS(CAN_DELAY);
+    read_angle(2);
+    delayMS(100); // delay
+
+    if (i==7){
+      i = 0;
+    }
   }
 }
 
