@@ -39,7 +39,7 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 15
+#define CAN_DELAY 100
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
@@ -1059,11 +1059,8 @@ void walk_mode_sequence(float kp, float kd){
     read_angle(1);
     delayMS(CAN_DELAY);
     read_angle(2);
-    delayMS(100); // delay
+    delayMS(500); // delay
 
-    if (i==7){
-      i = 0;
-    }
   }
 }
 
