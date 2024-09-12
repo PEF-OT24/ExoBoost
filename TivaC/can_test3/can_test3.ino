@@ -1015,13 +1015,19 @@ void onReceive(int len){
         delayMS(CAN_DELAY);
         read_angle(2);
         delayMS(CAN_DELAY);
-        motion_mode_command(1,PV1+90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+        read_angle(3);
+        delayMS(CAN_DELAY);
+        motion_mode_command(1,+90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,PV2-90,0,1,0.1,0,true);
+        motion_mode_command(2,-90,0,1,0.1,0,true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3,0,0,1,0.1,0,true);
         delayMS(CAN_DELAY);
         read_angle(1);
         delayMS(CAN_DELAY);
         read_angle(2);
+        delayMS(CAN_DELAY);
+        read_angle(3);
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         walk_flag = 0;
@@ -1029,10 +1035,12 @@ void onReceive(int len){
         delayMS(CAN_DELAY);
         read_angle(2);
         delayMS(CAN_DELAY);
-        motion_mode_command(1,PV1-90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+        motion_mode_command(1,-90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,PV2+90,0,1,0.1,0,true);
-        delayMS(500); // delay
+        motion_mode_command(2,+90,0,1,0.1,0,true);
+        delayMS(CAN_DELAY); // delay
+        motion_mode_command(3,0,0,1,0.1,0,true);
+        delayMS(CAN_DELAY);
         read_angle(1);
         delayMS(CAN_DELAY);
         read_angle(2);
@@ -1053,12 +1061,19 @@ void walk_mode_sequence(float kp, float kd){
     delayMS(CAN_DELAY);
     read_angle(2);
     delayMS(CAN_DELAY);
-    motion_mode_command(1,PV1+angle_sim_hip[i],0,kp,kd,0,true);
+    read_angle(3);
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
     delayMS(CAN_DELAY); // delay 
-    motion_mode_command(2,PV2+angle_sim_knee[i],0,kp,kd,0,true);
+    motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,angle_sim_ankle[i],0,1.1,0.05,0,true);
+    delayMS(CAN_DELAY);
     read_angle(1);
     delayMS(CAN_DELAY);
     read_angle(2);
+    delayMS(CAN_DELAY);
+    read_angle(3);
     delayMS(500); // delay
 
   }
@@ -1137,8 +1152,9 @@ void loop() {
     //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
 
   if (walk_flag){
-    walk_mode_sequence(1,0.1);
+    walk_mode_sequence(1.4,0.05);
   }
+  /*
   if (process_variable == "pos"){
     delayMS(20);
     read_angle(1);
@@ -1155,6 +1171,7 @@ void loop() {
     delayMS(20);
     read_current(2); 
   }
+  */
    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, LOW); 
  //}
   //Serial.print(process_variable);
