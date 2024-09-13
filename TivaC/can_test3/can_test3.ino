@@ -80,7 +80,7 @@ int index_alt;
 tCANMsgObject Message_Rx_1;   // Objeto para leer mensajes del motor 1
 tCANMsgObject Message_Rx_2;   // Objeto para leer mensajes del motor 2
 tCANMsgObject Message_Rx_3;   // Objeto para leer mensajes del motor 3
-uint8_t motor_selected = 0; // Indicador del motor seleccionado para lectura
+uint8_t motor_selected = 0;   // Indicador del motor seleccionado para lectura
 
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {              // Función para dividir una variable de 32 bits en 4 bytes
@@ -267,7 +267,7 @@ void motion_send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función 
   Message_Tx.ui32MsgID = 0x400 + ID;
   Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
   Message_Tx.ui32MsgLen = 8u;
-  Message_Tx.ui32Flags = MSG_OBJ_TX_INT_ENABLE; // Habilita interrupciones en el envío de mensaje
+  // Message_Tx.ui32Flags = MSG_OBJ_TX_INT_ENABLE; // Habilita interrupciones en el envío de mensaje
   Message_Tx.pui8MsgData = messageArray;
 
   if (ID == 1){       // Establecimiento de mensajes para el motor 1
