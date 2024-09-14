@@ -700,7 +700,10 @@ void onReceive(int len){
   
     // ----------- Se procesan diferentes JSON --------
     const char* type = jsonrec["T"];
-    if (strcmp(type, "F") == 0){ // Se establece el tipo de mensaje a mandar
+    if (strcmp(type, "F") == 0){ 
+      // --------------- Formateo Variable de Proceso ---------
+      // Sección que establece qué variable de proceso se está midiendo
+      // Guarda la información sobre dicha variable en un archivo JSON 
       
       jsonsend_ESP32.clear();    // Se limpia el JSON anterior
       stringsend_ESP32 = "";     // Se reinicia el string anterior
@@ -716,9 +719,6 @@ void onReceive(int len){
       serializeJson(jsonsend_ESP32, stringsend_ESP32);
       stringsend_ESP32 += '\n';  // terminador '\n'
 
-      //Serial.print("String ESP32: ");
-      //Serial.println(stringsend_ESP32);
-      
     }
     else if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------

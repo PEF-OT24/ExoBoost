@@ -313,10 +313,10 @@ class ExoBoostApp(MDApp):
             self.reading = False
         elif tab == "Tuning mode": 
             self.mode = "tuning"
-            self.reading = True
+            self.reading = False
         elif tab == "Monitoring tab": 
             self.mode = "monitoring"
-            self.reading = True
+            self.reading = True # Lectura habilitada solamente en modo monitoreo
 
     def is_valid(self, var: str, tipo) -> bool:
         """
