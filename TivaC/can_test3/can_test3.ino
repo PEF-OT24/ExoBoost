@@ -1149,29 +1149,29 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
- //if (doControlFlag) {
-    //doControlFlag = false;
-    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
-
   if (walk_flag){
     walk_mode_sequence(1.4,0.05);
   }
+
   /*
-  if (process_variable == "pos"){
-    delayMS(80);
-    read_angle(1);
-    delayMS(80);
-    read_angle(2);
-  } else if (process_variable == "vel"){
-    delayMS(20);
-    read_velocity(1); 
-    delayMS(20);
-    read_velocity(2); 
-  } else if (process_variable == "cur"){
-    delayMS(80);
-    read_current(1);
-    delayMS(80);
-    read_current(2); 
+  if (doControlFlag) {
+      doControlFlag = false;
+      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
+    if (process_variable == "pos"){
+      delayMS(80);
+      read_angle(1);
+      delayMS(80);
+      read_angle(2);
+    } else if (process_variable == "vel"){
+      delayMS(20);
+      read_velocity(1); 
+      delayMS(20);
+      read_velocity(2); 
+    } else if (process_variable == "cur"){
+      delayMS(80);
+      read_current(1);
+      delayMS(80);
+      read_current(2); 
   }
   */
 }
