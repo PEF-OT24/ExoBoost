@@ -29,13 +29,17 @@
 #define BLUE_LED GPIO_PIN_2
 #define GREEN_LED GPIO_PIN_3
 
+// Conversión de unidades
+#define DEG_TO_RAD (3.141592653589793 / 180.0)  // Degrees to radians conversion factor
+#define RAD_TO_DEG (180.0 / 3.141592653589793)  // Radians to degrees conversion factor
+
 // Define CAN_INT_INTID_STATUS if not defined
 #ifndef CAN_INT_INTID_STATUS
 #define CAN_INT_INTID_STATUS 0x8000
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 130
+#define CAN_DELAY 100
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
@@ -57,6 +61,7 @@ String process_variable = "vel"; // Tipo de variable de proceso: pos, vel, cur, 
 int32_t PV1 = 1;
 int32_t PV2 = 1;
 int32_t PV3 = 999;
+bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 // ----------------- Variables para I2C ------------------
@@ -75,7 +80,7 @@ int index_alt;
 tCANMsgObject Message_Rx_1;   // Objeto para leer mensajes del motor 1
 tCANMsgObject Message_Rx_2;   // Objeto para leer mensajes del motor 2
 tCANMsgObject Message_Rx_3;   // Objeto para leer mensajes del motor 3
-uint8_t motor_selected = 0; // Indicador del motor seleccionado para lectura
+uint8_t motor_selected = 0;   // Indicador del motor seleccionado para lectura
 
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {              // Función para dividir una variable de 32 bits en 4 bytes
@@ -233,6 +238,55 @@ void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para en
   } else if (ID == 3){ // Establecimiento de mensajes para el motor 3
     // Define el mensaje para leer por CAN
     Message_Rx_3.ui32MsgID = 0x243;
+    Message_Rx_3.ui32MsgIDMask = 0xFFFFFFFF; 
+    Message_Rx_3.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
+    Message_Rx_3.ui32MsgLen = 8u;
+    Message_Rx_3.pui8MsgData = CAN_data_RX;
+  }
+
+  // Envío por CAN
+  CANMessageSet(CAN0_BASE, ID, &Message_Tx, MSG_OBJ_TYPE_TX);
+
+  // Configura los objetos de mensajes
+  if (ID == 1){
+    CANMessageSet(CAN0_BASE, 1, &Message_Rx_1, MSG_OBJ_TYPE_RX);
+  } else if (ID == 2){
+    CANMessageSet(CAN0_BASE, 2, &Message_Rx_2, MSG_OBJ_TYPE_RX);
+  } else if (ID == 3){
+    CANMessageSet(CAN0_BASE, 3, &Message_Rx_3, MSG_OBJ_TYPE_RX);
+  }
+}
+
+void motion_send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
+  // Objetos para la comunicación CAN
+  tCANMsgObject Message_Tx;
+  
+  uint8_t CAN_data_RX[8u];
+
+  // Define el mensaje para mandar por CAN
+  Message_Tx.ui32MsgID = 0x400 + ID;
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
+  Message_Tx.ui32MsgLen = 8u;
+  // Message_Tx.ui32Flags = MSG_OBJ_TX_INT_ENABLE; // Habilita interrupciones en el envío de mensaje
+  Message_Tx.pui8MsgData = messageArray;
+
+  if (ID == 1){       // Establecimiento de mensajes para el motor 1
+    // Define el mensaje para leer por CAN
+    Message_Rx_1.ui32MsgID = 0x501;
+    Message_Rx_1.ui32MsgIDMask = 0xFFFFFFFF; // Lee todos los mensajes
+    Message_Rx_1.ui32Flags = MSG_OBJ_RX_INT_ENABLE; // Habilita interrupciones en la recepción del mensaje
+    Message_Rx_1.ui32MsgLen = 8u;
+    Message_Rx_1.pui8MsgData = CAN_data_RX;
+  } else if (ID == 2){ // Establecimiento de mensajes para el motor 2
+    // Define el mensaje para leer por CAN
+    Message_Rx_2.ui32MsgID = 0x502;
+    Message_Rx_2.ui32MsgIDMask = 0xFFFFFFFF; 
+    Message_Rx_2.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
+    Message_Rx_2.ui32MsgLen = 8u;
+    Message_Rx_2.pui8MsgData = CAN_data_RX;
+  } else if (ID == 3){ // Establecimiento de mensajes para el motor 3
+    // Define el mensaje para leer por CAN
+    Message_Rx_3.ui32MsgID = 0x503;
     Message_Rx_3.ui32MsgIDMask = 0xFFFFFFFF; 
     Message_Rx_3.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
     Message_Rx_3.ui32MsgLen = 8u;
@@ -654,6 +708,49 @@ void read_current(int8_t ID){
   send_cmd(ID, CAN_data_TX, false);
 }
 
+void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, float kp, float kd, float t_ff, bool show) {
+    uint16_t p_des_hex, v_des_hex, kp_hex, kd_hex, t_ff_hex;
+
+    // Convert position from degrees to radians and normalize
+    float p_des_rad = p_des_deg * DEG_TO_RAD;
+    p_des_hex = (uint16_t)(((p_des_rad + 12.5) / 25.0) * 65535);
+
+    // Convert velocity from degrees/second to radians/second and normalize
+    float v_des_rad_per_s = v_des_deg_per_s * DEG_TO_RAD;
+    v_des_hex = (uint16_t)(((v_des_rad_per_s + 45.0) / 90.0) * 4095);
+    v_des_hex &= 0x0FFF; //Mask para asegurar que la variable entra en 12 bits
+
+    // Normalize kp to the range 0 to 500
+    kp_hex = (uint16_t)((kp / 500.0) * 4095);
+    kp_hex &= 0x0FFF;
+
+    // Normalize kd to the range 0 to 5
+    kd_hex = (uint16_t)((kd / 5.0) * 4095);
+    kd_hex &= 0x0FFF;
+
+    // Normalize feedforward torque to the range -24 to 24 Nm
+    t_ff_hex = (uint16_t)(((t_ff + 24.0) / 48.0) * 4095);
+    t_ff_hex &= 0x0FFF; 
+
+    // Pack the CAN data into an 8-byte array
+    uint8_t CAN_message[8];
+
+    // Packing into CAN_message array
+    CAN_message[0] = (p_des_hex >> 8) & 0xFF;         // High byte of p_des
+    CAN_message[1] = p_des_hex & 0xFF;                // Low byte of p_des
+    CAN_message[2] = ((v_des_hex >> 4) & 0xFF);       // High 8 bits of v_des
+    CAN_message[3] = ((v_des_hex & 0x0F) << 4)        // Low 4 bits of v_des
+                     | ((kp_hex >> 8) & 0x0F);        // High 4 bits of kp
+    CAN_message[4] = kp_hex & 0xFF;                   // Low byte of kp
+    CAN_message[5] = ((kd_hex >> 4) & 0xFF);          // High 8 bits of kd
+    CAN_message[6] = ((kd_hex & 0x0F) << 4)           // Low 4 bits of kd
+                     | ((t_ff_hex >> 8) & 0x0F);      // High 4 bits of t_ff
+    CAN_message[7] = t_ff_hex & 0xFF;                 // Low byte of t_ff
+
+    // Send the CAN message (replace send_CAN with your CAN send function)
+    motion_send_cmd(ID, CAN_message , true);
+}
+
 // ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
 // Función para reiniciar el bus I2C ante algún error
 void clearI2C() {
@@ -901,17 +998,84 @@ void onReceive(int len){
       const char* state_command = jsonrec["state"];
       if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
         //Serial.println("Deteniendo motores");
+        walk_flag = 0;
         stop_motor(1, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(2, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(3, false);
+        delayMS(CAN_DELAY); // delay
+      }
+       else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
+        walk_flag = 1;
+      }
+       else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
+        walk_flag = 0;
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
+        delayMS(CAN_DELAY);
+        read_angle(3);
+        delayMS(CAN_DELAY);
+        motion_mode_command(1,+90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
         delayMS(CAN_DELAY); // delay 
+        motion_mode_command(2,-90,0,1,0.1,0,true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3,0,0,1,0.1,0,true);
+        delayMS(CAN_DELAY);
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
+        delayMS(CAN_DELAY);
+        read_angle(3);
+      }
+       else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
+        walk_flag = 0;
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
+        delayMS(CAN_DELAY);
+        motion_mode_command(1,-90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+        delayMS(CAN_DELAY); // delay 
+        motion_mode_command(2,+90,0,1,0.1,0,true);
+        delayMS(CAN_DELAY); // delay
+        motion_mode_command(3,0,0,1,0.1,0,true);
+        delayMS(CAN_DELAY);
+        read_angle(1);
+        delayMS(CAN_DELAY);
+        read_angle(2);
       }
     }
-  
     // Se limpia el buffer y el archivo json receptor
     mensaje_leido = "";
+  }
+}
+
+void walk_mode_sequence(float kp, float kd){
+  int angle_sim_hip[8] = {30, 22, 3, 10, 3, 17, 27, 30};
+  int angle_sim_knee[8] = {3, 12, 3, 3, 35, 55, 25, 3};
+  int angle_sim_ankle[8] = {0, 7, 7, 10, 20, 7, 0, 0};
+  
+  for (int i = 0; i<=7; i++){
+    read_angle(1);
+    delayMS(CAN_DELAY);
+    read_angle(2);
+    delayMS(CAN_DELAY);
+    read_angle(3);
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
+    delayMS(CAN_DELAY); // delay 
+    motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,angle_sim_ankle[i],0,1.1,0.05,0,true);
+    delayMS(CAN_DELAY);
+    read_angle(1);
+    delayMS(CAN_DELAY);
+    read_angle(2);
+    delayMS(CAN_DELAY);
+    read_angle(3);
+    delayMS(500); // delay
+
   }
 }
 
@@ -959,7 +1123,7 @@ void setup() {
     GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
 
     /*
-    //SysTickIntRegister(ISRSysTick);
+    SysTickIntRegister(ISRSysTick);
     SysTickPeriodSet(11200);
     SysTickIntEnable();
     SysTickEnable();
@@ -985,6 +1149,13 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
+ //if (doControlFlag) {
+    //doControlFlag = false;
+    //GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
+
+  if (walk_flag){
+    walk_mode_sequence(1.4,0.05);
+  }
   /*
   if (process_variable == "pos"){
     delayMS(80);
@@ -992,9 +1163,9 @@ void loop() {
     delayMS(80);
     read_angle(2);
   } else if (process_variable == "vel"){
-    delayMS(80);
-    read_velocity(1);
-    delayMS(80);
+    delayMS(20);
+    read_velocity(1); 
+    delayMS(20);
     read_velocity(2); 
   } else if (process_variable == "cur"){
     delayMS(80);
