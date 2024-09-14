@@ -93,7 +93,6 @@ class ExoBoostApp(MDApp):
 
         # -------------------------- Atributos internos --------------------------
         self.kv_loaded: bool = False
-        self.mode: str = None                  # Modo de operación la app: {assistance, tuning}
         self.assistance_state: str = "sitting down" # Modo de operación de la asistencia: {walking, sitting down, standing up}
         
         # Detecta el sistema operativo
@@ -166,7 +165,7 @@ class ExoBoostApp(MDApp):
         # --- Servicio de Process ---
         self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
-        self.uuid_manager.generate_uuids_chars(names[2], ["MODE"], [0x000c])
+        self.uuid_manager.generate_uuids_chars(names[2], ["MODE", "TAB"], [0x000c, 0x00aa])
 
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
@@ -306,17 +305,38 @@ class ExoBoostApp(MDApp):
     def on_tab_select(self, tab: str): 
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
         if tab == "Bluetooth settings": 
-            self.mode = "bluetooth"
+            self.send_tab("bluetooth")
             self.reading = False
         elif tab == "Assistance mode": 
-            self.mode = "assistance"
+            self.send_tab("assistance")
             self.reading = False
         elif tab == "Tuning mode": 
-            self.mode = "tuning"
+            self.send_tab("tuning")
             self.reading = False
         elif tab == "Monitoring tab": 
-            self.mode = "monitoring"
+            self.send_tab("monitoring")
             self.reading = True # Lectura habilitada solamente en modo monitoreo
+
+    def send_tab(self, tab: str):
+        '''Método para enviar la tab actual del usuario a la ESP32
+        Entradas: tab str -> Tab seleccionada
+        tab puede tener los valores: "bluetooth", "assistance", "tuning", "monitoring"
+        '''
+        
+        # Validación de BLE
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data = {"tab": tab}
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["TAB"]) # Se convierte a string
+
+        # Se mandan los datos
+        if not self.ble.connected: return
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     def is_valid(self, var: str, tipo) -> bool:
         """
@@ -736,7 +756,7 @@ class ExoBoostApp(MDApp):
                 service_uuid, char_uuid = self.ble.get_uuids_notified()
                 json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-                print("Información leida por noti: ")
+                print("Notificación: ")
                 print(json_dict) # Ver información recibida
 
                 '''

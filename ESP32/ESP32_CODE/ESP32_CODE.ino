@@ -37,11 +37,13 @@ String readI2CMessage(uint8_t slaveAddress);
 // Servicio para el modo de comando 
 #define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
+#define CHARACTERISTIC_UUID_TAB "000000aa-0000-1000-8000-00805f9b34fa" // Característica para indicar en qué ventana se encuentra el usuario
 
 // ------- Constantes para I2C -------
 #define SLAVE_ADDRESS 0x55     // Dirección del esclavo I2C para Right Leg
 #define BUFFER_SIZE 300        // Tamaño del buffer para recibir datos ELIMINAR
 #define I2C_BUFFER_LENGTH 128  // Tamaño máximo del buffer modificado en la ESP32
+
 // ------------------------------------------ Set up para BLE ------------------------------------------
 // ------- Variables para BLE -------
 bool client_connected = false;
@@ -57,6 +59,7 @@ BLECharacteristic *pCharacteristic_SP;
 BLECharacteristic *pCharacteristic_PV;
 BLECharacteristic *pCharacteristic_VAR;   // NO SE USA 
 BLECharacteristic *pCharacteristic_MODE;
+BLECharacteristic *pCharacteristic_TAB;
 
 // Variables para guardar los valores recibidos
 // Parámetros PI de los motores
@@ -78,6 +81,15 @@ String motor3_pv;
 String actual_pv; // PARA IMPLEMENTAR
 
 String state; // Estado del proceso actual
+
+String current_tab; // Tab actual del usuario
+int tab_num = 0;
+/*tab_num representa la info de current_tab, pero de una manera más simple para la tiva
+1 - bluetooth
+2 - assistance
+3 - tuning
+4 - monitoring
+*/
 
 String selected_limb; // Articulación seleccionada actual 
 
@@ -357,7 +369,8 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
       return;
     }
     /* Ejemplo de archivo
-      {"state": "sit_down_stand_up"}
+      {"state": "sit down"}
+      {"state": "stand up"}
       {"state": "walk"}
       {"state": "stop"}
 
@@ -379,6 +392,78 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
 
     // Enviar notificación de éxito en formato JSON
     pCharacteristic->notify();
+  }
+};
+
+// Clase de Callback para manejar comandos dependiendo de la ventana actual del usuario
+class BLECallback_TAB : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica leída por el cliente");
+  } // fin de onRead
+
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica escrita: " + String(value.c_str()));
+
+    // Procesa los datos recibidos en formato JSON
+    StaticJsonDocument<50> jsonrec;
+    DeserializationError error = deserializeJson(jsonrec, value);
+
+    Serial.println("Mensaje recibido: ");
+    serializeJson(jsonrec, Serial);
+
+    // Valida el formato del JSON y su contenido
+    if (error) { // Error en la deserialización
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    else if (!jsonrec.containsKey("tab")){ // Error de key
+      Serial.println("Tipo no encontrado en el JSON");
+      return;
+    }
+    else if (!jsonrec["tab"].is<String>()){ // Error de tipo de dato
+      Serial.println("Tipo de dato erróneo");
+      return;  
+    }
+
+    /* Ejemplo de archivo
+      {"tab": "bluetooth"}
+      {"tab": "assistance"}
+      {"tab": "tuning"}
+      {"tab": "monitoring"}
+
+      Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
+      {"tab": "bluetooth", "T", "G"}
+    */
+
+    // Recibe el valor y se procesa
+    current_tab = String(jsonrec["tab"]);
+    if (current_tab == "bluetooth"){tab_num = 1;}
+    else if (current_tab == "assistance"){tab_num = 2;}
+    else if (current_tab == "tuning"){tab_num = 3;}
+    else if (current_tab == "monitoring"){tab_num = 4;}
+    else {Serial.println("Error en la tab seleccionada.")}
+
+    // --------------- Procesamiento del archivo json para mandar ---------------
+    jsonrec["T"] = "G";                  // Se añade el tipo de mensaje 
+    jsonrec["tab"] = String(tab_num);    // Se cambia la información del mensaje
+    jsonrec.remove("limb");              // Se remueve la extremidad
+    
+    // Configuración del mensaje
+    String stringsend = ""; 
+    serializeJson(jsonrec, stringsend);                // Serialización del mensaje
+    stringsend += '\n';                                // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str()); // Envío del mensaje
+
+    // Enviar notificación de éxito en formato JSON
+    pCharacteristic->notify();
+
+    // PRUEBAS DE DEBUGGER
+    Serial.print(stringsend);
+    Serial.print("Tab: "); Serial.println(tab_num);
   }
 };
 
@@ -502,7 +587,7 @@ void setup() {
   Serial.println("Iniciando BLE");
 
   Wire.begin();  // SDA = GPIO 21, SCL = GPIO 22 by default on ESP32
-  Wire.setClock(400000);  // Establece la velocidad del I2C a 100 kHz
+  Wire.setClock(400000);  // Establece la velocidad del I2C a 400 kHz
 
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
@@ -558,7 +643,7 @@ void setup() {
 
   // Crea el servicio de envío de valor del estado
   BLEService *pService_MODE = pServer->createService(SERVICE_UUID_COMMAND);
-  // Crea la característica BLE para recibir datos de la PV
+  // Crea la característica BLE para recibir comandos sobre el modo de asistencia
   pCharacteristic_MODE = pService_MODE->createCharacteristic(
                                          CHARACTERISTIC_UUID_MODE,
                                          BLECharacteristic::PROPERTY_READ |
@@ -567,6 +652,15 @@ void setup() {
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic_MODE->setCallbacks(new BLECallback_MODE());
+  // Crea la característica BLE para recibir la ventana actual del usuario
+  pCharacteristic_TAB = pService_MODE->createCharacteristic(
+                                         CHARACTERISTIC_UUID_TAB,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_MODE->setCallbacks(new BLECallback_TAB());
 
   // Inicialización de las características
   StaticJsonDocument<20> doc;
@@ -575,6 +669,7 @@ void setup() {
   serializeJson(doc, buffer);
   pCharacteristic_PI->setValue(buffer);
   pCharacteristic_MODE->setValue(buffer);
+  pCharacteristic_TAB->setValue(buffer);
   
   // Inicialización de la característica PI
   StaticJsonDocument<200> values_doc;
@@ -587,7 +682,7 @@ void setup() {
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
 
-  // Inicia el servicio BLE
+  // Inicia los servicios BLE
   pService_PARAMS->start();
   pService_PV->start();
   pService_MODE->start();
@@ -603,7 +698,8 @@ void setup() {
 }
 
 void loop() {
-  // delay(150); // Lectuda de PV cada 100 ms
-  // read_PV();
-
+  if (tab_num == 4){ // Se realiza la lectura si está en tab de monitoring
+    delay(150); // Lectuda de PV cada 100 ms
+    read_PV();
+  }
 }

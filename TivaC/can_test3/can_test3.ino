@@ -30,10 +30,10 @@
 #define GREEN_LED GPIO_PIN_3
 
 // Conversión de unidades
-#define DEG_TO_RAD (3.141592653589793 / 180.0)  // Degrees to radians conversion factor
-#define RAD_TO_DEG (180.0 / 3.141592653589793)  // Radians to degrees conversion factor
+#define DEG_TO_RAD (3.141592653589793 / 180.0)  // Conversión de grados a radianes
+#define RAD_TO_DEG (180.0 / 3.141592653589793)  // Conversión de radianes a grados
 
-// Define CAN_INT_INTID_STATUS if not defined
+// Se define CAN_INT_INTID_STATUS si no lo está
 #ifndef CAN_INT_INTID_STATUS
 #define CAN_INT_INTID_STATUS 0x8000
 #endif
@@ -54,16 +54,22 @@ uint8_t curKI;
 uint16_t SP_motor1;
 uint32_t SP_motor2;
 uint32_t SP_motor3;
-uint16_t max_speed = 500; // Velocidad máxima al controlar posición
+uint16_t max_speed = 0; // Leer Nota 
+/*
+Nota: max_spsed controla la velocidad máxima con la que se ejecutan comandos de control de posición. 
+Si max_speed = 0, entonces la velocidad será la calculada por el controlador PI, de otra manera, 
+se limita al valor indicado. 
+*/
 
 // Variables de proceso para los motores
 String process_variable = "vel"; // Tipo de variable de proceso: pos, vel, cur, temp
 int32_t PV1 = 1;
 int32_t PV2 = 1;
-int32_t PV3 = 999;
+int32_t PV3 = 1;
 bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
+int8_t current_tab = 0; // Variable que almacena la ventana en la que se encuentra el usuario
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
 const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
@@ -751,13 +757,41 @@ void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, floa
     motion_send_cmd(ID, CAN_message , true);
 }
 
-// ----------------------------------- Funciones de callback de manejo de I2c -----------------------------------
+void walk_mode_sequence(float kp, float kd){
+  int angle_sim_hip[8] = {30, 22, 3, 10, 3, 17, 27, 30};
+  int angle_sim_knee[8] = {3, 12, 3, 3, 35, 55, 25, 3};
+  int angle_sim_ankle[8] = {0, 7, 7, 10, 20, 7, 0, 0};
+  
+  for (int i = 0; i<=7; i++){
+    read_angle(1);
+    delayMS(CAN_DELAY);
+    read_angle(2);
+    delayMS(CAN_DELAY);
+    read_angle(3);
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
+    delayMS(CAN_DELAY); // delay 
+    motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,angle_sim_ankle[i],0,1.1,0.05,0,true);
+    delayMS(CAN_DELAY);
+    read_angle(1);
+    delayMS(CAN_DELAY);
+    read_angle(2);
+    delayMS(CAN_DELAY);
+    read_angle(3);
+    delayMS(500); // delay
+
+  }
+}
+
+// ----------------------------------- Funciones de callback de manejo de I2C -----------------------------------
 // Función para reiniciar el bus I2C ante algún error
 void clearI2C() {
   while (Wire.available()) {
     Wire.read();  // Lee y desecha cualquier dato restante en el buffer
   }
-  mensaje_leido = "";
+  mensaje_leido = ""; // Reinicia el buffer manual
 }
 
 void onReceive(int len){
@@ -770,7 +804,7 @@ void onReceive(int len){
   }
 
   if (mensaje_leido.endsWith("\n")){ // Indicador de que el mensaje está completo
-    mensaje_leido.trim();
+    mensaje_leido.trim();            // Se elimina el terminador 
     JsonDocument jsonrec;            // Archivo json para recibir información 
   
     // ----- Procesamiento del mensaje recibido -----
@@ -789,35 +823,16 @@ void onReceive(int len){
       clearI2C();
       return;
     }
-    else if (!jsonrec["T"].is<const char*>()){
+    else if (!jsonrec["T"].is<const char*>()){ // Contenido en "tipo" incorrecto
       //Serial.println("Tipo de dato erróneo");
       clearI2C();
       return;   
     }
   
-    // ----------- Se procesan diferentes JSON --------
+    // ----------- Procesamiento del JSON completo --------
+    // El objeto "T" contiene un indicador de qué tipo de información contiene el JSON
     const char* type = jsonrec["T"];
-    if (strcmp(type, "F") == 0){ 
-      // --------------- Formateo Variable de Proceso ---------
-      // Sección que establece qué variable de proceso se está midiendo
-      // Guarda la información sobre dicha variable en un archivo JSON 
-      
-      jsonsend_ESP32.clear();    // Se limpia el JSON anterior
-      stringsend_ESP32 = "";     // Se reinicia el string anterior
-
-      // Se define el mensaje con los valores de la variable de proceso
-      jsonsend_ESP32["monitoring"] = process_variable;
-      jsonsend_ESP32["limb"] = "Right leg";
-      jsonsend_ESP32["motor1"] = String(PV1);
-      jsonsend_ESP32["motor2"] = String(PV2);
-      jsonsend_ESP32["motor3"] = String(PV3);
-
-      // Se construye el mensaje serializado
-      serializeJson(jsonsend_ESP32, stringsend_ESP32);
-      stringsend_ESP32 += '\n';  // terminador '\n'
-
-    }
-    else if (strcmp(type, "A") == 0){ 
+    if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
       // Ejemplo: {"T": "A","assistance_level": "100"}
 
@@ -958,22 +973,22 @@ void onReceive(int len){
       if (process_variable == "pos"){
         // Control de posición
         //Serial.println("Control de posición");
-        set_absolute_position(1, SP_motor1, max_speed, true);
+        set_absolute_position(1, SP_motor1, max_speed, false);
         delayMS(CAN_DELAY); // delay 
-        set_absolute_position(2, SP_motor2, max_speed, true);
+        set_absolute_position(2, SP_motor2, max_speed, false);
         delayMS(CAN_DELAY); // delay 
-        //set_absolute_position(3, SP_motor3, max_speed, true);
-        //delay(CAN_DELAY); // delay 
+        set_absolute_position(3, SP_motor3, max_speed, false);
+        delayMS(CAN_DELAY); // delay 
       }
       else if(process_variable == "vel"){
         // Control de velocidad
         //Serial.println("Control de velocidad");
-        set_speed(1, SP_motor1, true);
+        set_speed(1, SP_motor1, false);
         delayMS(CAN_DELAY); // delay 
-        set_speed(2, SP_motor2, true);
+        set_speed(2, SP_motor2, false);
         delayMS(CAN_DELAY); // delay 
-        //set_speed(3, SP_motor3, true);
-        //delayMS(CAN_DELAY); // delay 
+        set_speed(3, SP_motor3, false);
+        delayMS(CAN_DELAY); // delay 
       }
       else if (process_variable == "cur"){
         // Control de torque
@@ -982,8 +997,60 @@ void onReceive(int len){
         delayMS(CAN_DELAY); // delay 
         set_torque(2, SP_motor2, false);
         delayMS(CAN_DELAY); // delay 
-        //set_torque(3, SP_motor3, false);
-        //delayMS(CAN_DELAY); // delay  
+        set_torque(3, SP_motor3, false);
+        delayMS(CAN_DELAY); // delay  
+      }
+    }
+    else if (strcmp(type, "F") == 0){ 
+      // --------------- Formateo Variable de Proceso ---------
+      // Sección que establece qué variable de proceso se está midiendo
+      // Guarda la información sobre dicha variable en un archivo JSON 
+      
+      jsonsend_ESP32.clear();    // Se limpia el JSON anterior
+      stringsend_ESP32 = "";     // Se reinicia el string anterior
+
+      // Se define el mensaje con los valores de la variable de proceso
+      jsonsend_ESP32["monitoring"] = process_variable;
+      jsonsend_ESP32["limb"] = "Right leg";
+      jsonsend_ESP32["motor1"] = String(PV1);
+      jsonsend_ESP32["motor2"] = String(PV2);
+      jsonsend_ESP32["motor3"] = String(PV3);
+
+      // Se construye el mensaje serializado para mandar
+      serializeJson(jsonsend_ESP32, stringsend_ESP32);
+      stringsend_ESP32 += '\n';  // terminador '\n'
+
+    }
+    else if (strcmp(type, "G") == 0){
+      // ------------ Comando según ventana -----------
+      /*
+      La lógica interna de la Tiva C cambia en función de en qué ventana se 
+      encuentre el usuario. 
+      Ventanas: 
+      1 - Bluetooth - Ninguna acción
+      2 - Assistance - Motion Mode activado, requiere reset
+      3 - Tuning - Servo Mode activado, requiere reset. 
+      4 - Monitoring - Lectura de PV activada
+
+      Nota: Si una acción no indica activación, está desactivada. 
+      */
+      if (!jsonrec.containsKey("tab")){ // Validación del mensaje
+        return;  
+      }
+
+      int last_tab = current_tab; // Se guarda la tab anterior para reset motores
+      current_tab = jsonrec["tab"].as<int8_t>(); // Se extrae la información
+      if (current_tab < 0 || current_tab > 4){
+        return; // Error encontrado en el valor  
+      }
+
+      // Si hay un cambio de tab, se resetean los motores
+      if (current_tab != last_tab){
+        reset_motor(1);
+        delayMS(CAN_DELAY);   
+        reset_motor(3);
+        delayMS(CAN_DELAY);
+        reset_motor(2);
       }
     }
     else if (strcmp(type, "H") == 0){
@@ -991,10 +1058,11 @@ void onReceive(int len){
       /* Ejemplo
         {"state": "stop", "T", "H"}
       */
-      if (!jsonrec.containsKey("state")){
+      if (!jsonrec.containsKey("state")){ // Validación del mensaje
         //Serial.println("Información no disponible");
         return;  
       }
+      
       const char* state_command = jsonrec["state"];
       if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
         //Serial.println("Deteniendo motores");
@@ -1017,11 +1085,11 @@ void onReceive(int len){
         delayMS(CAN_DELAY);
         read_angle(3);
         delayMS(CAN_DELAY);
-        motion_mode_command(1,+90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+        motion_mode_command(1,+90,0,1,0.1,0,false); 
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,-90,0,1,0.1,0,true);
+        motion_mode_command(2,-90,0,1,0.1,0,false);
         delayMS(CAN_DELAY);
-        motion_mode_command(3,0,0,1,0.1,0,true);
+        motion_mode_command(3,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY);
         read_angle(1);
         delayMS(CAN_DELAY);
@@ -1035,11 +1103,11 @@ void onReceive(int len){
         delayMS(CAN_DELAY);
         read_angle(2);
         delayMS(CAN_DELAY);
-        motion_mode_command(1,-90,0,1,0.1,0,true); // SIMULACIÓN CAMINADO XD IDA
+        motion_mode_command(1,-90,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,+90,0,1,0.1,0,true);
+        motion_mode_command(2,+90,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
-        motion_mode_command(3,0,0,1,0.1,0,true);
+        motion_mode_command(3,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY);
         read_angle(1);
         delayMS(CAN_DELAY);
@@ -1051,37 +1119,10 @@ void onReceive(int len){
   }
 }
 
-void walk_mode_sequence(float kp, float kd){
-  int angle_sim_hip[8] = {30, 22, 3, 10, 3, 17, 27, 30};
-  int angle_sim_knee[8] = {3, 12, 3, 3, 35, 55, 25, 3};
-  int angle_sim_ankle[8] = {0, 7, 7, 10, 20, 7, 0, 0};
-  
-  for (int i = 0; i<=7; i++){
-    read_angle(1);
-    delayMS(CAN_DELAY);
-    read_angle(2);
-    delayMS(CAN_DELAY);
-    read_angle(3);
-    delayMS(CAN_DELAY);
-    motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
-    delayMS(CAN_DELAY); // delay 
-    motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
-    delayMS(CAN_DELAY);
-    motion_mode_command(3,angle_sim_ankle[i],0,1.1,0.05,0,true);
-    delayMS(CAN_DELAY);
-    read_angle(1);
-    delayMS(CAN_DELAY);
-    read_angle(2);
-    delayMS(CAN_DELAY);
-    read_angle(3);
-    delayMS(500); // delay
-
-  }
-}
-
 void onRequest(){
   // Función de callback que se ejecuta al recibir un request por I2C
-
+  // Nota: El mensaje a mandar se debe definir antes de que se haga el request
+  
   // Se manda un fragmento del mensaje
   int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
   Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
@@ -1149,14 +1190,11 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
-  if (walk_flag){
+  if (walk_flag && current_tab == 2){ // On assistance tab
     walk_mode_sequence(1.4,0.05);
   }
 
-  /*
-  if (doControlFlag) {
-      doControlFlag = false;
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED); 
+  if (current_tab == 4) { // On monitoring tab
     if (process_variable == "pos"){
       delayMS(80);
       read_angle(1);
@@ -1172,6 +1210,7 @@ void loop() {
       read_current(1);
       delayMS(80);
       read_current(2); 
+    }
   }
-  */
+  
 }
