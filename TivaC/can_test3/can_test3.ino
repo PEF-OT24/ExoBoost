@@ -70,6 +70,7 @@ bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 int8_t current_tab = 0; // Variable que almacena la ventana en la que se encuentra el usuario
+bool resetFlag = false; // Bandera que indica si es necesario un reset
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
 const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
@@ -619,33 +620,14 @@ void reset_motor(int8_t ID){
   send_cmd(ID, CAN_data_TX, false);
 }
 
-void reset_all_motors(bool show){
-  // Función para mandar un reset a todos los motores presentes en la RED CAN
-  
-  // Objetos para la comunicación CAN
-  uint8_t CAN_data_TX[8u];
-
-  // Reset del motor
-  CAN_data_TX[0] = 0x76; 
-  CAN_data_TX[1] = 0x00;
-  CAN_data_TX[2] = 0x00;
-  CAN_data_TX[3] = 0x00;
-  CAN_data_TX[4] = 0x00;
-  CAN_data_TX[5] = 0x00;
-  CAN_data_TX[6] = 0x00;
-  CAN_data_TX[7] = 0x00;
-
-  // Objetos para la comunicación CAN
-  tCANMsgObject Message_Tx;
-
-  // Define el mensaje para mandar por CAN
-  Message_Tx.ui32MsgID = 0x280;
-  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
-  Message_Tx.ui32MsgLen = 8u;
-  Message_Tx.pui8MsgData = CAN_data_TX;
-  
-  // Envío por CAN
-  CANMessageSet(CAN0_BASE, 0x280, &Message_Tx, MSG_OBJ_TYPE_TX); 
+void reset_all_motors(){
+  // Función para mandar un reset a los motores con ID 1, 2 y 3
+  delayMS(CAN_DELAY);
+  reset_motor(1);
+  delayMS(CAN_DELAY);   
+  reset_motor(3);
+  delayMS(CAN_DELAY);
+  reset_motor(2);
 }
 
 void read_angle(int8_t ID){
@@ -970,6 +952,11 @@ void onReceive(int len){
       
       // Control dependiendo del tipo 
       process_variable = jsonrec["monitoring"].as<String>();
+      if (resetFlag){ // Se resetean los motores si es necesario
+        reset_all_motors();
+        resetFlag = false;
+      }
+      
       if (process_variable == "pos"){
         // Control de posición
         //Serial.println("Control de posición");
@@ -1046,11 +1033,8 @@ void onReceive(int len){
 
       // Si hay un cambio de tab, se resetean los motores
       if (current_tab != last_tab){
-        reset_motor(1);
-        delayMS(CAN_DELAY);   
-        reset_motor(3);
-        delayMS(CAN_DELAY);
-        reset_motor(2);
+        reset_all_motors();
+        resetFlag = true;
       }
     }
     else if (strcmp(type, "H") == 0){
@@ -1192,6 +1176,11 @@ void setup() {
 void loop() {
   if (walk_flag && current_tab == 2){ // On assistance tab
     walk_mode_sequence(1.4,0.05);
+    
+    if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
+      reset_all_motors();
+      resetFlag = false;
+    }
   }
 
   if (current_tab == 4) { // On monitoring tab

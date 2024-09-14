@@ -445,7 +445,7 @@ class BLECallback_TAB : public BLECharacteristicCallbacks {
     else if (current_tab == "assistance"){tab_num = 2;}
     else if (current_tab == "tuning"){tab_num = 3;}
     else if (current_tab == "monitoring"){tab_num = 4;}
-    else {Serial.println("Error en la tab seleccionada.")}
+    else {Serial.println("Error en la tab seleccionada.");}
 
     // --------------- Procesamiento del archivo json para mandar ---------------
     jsonrec["T"] = "G";                  // Se añade el tipo de mensaje 
