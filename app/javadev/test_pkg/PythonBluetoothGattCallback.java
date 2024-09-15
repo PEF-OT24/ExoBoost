@@ -84,7 +84,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         this.ReadIndicated = true; // Se indica que se debe leer una característica
 
         // Se notifica al objeto de Python
-        this.pythonInterface.processNotification(this.characteristicNotified, this.serviceNotified);
+        this.pythonInterface.processNotification(this.serviceNotified, this.characteristicNotified);
     }
 
     @Override

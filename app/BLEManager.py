@@ -48,10 +48,10 @@ class PythonInterface(PythonJavaClass):
     __javainterfaces__ = ['javadev/test_pkg/PythonInterface']  # Ruta a la interfaz en Java
     __javacontext__ = 'app'
 
-    def __init__(self):
+    def __init__(self, notification_callback):
         self.serviceUUID: str = ""        # UUID del servicio
         self.characteristicUUID: str = "" # UUID de la característica
-        self.data:str = ""                # Información de la notificación
+        self.notification_callback = notification_callback # Callback al recibir notificación
 
     @java_method('(Ljava/lang/String;Ljava/lang/String;)V')  # Define un método que recibe los UUIDs de la notificación en formato str
     def processNotification(self, serviceUUID: str, characteristicUUID: str):
@@ -59,13 +59,12 @@ class PythonInterface(PythonJavaClass):
         self.serviceUUID = serviceUUID
         self.characteristicUUID = characteristicUUID
 
-        print(f"Servicio: {serviceUUID}")
-        print(f"Característica: {characteristicUUID}")
-        self.onNotification()
+        print("Callback de BLEManager")
+        # print(f"Servicio: {serviceUUID}")
+        # print(f"Característica: {characteristicUUID}")
 
-    def onNotification(self):
-        '''Método que procesa la información recibida en la notificación'''
-        print("Rutina especial")
+        if self.notification_callback:
+            self.notification_callback(self.serviceUUID, self.characteristicUUID)
 
 class Characteristic_Info:
     '''
@@ -135,7 +134,7 @@ class Characteristic_Info:
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
-    def __init__(self):
+    def __init__(self, notification_callback):
         '''Constructor de la clase'''
         # ----------- Métodos inicializadores -----------
         self.request_ble_permissions() # Solicitar permisos
@@ -155,7 +154,7 @@ class BluetoothManager_App:
         # Se crean los objetos BLE desde la API de Android SDK
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback()          # Instancia de Callback para escaneo
-        self.python_interface = PythonInterface()                 # Instancia de PythonInterface
+        self.python_interface = PythonInterface(notification_callback)                 # Instancia de PythonInterface con su callback
         self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface) # Instancia de Callback para el estado del GATT
 
         # ----------- Atributos lógicos -----------
