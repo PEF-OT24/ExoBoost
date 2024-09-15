@@ -54,7 +54,7 @@ uint8_t curKI;
 uint16_t SP_motor1;
 uint32_t SP_motor2;
 uint32_t SP_motor3;
-uint16_t max_speed = 0; // Leer Nota 
+uint16_t max_speed = 500; // Leer Nota 
 /*
 Nota: max_spsed controla la velocidad máxima con la que se ejecutan comandos de control de posición. 
 Si max_speed = 0, entonces la velocidad será la calculada por el controlador PI, de otra manera, 
@@ -70,6 +70,7 @@ bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 int8_t current_tab = 0; // Variable que almacena la ventana en la que se encuentra el usuario
+int8_t last_tab = 0;       // Variable que almacena la ventana antigua en la que se encontraba el usuario
 bool resetFlag = false; // Bandera que indica si es necesario un reset
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
@@ -560,24 +561,15 @@ void stop_motor(int8_t ID, bool show){
   send_cmd(ID, CAN_data_TX, false);
 }
 
-void stop_all_motors(bool show){
+void stop_all_motors(){
   // Función para detener el motor
   
-  // Objetos para la comunicación CAN
-  uint8_t CAN_data_TX[8u];
-
-  // Reset del motor
-  CAN_data_TX[0] = 0x81; 
-  CAN_data_TX[1] = 0x00;
-  CAN_data_TX[2] = 0x00;
-  CAN_data_TX[3] = 0x00;
-  CAN_data_TX[4] = 0x00;
-  CAN_data_TX[5] = 0x00;
-  CAN_data_TX[6] = 0x00;
-  CAN_data_TX[7] = 0x00;
-
-  // Se envía el mensaje
-  // send_cmd_multiple(2, CAN_data_TX, show);
+  stop_motor(1, false);
+  delayMS(CAN_DELAY);
+  stop_motor(2, false);
+  delayMS(CAN_DELAY);
+  stop_motor(3, false);
+  delayMS(CAN_DELAY);
 }
 
 void shutdown_motor(int8_t ID, bool show){
@@ -621,13 +613,18 @@ void reset_motor(int8_t ID){
 }
 
 void reset_all_motors(){
-  // Función para mandar un reset a los motores con ID 1, 2 y 3
-  delayMS(CAN_DELAY);
-  reset_motor(1);
+  // Función para mandar un stop y shutdown a los motores con ID 1, 2 y 3
+  if (last_tab == 2 || current_tab == 2 || current_tab == 1){
+    stop_all_motors();
+  }
+  /*
+  delayMS(100); // delay de 100 ms entre el stop y shutdown
+  shutdown_motor(1, false);
   delayMS(CAN_DELAY);   
-  reset_motor(3);
+  shutdown_motor(3, false);
   delayMS(CAN_DELAY);
-  reset_motor(2);
+  shutdown_motor(2, false);
+  */
 }
 
 void read_angle(int8_t ID){
@@ -814,6 +811,7 @@ void onReceive(int len){
     // ----------- Procesamiento del JSON completo --------
     // El objeto "T" contiene un indicador de qué tipo de información contiene el JSON
     const char* type = jsonrec["T"];
+    Serial.println(type);
     if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
       // Ejemplo: {"T": "A","assistance_level": "100"}
@@ -959,7 +957,7 @@ void onReceive(int len){
       
       if (process_variable == "pos"){
         // Control de posición
-        //Serial.println("Control de posición");
+        Serial.println("Control de posición");
         set_absolute_position(1, SP_motor1, max_speed, false);
         delayMS(CAN_DELAY); // delay 
         set_absolute_position(2, SP_motor2, max_speed, false);
@@ -1025,7 +1023,7 @@ void onReceive(int len){
         return;  
       }
 
-      int last_tab = current_tab; // Se guarda la tab anterior para reset motores
+      last_tab = current_tab; // Se guarda la tab anterior para reset motores
       current_tab = jsonrec["tab"].as<int8_t>(); // Se extrae la información
       if (current_tab < 0 || current_tab > 4){
         return; // Error encontrado en el valor  

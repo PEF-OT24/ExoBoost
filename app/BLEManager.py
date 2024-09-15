@@ -528,7 +528,9 @@ class BluetoothManager_App:
     
     def notification_received(self) -> bool:
         '''Devuelve True si el gatt recibió una notificación'''
-        return self.python_gatt_callback.ReadIndicated
+        flag = self.python_gatt_callback.getReadFlag()
+        print(f"Flag: {flag}")
+        return flag
     
     def get_uuids_notified(self) -> tuple[str]:
         '''Devuelve una tupla de los UUIDs de las características notificadas. 

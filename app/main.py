@@ -331,7 +331,7 @@ class ExoBoostApp(MDApp):
         json_data["limb"] = self.selected_limb
 
         # Se definen los UUIDs y los datos a mandar para la parámetros de control 
-        service_uuid = str(self.uuid_manager.uuids_services["Commands"]) # Se convierte a string
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"])  # Se convierte a string
         char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["TAB"]) # Se convierte a string
 
         # Se mandan los datos

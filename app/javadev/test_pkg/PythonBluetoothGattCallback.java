@@ -264,4 +264,8 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         // Método para obtener el estado de la notificación (exitosa no exitosa)
         return this.notification_enabled;
     }
+
+    public boolean getReadFlag() {
+        return this.ReadIndicated;
+    }
 }

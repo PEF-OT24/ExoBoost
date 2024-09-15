@@ -481,12 +481,19 @@ void resetI2C() {
   Wire.begin();   // Reinicia la comunicación I2C
 }
 
+void clearI2C() {
+  while (Wire.available()) {
+    Wire.read();  // Lee y desecha cualquier dato restante en el buffer
+  }
+}
+
 // Función para mandar un mensaje a través de I2C
 void sendI2CMessage(uint8_t slaveAddress, const char* message) {
   int length = strlen(message);  // Calcular el tamaño del mensaje
   byte byteArray[length];        // Crear un arreglo de bytes del mismo tamaño 
   int buffer_size = 32;          // Número máximo de bytes a transmitir (por protocolo)
   int errorCode;
+  int errorCount = 0;
 
   do { // Intento de mandar información por I2C
     for (int i = 0; i < length; i += buffer_size) { 
@@ -500,16 +507,24 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
         Wire.write(message[i + j]);
       }
       
-      errorCode = Wire.endTransmission();
       // Se imprime el error si hay uno
-      if (errorCode == 5){
+      errorCode = Wire.endTransmission();
+      if (errorCode != 0){
         Serial.println("retry");
         resetI2C();
+        errorCount++;
+
+        // Después de 5 errores deja de intentar
+        if (errorCount >=5){
+          resetI2C();
+          clearI2C();
+          break;
+        }
       }
       
       delay(10);  // delay para evitar saturación del bus I2C
     }
-  } while (errorCode == 5); // Se repite si encontró un erro
+  } while (errorCode != 0); // Se repite si encontró un error
 } //  fin de la función
 
 String readI2CMessage(uint8_t slaveAddress) {
@@ -660,7 +675,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_NOTIFY |
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
-  pCharacteristic_MODE->setCallbacks(new BLECallback_TAB());
+  pCharacteristic_TAB->setCallbacks(new BLECallback_TAB());
 
   // Inicialización de las características
   StaticJsonDocument<20> doc;
@@ -699,7 +714,7 @@ void setup() {
 
 void loop() {
   if (tab_num == 4){ // Se realiza la lectura si está en tab de monitoring
-    delay(150); // Lectuda de PV cada 100 ms
+    delay(250); // Lectuda de PV cada 100 ms
     read_PV();
   }
 }
