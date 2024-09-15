@@ -771,8 +771,8 @@ class ExoBoostApp(MDApp):
 
             # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
             if self.selected_limb == limb_read: 
-                # Clock.schedule_once(self.update_process_variable)
-                self.update_process_variable()
+                Clock.schedule_once(self.update_process_variable)
+                # self.update_process_variable()
 
         except Exception as e:
             print(f"Error la lectura: {e}")
