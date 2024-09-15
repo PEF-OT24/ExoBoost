@@ -459,8 +459,8 @@ class BluetoothManager_App:
 
             # Espera hasta que la característica se pueda leer
             self.python_gatt_callback.show_info = False # Mensaje no mostrado 
-            while not(self.python_gatt_callback.isReady_to_read()): pass # Espera hasta que la lectura esté disponible
-            self.python_gatt_callback.reset_reading()                    # Reinicia la bandera
+            while not(self.python_gatt_callback.isReady_to_read()): sleep(0.01) # Espera 10 ms hasta que la lectura esté disponible
+            self.python_gatt_callback.reset_reading()  # Reinicia la bandera
 
             # Se devuelve el valor de la característica
             return self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string
@@ -480,7 +480,7 @@ class BluetoothManager_App:
         # Se llama al método write()
         valor = self.read(service_uuid, characteristic_uuid)
         print(f"Raw string: {valor}")
-        dict_json = json.loads(valor)
+        dict_json: dict = json.loads(valor)
 
         return dict_json # Devuelve el diccionario JSON leído
     

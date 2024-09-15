@@ -231,7 +231,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         if (innerMap != null) {
             return innerMap.get(innerKey);
         }
-        return "null"; // Retorna null si la clave externa o interna no existe
+        return "null"; // Retorna null si una clave no existe
     }
 
     public boolean isReady_to_read() {

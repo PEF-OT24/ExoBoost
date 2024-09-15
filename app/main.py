@@ -730,17 +730,16 @@ class ExoBoostApp(MDApp):
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
 
-    def notification_callback(self,service_uuid, char_uuid):
+    def notification_callback(self, service_uuid, char_uuid):
         try: 
             # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+            print("Notificación: ")
+
             if not self.ble: return
             if not self.ble.connected: return
             if not self.reading: return
             
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
-
-            print("Notificación: ")
-            print(json_dict) # Ver información recibida
 
             '''
             Nota: De momento solamente se desea leer el parámetro PV.
@@ -772,10 +771,11 @@ class ExoBoostApp(MDApp):
 
             # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
             if self.selected_limb == limb_read: 
-                Clock.schedule_once(self.update_process_variable)
+                # Clock.schedule_once(self.update_process_variable)
+                self.update_process_variable()
 
         except Exception as e:
-            print(f"Error en el hilo de lectura: {e}")
+            print(f"Error la lectura: {e}")
 
     def read_pv_cycle(self, time: int, *args):  
         '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
