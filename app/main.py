@@ -729,20 +729,53 @@ class ExoBoostApp(MDApp):
                 self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][self.selected_param][param]
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
-    
-    def thread_supervisor(self, thread_name: Thread) -> None:
-        while True:
-            sleep(5)  # Verificar cada 5 segundos
-            if thread_name.is_alive(): continue
-            print("Hilo muerto, reiniciando...")
-            thread_name = Thread(target=self.read_pv_cycle, args=(20,), daemon=True)
-            thread_name.start()
-    
-    def aux_thread(self) -> None:
-        Clock.schedule_interval(lambda dt: self.read_pv_cycle(20, dt), 0) # Se inicia la lectura de datos de manera cíclica a 60 fps
 
-    def notification_callback(self,servce_uuid, char_uuid):
-        print(f"Callback de - Servicio: {servce_uuid}, Característica: {char_uuid}")
+    def notification_callback(self,service_uuid, char_uuid):
+        try: 
+            # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+            if not self.ble: return
+            if not self.ble.connected: return
+            if not self.reading: return
+            
+            json_dict = self.ble.read_json(service_uuid, char_uuid) 
+
+            print("Notificación: ")
+            print(json_dict) # Ver información recibida
+
+            '''
+            Nota: De momento solamente se desea leer el parámetro PV.
+
+            Ejemplo de estructura deseada del json para PV
+            json_dict = {
+                "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+                "monitoring": "pos", # {"pos", "vel", "cur"}
+                "motor1": "100",
+                "motor2": "100",
+                "motor3": "100"
+            }
+            '''
+
+            # Se obtienen los valores del diccionario
+            limb_read = json_dict["limb"]      
+            monitoring_read = json_dict["monitoring"]      
+            motor1pv_read = json_dict["motor1"]            
+            motor2pv_read = json_dict["motor2"]            
+            motor3pv_read = json_dict["motor3"]    
+
+            # Si es la variable de proceso de interés, se despliega la información 
+            if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
+                
+            # Se guardan los valores en el diccionario
+            self.motor_parameters_pv["motor1"] = motor1pv_read
+            self.motor_parameters_pv["motor2"] = motor2pv_read
+            self.motor_parameters_pv["motor3"] = motor3pv_read
+
+            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+            if self.selected_limb == limb_read: 
+                Clock.schedule_once(self.update_process_variable)
+
+        except Exception as e:
+            print(f"Error en el hilo de lectura: {e}")
 
     def read_pv_cycle(self, time: int, *args):  
         '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
