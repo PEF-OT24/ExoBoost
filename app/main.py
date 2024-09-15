@@ -767,10 +767,10 @@ class ExoBoostApp(MDApp):
             try: 
 
                 # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-                if not self.ble: 
+                if not self.ble: continue
+                if not self.ble.connected: 
                     print("no")
                     continue
-                if not self.ble.connected: continue
                 if not self.reading: continue
                 
                 # Si no hay notificaciones pendientes continua comprobando
@@ -812,7 +812,9 @@ class ExoBoostApp(MDApp):
                 self.motor_parameters_pv["motor3"] = motor3pv_read
 
                 # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-                if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
+                if self.selected_limb == limb_read: 
+                    Clock.schedule_once(self.update_process_variable)
+                    continue
 
             except Exception as e:
                 print(f"Error en el hilo de lectura: {e}")
