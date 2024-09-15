@@ -47,16 +47,25 @@ PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCal
 class PythonInterface(PythonJavaClass):
     __javainterfaces__ = ['javadev/test_pkg/PythonInterface']  # Ruta a la interfaz en Java
     __javacontext__ = 'app'
-    
-    @java_method('()V')  # Define un método que toma un array de bytes
-    def processNotification(self):
-        # Aquí ejecutas la rutina Python cuando se reciba la notificación
-        print("Notificación recibida con datos (python)")
-        self.python_routine()
 
-    def python_routine(self):
-        # Lógica Python a ejecutar al recibir notificación
-        print("Ejecutando rutina Python desde java (python)")
+    def __init__(self):
+        self.serviceUUID: str = ""        # UUID del servicio
+        self.characteristicUUID: str = "" # UUID de la característica
+        self.data:str = ""                # Información de la notificación
+
+    @java_method('(Ljava/lang/String;Ljava/lang/String;)V')  # Define un método que recibe los UUIDs de la notificación en formato str
+    def processNotification(self, serviceUUID: str, characteristicUUID: str):
+        # Aquí ejecutas la rutina Python cuando se reciba la notificación
+        self.serviceUUID = serviceUUID
+        self.characteristicUUID = characteristicUUID
+
+        print(f"Servicio: {serviceUUID}")
+        print(f"Característica: {characteristicUUID}")
+        self.onNotification()
+
+    def onNotification(self):
+        '''Método que procesa la información recibida en la notificación'''
+        print("Rutina especial")
 
 class Characteristic_Info:
     '''
@@ -544,12 +553,11 @@ class BluetoothManager_App:
     def notification_received(self) -> bool:
         '''Devuelve True si el gatt recibió una notificación'''
         flag: bool = self.python_gatt_callback.getReadFlag()
-        # print(f"Flag: {flag}")
         return flag
     
     def get_uuids_notified(self) -> tuple[str]:
-        '''Devuelve una tupla de los UUIDs de las características notificadas. 
-        El primer elemento corresponde al servicio y el segundo elemento a la característica
+        '''Devuelve una tupla de los UUIDs de las características notificadas:
+        (service_uuid, characteristic_uuid)
         '''
         if not self.connected_gatt: return ("", "") # Comprobación de errores
 

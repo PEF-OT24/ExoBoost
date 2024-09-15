@@ -152,19 +152,7 @@ class ExoBoostApp(MDApp):
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
         # Se inicializa el hilo secundario de la lectura de datos y su supervisor.
-        # self.read_thread = Thread(target=self.read_pv_cycle, args=(100,), daemon=True)
-        # self.read_thread.start()
-        def start_loop(loop):
-            asyncio.set_event_loop(loop)
-            loop.run_forever()
-        self.loop = asyncio.new_event_loop()
-        self.read_thread = Thread(target=start_loop, args=(self.loop,), daemon=True)
-        self.read_thread.start()
-
-        asyncio.run_coroutine_threadsafe(self.read_pv_cycle(20), self.loop)
-        # self.aux_thread_running = Thread(target=self.aux_thread, args=(), daemon=True)
-        # self.aux_thread_running.start()
-        # self.supervisor = Thread(target=self.thread_supervisor, args=(self.read_thread,), daemon=True)
+        self.read_thread = Thread(target=self.read_pv_cycle, args=(100,), daemon=True)
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
@@ -468,7 +456,7 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
 
             # Comienza la lectura de datos
-            # self.read_thread.start()
+            self.read_thread.start()
 
         # Cuando está conectado, se desconecta
         else:
@@ -753,7 +741,7 @@ class ExoBoostApp(MDApp):
     def aux_thread(self) -> None:
         Clock.schedule_interval(lambda dt: self.read_pv_cycle(20, dt), 0) # Se inicia la lectura de datos de manera cíclica a 60 fps
 
-    async def read_pv_cycle(self, time: int, *args):  
+    def read_pv_cycle(self, time: int, *args):  
         '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
         Este método se llama mientras se encuentre en modo sintonización.
         Entrada: time interval int -> Periodo de lectura de datos en ms'''
@@ -768,9 +756,7 @@ class ExoBoostApp(MDApp):
 
                 # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
                 if not self.ble: continue
-                if not self.ble.connected: 
-                    print("no")
-                    continue
+                if not self.ble.connected: continue
                 if not self.reading: continue
                 
                 # Si no hay notificaciones pendientes continua comprobando
