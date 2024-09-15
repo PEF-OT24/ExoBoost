@@ -528,8 +528,8 @@ class BluetoothManager_App:
     
     def notification_received(self) -> bool:
         '''Devuelve True si el gatt recibió una notificación'''
-        flag = self.python_gatt_callback.getReadFlag()
-        print(f"Flag: {flag}")
+        flag: bool = self.python_gatt_callback.getReadFlag()
+        # print(f"Flag: {flag}")
         return flag
     
     def get_uuids_notified(self) -> tuple[str]:

@@ -742,7 +742,7 @@ class ExoBoostApp(MDApp):
                 sleep(float(time/1000))
 
                 # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-                # print(f'{self.ble}, {self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
+                print(f'{self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
                 if not self.ble: continue
                 if not self.ble.connected: continue
                 if not self.reading: continue

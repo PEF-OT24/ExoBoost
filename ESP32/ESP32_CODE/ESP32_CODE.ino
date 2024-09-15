@@ -518,6 +518,7 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
         if (errorCount >=5){
           resetI2C();
           clearI2C();
+          errorCode = 0; // forza a no seguir intentando
           break;
         }
       }
