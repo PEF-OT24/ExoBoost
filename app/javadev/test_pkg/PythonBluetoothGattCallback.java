@@ -23,7 +23,7 @@ import android.bluetooth.BluetoothGattService;
 public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     // Referencia a la clase de Python en Java
-    private PythonInterface pythonInterface;
+    public PythonInterface pythonInterface;
 
     public BluetoothGatt connected_gatt = null;
     public boolean ready_to_read = false;
