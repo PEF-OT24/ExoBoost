@@ -62,7 +62,7 @@ se limita al valor indicado.
 */
 
 // Variables de proceso para los motores
-String process_variable = "vel"; // Tipo de variable de proceso: pos, vel, cur, temp
+String process_variable = "pos"; // Tipo de variable de proceso: pos, vel, cur, temp
 int32_t PV1 = 1;
 int32_t PV2 = 1;
 int32_t PV3 = 1;
@@ -1007,7 +1007,6 @@ void onReceive(int len){
       // Se construye el mensaje serializado para mandar
       serializeJson(jsonsend_ESP32, stringsend_ESP32);
       stringsend_ESP32 += '\n';  // terminador '\n'
-
     }
     else if (strcmp(type, "G") == 0){
       // ------------ Comando según ventana -----------
