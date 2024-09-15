@@ -13,7 +13,7 @@ Autores: Teresa Hernandez, Carlos Reyes y David Villanueva.
 Ante cualquier duda contactar: david.villanueva@udem.edu
 '''
 
-from jnius import autoclass
+from jnius import autoclass, PythonJavaClass, java_method
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
@@ -43,6 +43,19 @@ UUIDClass = autoclass('java.util.UUID')
 # Se importan las clases del paquete personalizado 
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
 PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
+
+class PythonInterface(PythonJavaClass):
+    __javainterfaces__ = ['com/example/PythonInterface']  # Nombre de la interfaz en Java
+
+    @java_method('()V')  # Define un método que toma un array de bytes
+    def processNotification(self):
+        # Aquí ejecutas la rutina Python cuando se reciba la notificación
+        print("Notificación recibida con datos (python)")
+        self.python_routine()
+
+    def python_routine(self):
+        # Lógica Python a ejecutar al recibir notificación
+        print("Ejecutando rutina Python desde java (python)")
 
 class Characteristic_Info:
     '''
@@ -129,10 +142,11 @@ class BluetoothManager_App:
         self.ble_enable = self.is_bluetooth_enabled()
         if not(self.ble_enable): self.enable_bluetooth()
 
-        # Se crea el escaneador de BLE
+        # Se crean los objetos BLE desde la API de Android SDK
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback()          # Instancia de Callback para escaneo
-        self.python_gatt_callback = PythonBluetoothGattCallback() # Instancia de Callback para el estado del GATT
+        self.python_interface = PythonInterface()                 # Instancia de PythonInterface
+        self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface) # Instancia de Callback para el estado del GATT
 
         # ----------- Atributos lógicos -----------
         self._GATT_MAX_MTU_SIZE = 517               # Tamaño máximo de transmisión
