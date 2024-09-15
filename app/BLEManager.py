@@ -45,7 +45,7 @@ PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback
 PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
 
 class PythonInterface(PythonJavaClass):
-    __javainterfaces__ = ['com/example/PythonInterface']  # Nombre de la interfaz en Java
+    __javainterfaces__ = ['javadev/test_pkg/PythonInterface']  # Nombre de la interfaz en Java
 
     @java_method('()V')  # Define un método que toma un array de bytes
     def processNotification(self):
