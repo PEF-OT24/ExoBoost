@@ -46,7 +46,8 @@ PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCal
 
 class PythonInterface(PythonJavaClass):
     __javainterfaces__ = ['javadev/test_pkg/PythonInterface']  # Ruta a la interfaz en Java
-
+    __javacontext__ = 'app'
+    
     @java_method('()V')  # Define un método que toma un array de bytes
     def processNotification(self):
         # Aquí ejecutas la rutina Python cuando se reciba la notificación
