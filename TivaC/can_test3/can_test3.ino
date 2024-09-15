@@ -162,6 +162,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV1_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
             PV1 = PV1_read;
           }
+          Serial.print("PV1: "); Serial.println(PV1);
 
         } else if (motor_selected == 2){           // motor 2
           // Se obtiene el mensaje
@@ -185,6 +186,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV2_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
             PV2 = PV2_read;
           }
+          Serial.print("PV2: "); Serial.println(PV2);
           
         } else if (motor_selected == 3){           // motor 3
           // Se obtiene el mensaje
@@ -208,7 +210,8 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV3_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
             PV3 = PV3_read;
           }
-        } else {/*Serial.println("Error")*/;}             // error en el motor seleccionado
+          Serial.print("PV3: "); Serial.println(PV3);
+        }
 
     } else {
         // Handle unexpected interrupts
@@ -616,15 +619,15 @@ void reset_all_motors(){
   // Función para mandar un stop y shutdown a los motores con ID 1, 2 y 3
   if (last_tab == 2 || current_tab == 2 || current_tab == 1){
     stop_all_motors();
+  
+    delayMS(100); // delay de 100 ms entre el stop y shutdown
+    shutdown_motor(1, false);
+    delayMS(CAN_DELAY);   
+    shutdown_motor(2, false);
+    delayMS(CAN_DELAY);
+    shutdown_motor(3, false);
+  
   }
-  /*
-  delayMS(100); // delay de 100 ms entre el stop y shutdown
-  shutdown_motor(1, false);
-  delayMS(CAN_DELAY);   
-  shutdown_motor(3, false);
-  delayMS(CAN_DELAY);
-  shutdown_motor(2, false);
-  */
 }
 
 void read_angle(int8_t ID){
@@ -1025,6 +1028,8 @@ void onReceive(int len){
 
       last_tab = current_tab; // Se guarda la tab anterior para reset motores
       current_tab = jsonrec["tab"].as<int8_t>(); // Se extrae la información
+      Serial.print("Tab: ");
+      Serial.println(current_tab);
       if (current_tab < 0 || current_tab > 4){
         return; // Error encontrado en el valor  
       }
@@ -1061,39 +1066,53 @@ void onReceive(int len){
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
         walk_flag = 0;
+        /*
         read_angle(1);
         delayMS(CAN_DELAY);
         read_angle(2);
         delayMS(CAN_DELAY);
         read_angle(3);
         delayMS(CAN_DELAY);
+        */
         motion_mode_command(1,+90,0,1,0.1,0,false); 
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,-90,0,1,0.1,0,false);
         delayMS(CAN_DELAY);
         motion_mode_command(3,0,0,1,0.1,0,false);
+        delayMS(CAN_DELAY); // delay
+        /*
         delayMS(CAN_DELAY);
         read_angle(1);
         delayMS(CAN_DELAY);
         read_angle(2);
         delayMS(CAN_DELAY);
         read_angle(3);
+        */
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         walk_flag = 0;
+        /*
         read_angle(1);
         delayMS(CAN_DELAY);
         read_angle(2);
         delayMS(CAN_DELAY);
+        read_angle(3);
+        delayMS(CAN_DELAY);
+        */
         motion_mode_command(1,-90,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,+90,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
         motion_mode_command(3,0,0,1,0.1,0,false);
+        delayMS(CAN_DELAY); // delay
+        /*
         delayMS(CAN_DELAY);
         read_angle(1);
         delayMS(CAN_DELAY);
         read_angle(2);
+        delayMS(CAN_DELAY);
+        read_angle(3);
+        */
       }
     }
     // Se limpia el buffer y el archivo json receptor
@@ -1172,7 +1191,7 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
-  if (walk_flag && current_tab == 2){ // On assistance tab
+  if (walk_flag == 1 && current_tab == 2){ // On assistance tab
     walk_mode_sequence(1.4,0.05);
     
     if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera

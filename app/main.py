@@ -150,8 +150,9 @@ class ExoBoostApp(MDApp):
         self.connection_successful: bool = False   # Indica si la conexión fue exitosa
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
-        # Se inicializa el hilo secundario de la lectura de datos
-        self.read_thread = Thread(target=self.read_pv_cycle, args=(20,))
+        # Se inicializa el hilo secundario de la lectura de datos y su supervisor.
+        self.read_thread = Thread(target=self.read_pv_cycle, args=(20,), daemon=True)
+        self.supervisor = Thread(target=self.thread_supervisor, args=(self.read_thread,), daemon=True)
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
@@ -728,6 +729,14 @@ class ExoBoostApp(MDApp):
                 self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][self.selected_param][param]
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
+    
+    def thread_supervisor(self, thread_name: Thread) -> None:
+        while True:
+            sleep(5)  # Verificar cada 5 segundos
+            if thread_name.is_alive(): continue
+            print("Hilo muerto, reiniciando...")
+            thread_name = Thread(target=self.read_pv_cycle, args=(20,), daemon=True)
+            thread_name.start()
 
     def read_pv_cycle(self, time: int):  
         '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
@@ -742,7 +751,7 @@ class ExoBoostApp(MDApp):
                 sleep(float(time/1000))
 
                 # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-                print(f'{self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
+                # print(f'{self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
                 if not self.ble: continue
                 if not self.ble.connected: continue
                 if not self.reading: continue
@@ -794,9 +803,11 @@ class ExoBoostApp(MDApp):
                 except Exception as e:
                     print("Error al leer los datos")
                     print(e)
+                    continue
 
             except Exception as e:
                 print(f"Error en el hilo de lectura: {e}")
+                continue
 
     def update_process_variable(self, *args):
         print("Desplegando valores PV")
