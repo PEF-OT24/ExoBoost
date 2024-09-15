@@ -730,15 +730,19 @@ class ExoBoostApp(MDApp):
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
 
-    def notification_callback(self, service_uuid, char_uuid):
+    def notification_callback(self, service_uuid, char_uuid) -> None:
+        '''
+        Método que se ejecuta cuando se recibe una notificación del dispositivo conectado
+        Entradas: service_uuid str -> UUID del servicio de la característica
+                  char_uuid str -> UUID de la característica
+        '''
         try: 
             # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-            print("Notificación: ")
-
             if not self.ble: return
             if not self.ble.connected: return
             if not self.reading: return
             
+            # Se lee el archivo JSON
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
             '''
@@ -772,75 +776,9 @@ class ExoBoostApp(MDApp):
             # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
             if self.selected_limb == limb_read: 
                 Clock.schedule_once(self.update_process_variable)
-                # self.update_process_variable()
 
         except Exception as e:
             print(f"Error la lectura: {e}")
-
-    def read_pv_cycle(self, time: int, *args):  
-        '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
-        Este método se llama mientras se encuentre en modo sintonización.
-        Entrada: time interval int -> Periodo de lectura de datos en ms'''
-
-        sleep(1) # Espera un momento antes de comenzar la lectura
-        print("Iniciando ciclo de lectura ...")
-
-        while True: # Este ciclo nunca debería detenerse en el thread secundario 
-                # Espera el tiempo indicado para cada lectura
-            sleep(float(time/1000))
-            try: 
-
-                # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-                if not self.ble: continue
-                if not self.ble.connected: continue
-                if not self.reading: continue
-                
-                # Si no hay notificaciones pendientes continua comprobando
-                if not self.ble.notification_received(): continue
-
-                # Se realiza la lectura si está conectado y en lectura activa
-                service_uuid, char_uuid = self.ble.get_uuids_notified()
-                json_dict = self.ble.read_json(service_uuid, char_uuid) 
-
-                print("Notificación: ")
-                print(json_dict) # Ver información recibida
-
-                '''
-                Nota: De momento solamente se desea leer el parámetro PV.
-
-                Ejemplo de estructura deseada del json para PV
-                json_dict = {
-                    "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
-                    "monitoring": "pos", # {"pos", "vel", "cur"}
-                    "motor1": "100",
-                    "motor2": "100",
-                    "motor3": "100"
-                }
-                '''
-
-                # Se obtienen los valores del diccionario
-                limb_read = json_dict["limb"]      
-                monitoring_read = json_dict["monitoring"]      
-                motor1pv_read = json_dict["motor1"]            
-                motor2pv_read = json_dict["motor2"]            
-                motor3pv_read = json_dict["motor3"]    
-
-                # Si es la variable de proceso de interés, se despliega la información 
-                if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
-                    
-                # Se guardan los valores en el diccionario
-                self.motor_parameters_pv["motor1"] = motor1pv_read
-                self.motor_parameters_pv["motor2"] = motor2pv_read
-                self.motor_parameters_pv["motor3"] = motor3pv_read
-
-                # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-                if self.selected_limb == limb_read: 
-                    Clock.schedule_once(self.update_process_variable)
-                    continue
-
-            except Exception as e:
-                print(f"Error en el hilo de lectura: {e}")
-                continue
 
     def update_process_variable(self, *args):
         print("Desplegando valores PV")

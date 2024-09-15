@@ -23,7 +23,7 @@ import android.bluetooth.BluetoothGattService;
 public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
     // Referencia a la clase de Python en Java
-    public PythonInterface pythonInterface;
+    public NotificationInterfaceCallback notificationCallback;
 
     public BluetoothGatt connected_gatt = null;
     public boolean ready_to_read = false;
@@ -48,11 +48,11 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
 
-    public PythonBluetoothGattCallback(PythonInterface pythonInterface) {
+    public PythonBluetoothGattCallback(NotificationInterfaceCallback notificationCallback) {
         super();
         System.out.println("Objeto de BluetoothGattCallback creado en java (python)");
 
-        this.pythonInterface = pythonInterface;
+        this.notificationCallback = notificationCallback;
     }
 
     @Override
@@ -84,7 +84,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         this.ReadIndicated = true; // Se indica que se debe leer una característica
 
         // Se notifica al objeto de Python
-        this.pythonInterface.processNotification(this.serviceNotified, this.characteristicNotified);
+        this.notificationCallback.processNotification(this.serviceNotified, this.characteristicNotified);
     }
 
     @Override
