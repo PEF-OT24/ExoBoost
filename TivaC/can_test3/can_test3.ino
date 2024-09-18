@@ -18,6 +18,7 @@
 #include "driverlib/uart.h"
 #include "driverlib/pwm.h"
 #include "driverlib/adc.h"
+#include "driverlib/timer.h"
 #include "driverlib/can.h"
 #include "driverlib/systick.h"
 #include <Wire.h>
@@ -39,7 +40,7 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 100
+#define CAN_DELAY 80
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
@@ -162,7 +163,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV1_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
             PV1 = PV1_read;
           }
-          Serial.print("PV1: "); Serial.println(PV1);
+          //Serial.print("PV1: "); Serial.println(PV1);
 
         } else if (motor_selected == 2){           // motor 2
           // Se obtiene el mensaje
@@ -186,7 +187,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV2_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
             PV2 = PV2_read;
           }
-          Serial.print("PV2: "); Serial.println(PV2);
+          //Serial.print("PV2: "); Serial.println(PV2);
           
         } else if (motor_selected == 3){           // motor 3
           // Se obtiene el mensaje
@@ -210,7 +211,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV3_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
             PV3 = PV3_read;
           }
-          Serial.print("PV3: "); Serial.println(PV3);
+          //Serial.print("PV3: "); Serial.println(PV3);
         }
 
     } else {
@@ -218,8 +219,50 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
         CANIntClear(CAN0_BASE, ui32Status);
     }
 }
+// Función de interrupción del Timer 0
+void Timer0IntHandler(void) {
+    // Limpia la interrupción del timer
+    TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    
+    // Código a ejecutar en cada desbordamiento del timer
+
+    Serial.println("-- Lecturas de corriente --");
+    delayMS(80);
+    read_current(1);
+    delayMS(80);
+    read_current(2); 
+    delayMS(80);
+    read_current(3); 
+}
+
+// ---------------------------------- Configuración del Timer 0 --------------------------------------
+// Función para configurar el Timer0 con un periodo dado
+void ConfigureTimer0(float period_in_seconds) {
+    // Habilita el periférico Timer0
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
+    
+    // Configura el timer en modo periódico
+    TimerConfigure(TIMER0_BASE, TIMER_CFG_PERIODIC);
+    
+    // Calcula el valor de carga del timer basado en el período en segundos
+    uint32_t ui32Period = (uint32_t)(SysCtlClockGet() * period_in_seconds);
+    TimerLoadSet(TIMER0_BASE, TIMER_A, ui32Period - 1);
+    
+    // Habilita la interrupción del Timer0
+    IntEnable(INT_TIMER0A);
+    TimerIntEnable(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
+    IntMasterEnable();
+    TimerIntRegister(TIMER0_BASE,TIMER_BOTH,Timer0IntHandler);
+
+    // Activa el timer
+    TimerEnable(TIMER0_BASE, TIMER_A);
+}
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
+  
+  // Omitir el motor 3
+  if (ID == 3){return;}
+  
   // Objetos para la comunicación CAN
   tCANMsgObject Message_Tx;
   
@@ -544,6 +587,30 @@ void set_torque(int8_t ID, int64_t current_torque, bool show){
   send_cmd(ID, CAN_data_TX, show);
 }
 
+void write_zero(int8_t ID, int32_t zero){
+  // Función para establecer el zero offset del motor en el encoder
+
+  uint8_t byteArray_zero[4];
+
+  // Split the number into 4 bytes
+  split32bits(zero, byteArray_zero);
+  
+  // Objetos para la comunicación CAN
+  uint8_t CAN_data_TX[8u];
+
+  // Reset del motor
+  CAN_data_TX[0] = 0x64;
+  CAN_data_TX[1] = 0x00;
+  CAN_data_TX[2] = 0x00;
+  CAN_data_TX[3] = 0x00;
+  CAN_data_TX[4] = 0x00;
+  CAN_data_TX[5] = 0x00;
+  CAN_data_TX[6] = 0x00;
+  CAN_data_TX[7] = 0x00;
+
+  // Se envía el mensaje
+  send_cmd(ID, CAN_data_TX, false);
+}
 void stop_motor(int8_t ID, bool show){
   // Función para detener el motor
   
@@ -620,7 +687,7 @@ void reset_all_motors(){
   if (last_tab == 2 || current_tab == 2 || current_tab == 1){
     stop_all_motors();
   
-    delayMS(100); // delay de 100 ms entre el stop y shutdown
+    delayMS(CAN_DELAY); // delay de 100 ms entre el stop y shutdown
     shutdown_motor(1, false);
     delayMS(CAN_DELAY);   
     shutdown_motor(2, false);
@@ -745,17 +812,20 @@ void walk_mode_sequence(float kp, float kd){
   int angle_sim_ankle[8] = {0, 7, 7, 10, 20, 7, 0, 0};
   
   for (int i = 0; i<=7; i++){
+    /*
     read_angle(1);
     delayMS(CAN_DELAY);
     read_angle(2);
     delayMS(CAN_DELAY);
     read_angle(3);
+    */
     delayMS(CAN_DELAY);
     motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
     delayMS(CAN_DELAY); // delay 
     motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
     delayMS(CAN_DELAY);
     motion_mode_command(3,angle_sim_ankle[i],0,1.1,0.05,0,true);
+    /*
     delayMS(CAN_DELAY);
     read_angle(1);
     delayMS(CAN_DELAY);
@@ -763,7 +833,7 @@ void walk_mode_sequence(float kp, float kd){
     delayMS(CAN_DELAY);
     read_angle(3);
     delayMS(500); // delay
-
+    */
   }
 }
 
@@ -1185,11 +1255,16 @@ void setup() {
     CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
+
+    // Configuración del Timer 0
+    //ConfigureTimer0(1.5);
     Serial.println("Listo");
+
 }
 
 // ----- Main Loop -----
 void loop() {
+  //write_zero(1,0);
   if (walk_flag == 1 && current_tab == 2){ // On assistance tab
     walk_mode_sequence(1.4,0.05);
     
@@ -1198,24 +1273,44 @@ void loop() {
       resetFlag = false;
     }
   }
-
+  
   if (current_tab == 4) { // On monitoring tab
+    
     if (process_variable == "pos"){
       delayMS(80);
       read_angle(1);
       delayMS(80);
       read_angle(2);
+      delayMS(80);
+      read_angle(3);
     } else if (process_variable == "vel"){
-      delayMS(20);
+      delayMS(80);
       read_velocity(1); 
-      delayMS(20);
+      delayMS(80);
       read_velocity(2); 
+      delayMS(80);
+      read_velocity(3); 
+    
     } else if (process_variable == "cur"){
       delayMS(80);
       read_current(1);
       delayMS(80);
       read_current(2); 
+      delayMS(80);
+      read_current(3); 
     }
   }
-  
+  //read_currents();
+ 
+}
+
+void read_currents(){
+  delayMS(20);
+  read_current(1);
+  delayMS(20);
+  read_current(2); 
+  //delayMS(20);
+  //read_current(3); 
+  Serial.print("I1: "); Serial.print(PV1);
+  Serial.print("I2: "); Serial.println(PV2);
 }
