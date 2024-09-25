@@ -1,10 +1,6 @@
 # Se establece el tamaño y posición de la pantalla
 from kivy.config import Config
 
-# width = 400
-# height = width*(9/20)
-# Config.set('graphics', 'width', width)
-# Config.set('graphics', 'height', height)
 Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
@@ -34,7 +30,6 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.behaviors.toggle_behavior import MDToggleButton 
 
-
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
 Clock.max_iteration = 2000  # Increase this value if necessary
@@ -43,9 +38,6 @@ Clock.max_iteration = 2000  # Increase this value if necessary
 from threading import Thread, Timer
 import platform
 import json
-import os 
-import uuid
-import asyncio
 import webbrowser
 from time import sleep
 

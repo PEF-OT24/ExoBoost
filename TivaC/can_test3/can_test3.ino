@@ -40,7 +40,7 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 250
+#define CAN_DELAY 25
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
 // Parámetros de PI para un determinado motor
@@ -174,7 +174,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (commandCAN != CANBUSReceive[0]){
             return;
           }
-          Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+          //Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
           
           // Se formatea la información dependiendo del comando recibido
           if (process_variable == "pos"){ // Formateo para posición
@@ -186,8 +186,8 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           } else if (process_variable == "cur"){ // Formateo para corriente
             int16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
             float PV1_cur = PV1_read/100;
-            Serial.print("PV1 "); Serial.println(PV1_read);
-            print_data(CANBUSReceive); 
+            Serial.print("PV1 "); Serial.print(PV1_read); Serial.print(" ");
+            //print_data(CANBUSReceive); 
           }
           //Serial.print("PV1: "); Serial.println(PV1);
         // -------- Lectura del motor 2 ---------
@@ -200,7 +200,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (commandCAN != CANBUSReceive[0]){
             return;
           }
-          Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+          //Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
           
           // Se formatea la información dependiendo del comando recibido
           if (process_variable == "pos"){ // Formateo para posición
@@ -212,8 +212,8 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           } else if (process_variable == "cur"){ // Formateo para corriente
             int16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
             float PV2_cur = PV2_read/100;
-            Serial.print("PV2 "); Serial.println(PV2_cur);
-            print_data(CANBUSReceive);
+            Serial.print("PV2 "); Serial.println(PV2_read);
+            //print_data(CANBUSReceive);
           }
           //Serial.print("PV2: "); Serial.println(PV2);
           
@@ -240,7 +240,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
             float PV3_cur = PV3_read/100;
             Serial.print("PV3 "); Serial.println(PV3_cur);
-            print_data(CANBUSReceive);
+            //print_data(CANBUSReceive);
           }
           //Serial.print("PV3: "); Serial.println(PV3);
         }
@@ -1332,13 +1332,14 @@ void loop() {
       read_current(3); 
     }
   }
-  */
-  Serial.println("-- Lectura --"); 
+  /*
   read_currents();
-  delayMS(1000);
+  //delayMS(1000);
 }
 
 void read_currents(){
+  process_variable = "cur";
+  //Serial.println("NEW"); 
   delayMS(CAN_DELAY);
   read_current(1);
   delayMS(CAN_DELAY);
@@ -1354,6 +1355,7 @@ void read_currents(){
 }
 
 void read_positions(){
+
   delayMS(CAN_DELAY);
   read_angle(1);
   delayMS(CAN_DELAY);
