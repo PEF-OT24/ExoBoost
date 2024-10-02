@@ -39,7 +39,6 @@ from threading import Thread, Timer
 import platform
 import json
 import webbrowser
-from time import sleep
 
 # Clase para mostrar el teclado en los text fields
 from kivy.core.window import Window
