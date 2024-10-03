@@ -1,5 +1,5 @@
 class ColorManager():
-    '''Class that manages colors used on the ExoBoost App for Android.'''
+    '''Class that manages colors used on the kivy design file for front-end development.'''
     def __init__(self):
         # Transparency values go from 0 to 255 (hex to binary)
         self.HexColors: dict = {

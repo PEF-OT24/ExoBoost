@@ -49,7 +49,7 @@ class UUIDManager:
         for i in range(len(names)): 
             self.uuids_services[names[i]] = self.generate_custom_uuid(self._base_uuid_services, values[i])
 
-    def generate_uuids_chars(self, service_uuid_name: str, names: list[str], values: list):
+    def generate_uuids_chars(self, service_uuid_name: str, names: list[str], values: list) -> None:
         '''
         Método que genera las UUIDs de las características de un servicio y las guarda en un diccionario
         Entrada: service_uuid_name -> UUID del servicio que contendrá las características
@@ -86,4 +86,4 @@ if __name__ == '__main__':
     print(uuid_manager.uuids_services)
     print("\n")
     print("Características")
-    print(uuid_manager.uuids_chars["Parameters"]["PI"])
+    print(uuid_manager.uuids_chars)

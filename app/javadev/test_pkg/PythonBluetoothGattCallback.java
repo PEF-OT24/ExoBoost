@@ -22,6 +22,9 @@ import android.bluetooth.BluetoothGattService;
 
 public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
 
+    // Referencia a la clase de Python en Java
+    public NotificationInterfaceCallback notificationCallback;
+
     public BluetoothGatt connected_gatt = null;
     public boolean ready_to_read = false;
     public boolean show_info = true;
@@ -45,9 +48,11 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     private Map<String, Map<String, String>> read_values = new HashMap<>(); // Hashmap de valores de características
                                                                             // según sus UUIDs
 
-    public PythonBluetoothGattCallback() {
+    public PythonBluetoothGattCallback(NotificationInterfaceCallback notificationCallback) {
         super();
         System.out.println("Objeto de BluetoothGattCallback creado en java (python)");
+
+        this.notificationCallback = notificationCallback;
     }
 
     @Override
@@ -77,6 +82,9 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         }
 
         this.ReadIndicated = true; // Se indica que se debe leer una característica
+
+        // Se notifica al objeto de Python
+        this.notificationCallback.processNotification(this.serviceNotified, this.characteristicNotified);
     }
 
     @Override
@@ -223,7 +231,7 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
         if (innerMap != null) {
             return innerMap.get(innerKey);
         }
-        return "null"; // Retorna null si la clave externa o interna no existe
+        return "null"; // Retorna null si una clave no existe
     }
 
     public boolean isReady_to_read() {
@@ -263,5 +271,9 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
     public boolean notification_flag() {
         // Método para obtener el estado de la notificación (exitosa no exitosa)
         return this.notification_enabled;
+    }
+
+    public boolean getReadFlag() {
+        return this.ReadIndicated;
     }
 }

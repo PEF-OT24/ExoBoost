@@ -13,7 +13,7 @@ Autores: Teresa Hernandez, Carlos Reyes y David Villanueva.
 Ante cualquier duda contactar: david.villanueva@udem.edu
 '''
 
-from jnius import autoclass
+from jnius import autoclass, PythonJavaClass, java_method
 from android.permissions import request_permissions, Permission # type: ignore
 from time import sleep
 import os
@@ -21,9 +21,6 @@ import json
 
 # Se establece la ruta de la librería para Android
 os.environ['CLASSPATH'] = 'javadev'
-
-# Base genérica para los UUID personalizados
-BASE_UUID = "00000000-0000-1000-8000-00805f9b34fb"
 
 # Se importan las clases de Android SDK (API v. 31) en el paquete con P4A
 Context = autoclass('android.content.Context')
@@ -43,6 +40,29 @@ UUIDClass = autoclass('java.util.UUID')
 # Se importan las clases del paquete personalizado 
 PythonScanCallback = autoclass('javadev.test_pkg.PythonScanCallback') # Callback al realizar escaneo
 PythonBluetoothGattCallback = autoclass('javadev.test_pkg.PythonBluetoothGattCallback') # Callback al conectar
+
+class NotificationInterfaceCallback(PythonJavaClass):
+    '''
+    Clase de la interfaz de Python para Java. Funciona como manejo de acciones al recibir notificaciones. 
+    Entradas: notification_callback Callable[[str, str], None] -> Callback al recibir notificación desde el main
+    '''
+    __javainterfaces__ = ['javadev/test_pkg/NotificationInterfaceCallback']  # Ruta a la interfaz en Java
+    __javacontext__ = 'app'
+
+    def __init__(self, notification_callback):
+        self.serviceUUID: str = ""        # UUID del servicio
+        self.characteristicUUID: str = "" # UUID de la característica
+        self.notification_callback = notification_callback # Callback al recibir notificación
+
+    @java_method('(Ljava/lang/String;Ljava/lang/String;)V')  # Define un método que recibe los UUIDs de la notificación en formato str
+    def processNotification(self, serviceUUID: str, characteristicUUID: str):
+        '''Método que se ejecuta cuando se recibe una notificación'''
+        self.serviceUUID = serviceUUID
+        self.characteristicUUID = characteristicUUID
+
+        if self.notification_callback:
+            '''Si se indicó un callback externo se ejecuta'''
+            self.notification_callback(self.serviceUUID, self.characteristicUUID)
 
 class Characteristic_Info:
     '''
@@ -112,7 +132,7 @@ class Characteristic_Info:
 
 class BluetoothManager_App:
     '''Clase principal para el manejo de Bluetooth'''
-    def __init__(self):
+    def __init__(self, notification_callback):
         '''Constructor de la clase'''
         # ----------- Métodos inicializadores -----------
         self.request_ble_permissions() # Solicitar permisos
@@ -129,10 +149,11 @@ class BluetoothManager_App:
         self.ble_enable = self.is_bluetooth_enabled()
         if not(self.ble_enable): self.enable_bluetooth()
 
-        # Se crea el escaneador de BLE
+        # Se crean los objetos BLE desde la API de Android SDK
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback()          # Instancia de Callback para escaneo
-        self.python_gatt_callback = PythonBluetoothGattCallback() # Instancia de Callback para el estado del GATT
+        self.python_interface = NotificationInterfaceCallback(notification_callback)                 # Instancia de PythonInterface con su callback
+        self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface) # Instancia de Callback para el estado del GATT
 
         # ----------- Atributos lógicos -----------
         self._GATT_MAX_MTU_SIZE = 517               # Tamaño máximo de transmisión
@@ -434,10 +455,10 @@ class BluetoothManager_App:
             self.python_gatt_callback.CharToRead(service_uuid, characteristic_uuid)
             self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
 
-            # Espera hasta que la característica se pueda leer
-            self.python_gatt_callback.show_info = False # Mensaje no mostrado 
-            while not(self.python_gatt_callback.isReady_to_read()): pass # Espera hasta que la lectura esté disponible
-            self.python_gatt_callback.reset_reading()                    # Reinicia la bandera
+            # # Espera hasta que la característica se pueda leer
+            # self.python_gatt_callback.show_info = False # Mensaje no mostrado 
+            # while not(self.python_gatt_callback.isReady_to_read()): sleep(0.01) # Espera 10 ms hasta que la lectura esté disponible
+            # self.python_gatt_callback.reset_reading()  # Reinicia la bandera
 
             # Se devuelve el valor de la característica
             return self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string
@@ -457,7 +478,7 @@ class BluetoothManager_App:
         # Se llama al método write()
         valor = self.read(service_uuid, characteristic_uuid)
         print(f"Raw string: {valor}")
-        dict_json = json.loads(valor)
+        dict_json: dict = json.loads(valor)
 
         return dict_json # Devuelve el diccionario JSON leído
     
@@ -528,11 +549,12 @@ class BluetoothManager_App:
     
     def notification_received(self) -> bool:
         '''Devuelve True si el gatt recibió una notificación'''
-        return self.python_gatt_callback.ReadIndicated
+        flag: bool = self.python_gatt_callback.getReadFlag()
+        return flag
     
     def get_uuids_notified(self) -> tuple[str]:
-        '''Devuelve una tupla de los UUIDs de las características notificadas. 
-        El primer elemento corresponde al servicio y el segundo elemento a la característica
+        '''Devuelve una tupla de los UUIDs de las características notificadas:
+        (service_uuid, characteristic_uuid)
         '''
         if not self.connected_gatt: return ("", "") # Comprobación de errores
 

@@ -1,10 +1,6 @@
 # Se establece el tamaño y posición de la pantalla
 from kivy.config import Config
 
-# width = 400
-# height = width*(9/20)
-# Config.set('graphics', 'width', width)
-# Config.set('graphics', 'height', height)
 Config.set('graphics', 'width', '400')
 Config.set('graphics', 'height', '726')
 Config.set('graphics', 'fullscreen', '0')
@@ -34,7 +30,6 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.button import MDFlatButton
 from kivymd.uix.behaviors.toggle_behavior import MDToggleButton 
 
-
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
 Clock.max_iteration = 2000  # Increase this value if necessary
@@ -43,10 +38,7 @@ Clock.max_iteration = 2000  # Increase this value if necessary
 from threading import Thread, Timer
 import platform
 import json
-import os 
-import uuid
 import webbrowser
-from time import sleep
 
 # Clase para mostrar el teclado en los text fields
 from kivy.core.window import Window
@@ -93,7 +85,6 @@ class ExoBoostApp(MDApp):
 
         # -------------------------- Atributos internos --------------------------
         self.kv_loaded: bool = False
-        self.mode: str = None                  # Modo de operación la app: {assistance, tuning}
         self.assistance_state: str = "sitting down" # Modo de operación de la asistencia: {walking, sitting down, standing up}
         
         # Detecta el sistema operativo
@@ -143,7 +134,7 @@ class ExoBoostApp(MDApp):
         else: self.ble_found = False
 
         # Instancia de Bluetooth
-        if self.ble_found: self.ble = BluetoothManager_App()
+        if self.ble_found: self.ble = BluetoothManager_App(self.notification_callback)
         else: self.ble = None
 
         # Atributos de lógica BLE
@@ -151,8 +142,8 @@ class ExoBoostApp(MDApp):
         self.connection_successful: bool = False   # Indica si la conexión fue exitosa
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
-        # Se inicializa el hilo secundario de la lectura de datos
-        self.read_thread = Thread(target=self.read_pv_cycle, args=(20,))
+        # Se inicializa el hilo secundario de la lectura de datos y su supervisor.
+        # self.read_thread = Thread(target=self.read_pv_cycle, args=(100,), daemon=True)
 
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
@@ -166,7 +157,7 @@ class ExoBoostApp(MDApp):
         # --- Servicio de Process ---
         self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
-        self.uuid_manager.generate_uuids_chars(names[2], ["MODE"], [0x000c])
+        self.uuid_manager.generate_uuids_chars(names[2], ["MODE", "TAB"], [0x000c, 0x00aa])
 
         # -------------------------- Atributos externos --------------------------
         # Diccionario de valores de los parámetros de los motores de sintonización y control
@@ -306,17 +297,38 @@ class ExoBoostApp(MDApp):
     def on_tab_select(self, tab: str): 
         '''Método que establece el modo de funcionamiento en función de la tab seleccionada'''
         if tab == "Bluetooth settings": 
-            self.mode = "bluetooth"
+            self.send_tab("bluetooth")
             self.reading = False
         elif tab == "Assistance mode": 
-            self.mode = "assistance"
+            self.send_tab("assistance")
             self.reading = False
         elif tab == "Tuning mode": 
-            self.mode = "tuning"
-            self.reading = True
+            self.send_tab("tuning")
+            self.reading = False
         elif tab == "Monitoring tab": 
-            self.mode = "monitoring"
-            self.reading = True
+            self.send_tab("monitoring")
+            self.reading = True # Lectura habilitada solamente en modo monitoreo
+
+    def send_tab(self, tab: str):
+        '''Método para enviar la tab actual del usuario a la ESP32
+        Entradas: tab str -> Tab seleccionada
+        tab puede tener los valores: "bluetooth", "assistance", "tuning", "monitoring"
+        '''
+        
+        # Validación de BLE
+        if not self.ble_found: return
+
+        # Se define la información a mandar con la limb
+        json_data = {"tab": tab}
+        json_data["limb"] = self.selected_limb
+
+        # Se definen los UUIDs y los datos a mandar para la parámetros de control 
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"])  # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["TAB"]) # Se convierte a string
+
+        # Se mandan los datos
+        if not self.ble.connected: return
+        self.ble.write_json(service_uuid, char_uuid, json_data) 
 
     def is_valid(self, var: str, tipo) -> bool:
         """
@@ -420,8 +432,7 @@ class ExoBoostApp(MDApp):
                 self.ble.connected = notifications_enabled # Comprueba el estado de la conexión dependiente del estado de la notificación
                 Clock.schedule_once(update_label)
 
-        def update_label(*args):
-            self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
+        def update_label(*args): self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
 
         # No hace ninguna acción si no hay un dispositivo seleccionado o si el BLE no está disponible
         if not self.selected_device or not self.ble_found: return
@@ -436,7 +447,7 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text = f"Connected to {self.selected_device}"
 
             # Comienza la lectura de datos
-            self.read_thread.start()
+            # self.read_thread.start()
 
         # Cuando está conectado, se desconecta
         else:
@@ -448,7 +459,8 @@ class ExoBoostApp(MDApp):
             self.root.get_screen('Main Window').ids.bt_state.text = "Disconnected"
             self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Red"]
 
-            self.read_thread.join() # Stops reading thread
+            print("Desconexión")
+            # self.read_thread.join() # Stops reading thread
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
     # ---------------- Valor del slider ----------------
@@ -709,74 +721,55 @@ class ExoBoostApp(MDApp):
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
 
-    def read_pv_cycle(self, time: int):  
-        '''Método que leerá los datos de los motores perdiódicamente. Se ejecuta en un hilo separado.
-        Este método se llama mientras se encuentre en modo sintonización.
-        Entrada: time interval int -> Periodo de lectura de datos en ms'''
+    def notification_callback(self, service_uuid, char_uuid) -> None:
+        '''
+        Método que se ejecuta cuando se recibe una notificación del dispositivo conectado
+        Entradas: service_uuid str -> UUID del servicio de la característica
+                  char_uuid str -> UUID de la característica
+        '''
+        try: 
+            # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
+            if not self.ble: return
+            if not self.ble.connected: return
+            if not self.reading: return
+            
+            # Se lee el archivo JSON
+            json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-        sleep(1) # Espera un momento antes de comenzar la lectura
+            '''
+            Nota: De momento solamente se desea leer el parámetro PV.
 
-        while True: # Este ciclo nunca debería detenerse en el thread secundario 
-            try: 
-                # Espera el tiempo indicado para cada lectura
-                sleep(float(time/1000))
+            Ejemplo de estructura deseada del json para PV
+            json_dict = {
+                "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+                "monitoring": "pos", # {"pos", "vel", "cur"}
+                "motor1": "100",
+                "motor2": "100",
+                "motor3": "100"
+            }
+            '''
 
-                # Se valida que exista el dispositivo BLE, que esté conectado y lectura habilitada
-                print(f'{self.ble}, {self.ble.connected}, {self.reading}, {self.ble.notification_received()}') 
-                if not self.ble: continue
-                if not self.ble.connected: continue
-                if not self.reading: continue
+            # Se obtienen los valores del diccionario
+            limb_read = json_dict["limb"]      
+            monitoring_read = json_dict["monitoring"]      
+            motor1pv_read = json_dict["motor1"]            
+            motor2pv_read = json_dict["motor2"]            
+            motor3pv_read = json_dict["motor3"]    
+
+            # Si es la variable de proceso de interés, se despliega la información 
+            if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
                 
-                # Si no hay notificaciones pendientes continua comprobando
-                if not self.ble.notification_received(): continue
+            # Se guardan los valores en el diccionario
+            self.motor_parameters_pv["motor1"] = motor1pv_read
+            self.motor_parameters_pv["motor2"] = motor2pv_read
+            self.motor_parameters_pv["motor3"] = motor3pv_read
 
-                # Se realiza la lectura si está conectado y en lectura activa
-                # service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
-                # char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
-                service_uuid, char_uuid = self.ble.get_uuids_notified()
-                json_dict = self.ble.read_json(service_uuid, char_uuid) 
+            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+            if self.selected_limb == limb_read: 
+                Clock.schedule_once(self.update_process_variable)
 
-                print("Información leida por noti: ")
-                print(json_dict) # Ver información recibida
-
-                '''
-                Nota: De momento solamente se desea leer el parámetro PV.
-
-                Ejemplo de estructura deseada del json para PV
-                json_dict = {
-                    "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
-                    "monitoring": "pos", # {"pos", "vel", "cur"}
-                    "motor1": "100",
-                    "motor2": "100",
-                    "motor3": "100"
-                }
-                '''
-
-                # Se obtienen los valores del diccionario
-                try: 
-                    limb_read = json_dict["limb"]      
-                    monitoring_read = json_dict["monitoring"]      
-                    motor1pv_read = json_dict["motor1"]            
-                    motor2pv_read = json_dict["motor2"]            
-                    motor3pv_read = json_dict["motor3"]    
-    
-                    # Si es la variable de proceso de interés, se despliega la información 
-                    if not (monitoring_read == self.motor_parameters_pv["monitoring"]): continue
-                        
-                    # Se guardan los valores en el diccionario
-                    self.motor_parameters_pv["motor1"] = motor1pv_read
-                    self.motor_parameters_pv["motor2"] = motor2pv_read
-                    self.motor_parameters_pv["motor3"] = motor3pv_read
-
-                    # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-                    if self.selected_limb == limb_read: Clock.schedule_once(self.update_process_variable)
-
-                except Exception as e:
-                    print("Error al leer los datos")
-                    print(e)
-
-            except Exception as e:
-                print(f"Error en el hilo de lectura: {e}")
+        except Exception as e:
+            print(f"Error la lectura: {e}")
 
     def update_process_variable(self, *args):
         print("Desplegando valores PV")
