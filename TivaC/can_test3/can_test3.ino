@@ -67,6 +67,11 @@ String process_variable = "pos"; // Tipo de variable de proceso: pos, vel, cur, 
 int32_t PV1 = 1;
 int32_t PV2 = 1;
 int32_t PV3 = 1;
+
+// Variables de lectura de corriente en formato float
+int16_t PV1_cur;
+int16_t PV2_cur;
+int16_t PV3_cur;
 bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
@@ -119,6 +124,28 @@ void delayMS(uint32_t milliseconds){                            // Función que 
     // Call SysCtlDelay to create the delay
     SysCtlDelay(delay_cycles);
 }
+
+void print_data(uint8_t arr[8]) {
+  // Inicia la comunicación serial
+  Serial.begin(9600);
+
+  // Recorre el array e imprime cada valor en formato hexadecimal
+  for (int i = 0; i < 8; i++) {
+    if (arr[i] < 0x10) {
+      // Si el valor es menor que 0x10, imprime un 0 para mantener formato de 2 dígitos
+      //Serial.print("0");
+    }
+    //Serial.print(arr[i], HEX);
+    
+    // Imprime un espacio entre los valores, pero no después del último
+    if (i < 7) {
+      //Serial.print(" ");
+    }
+  }
+  
+  // Salto de línea al final
+  /Serial.println();
+}
 // ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real
     doControlFlag = true;
@@ -159,9 +186,10 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV1_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
             PV1 = PV1_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            int16_t PV1_read;
-            PV1_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
-            PV1 = PV1_read;
+            int16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+            PV1_cur = PV1_read;
+            // Serial.print("PV1 "); Serial.print(PV1_read); Serial.print(" ");
+            //print_data(CANBUSReceive); 
           }
           Serial.print("PV1: "); Serial.println(PV1);
 
@@ -183,9 +211,10 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV2_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
             PV2 = PV2_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            int16_t PV2_read;
-            PV2_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
-            PV2 = PV2_read;
+            int16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+            PV2_cur = PV2_read; // Lectura en cA
+            // Serial.print("PV2 "); Serial.println(PV2_read);
+            //print_data(CANBUSReceive);
           }
           Serial.print("PV2: "); Serial.println(PV2);
           
@@ -198,6 +227,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (commandCAN != CANBUSReceive[0]){
             return;
           }
+          // Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
           
           // Se formatea la información dependiendo del comando recibido
           if (process_variable == "pos"){ // Formateo para posición
@@ -207,9 +237,10 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV3_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
             PV3 = PV3_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            int16_t PV3_read;
-            PV3_read = int(round(((CANBUSReceive[3] << 8) | CANBUSReceive[2]))/100);
-            PV3 = PV3_read;
+            int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+            PV3_cur = PV3_read; // Lectura en cA
+            // Serial.print("PV3 "); Serial.println(PV3_cur);
+            //print_data(CANBUSReceive);
           }
           Serial.print("PV3: "); Serial.println(PV3);
         }
@@ -750,9 +781,9 @@ void walk_mode_sequence(float kp, float kd){
 //    read_angle(1);
 //    delayMS(CAN_DELAY);
 //    read_angle(2);
-//    delayMS(CAN_DELAY);
-    read_angle(3);
-    delayMS(CAN_DELAY);
+// //    delayMS(CAN_DELAY);
+//     read_angle(3);
+//     delayMS(CAN_DELAY);
 //    motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
 //    delayMS(CAN_DELAY); // delay 
 //    motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
@@ -763,8 +794,10 @@ void walk_mode_sequence(float kp, float kd){
 //    delayMS(CAN_DELAY);
 //    read_angle(2);
 //    delayMS(CAN_DELAY);
-    read_angle(3);
-
+    // read_angle(3);
+    
+    // delayMS(100); // delay
+    
   }
 }
 
@@ -796,8 +829,8 @@ void onReceive(int len){
   
     // Se revisan errores
     if (error) { // Error al deserializar
-      Serial.print("Error al analizar JSON: ");
-      Serial.println(error.c_str());
+      // Serial.print("Error al analizar JSON: ");
+      // Serial.println(error.c_str());
       clearI2C();
       return;
     }
@@ -815,7 +848,7 @@ void onReceive(int len){
     // ----------- Procesamiento del JSON completo --------
     // El objeto "T" contiene un indicador de qué tipo de información contiene el JSON
     const char* type = jsonrec["T"];
-    Serial.println(type);
+    // Serial.println(type);
     if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
       // Ejemplo: {"T": "A","assistance_level": "100"}
@@ -834,8 +867,8 @@ void onReceive(int len){
   
       // Se extrae la información recibida
       assistance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
-      Serial.print("Nivel de asistencia: ");
-      Serial.println(assistance_level);
+      // Serial.print("Nivel de asistencia: ");
+      // Serial.println(assistance_level);
     }
     else if (strcmp(type, "B") == 0 || strcmp(type, "C") == 0 || strcmp(type, "D") == 0){ // Parámetros PI para cualquier motor
       // ------------- Parámetros de PI -------------
@@ -1028,8 +1061,8 @@ void onReceive(int len){
 
       last_tab = current_tab; // Se guarda la tab anterior para reset motores
       current_tab = jsonrec["tab"].as<int8_t>(); // Se extrae la información
-      Serial.print("Tab: ");
-      Serial.println(current_tab);
+      // Serial.print("Tab: ");
+      // Serial.println(current_tab);
       if (current_tab < 0 || current_tab > 4){
         return; // Error encontrado en el valor  
       }
@@ -1186,35 +1219,74 @@ void setup() {
     CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
     IntEnable(INT_CAN0); // test
     CANIntRegister(CAN0_BASE,CAN0IntHandler);
-    Serial.println("Listo");
+
+    // Set up de lectura de corriente
+    process_variable = "cur";
+    uint8_t current_Array[2];
 }
 // ----- Main Loop -----
-void loop() {
-  if (walk_flag == 1 && current_tab == 2){ // On assistance tab
-    walk_mode_sequence(1.4,0.0);
-    
-    if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
-      reset_all_motors();
-      resetFlag = false;
-    }
-  }
 
-  if (current_tab == 4) { // On monitoring tab
-    if (process_variable == "pos"){
-      delayMS(80);
-      read_angle(1);
-      delayMS(80);
-      read_angle(2);
-    } else if (process_variable == "vel"){
-      delayMS(20);
-      read_velocity(1); 
-      delayMS(20);
-      read_velocity(2); 
-    } else if (process_variable == "cur"){
-      delayMS(80);
-      read_current(1);
-      delayMS(80);
-      read_current(2); 
-    }
-  }
+void loop() {
+  read_current(3);
+  delayMS(10);
+  split16bits(PV1_read, current_Array);
+
+  Serial.write(current_Array, 2);
+}
+
+// void loop() {
+//   if (walk_flag == 1 && current_tab == 2){ // On assistance tab
+//     walk_mode_sequence(1.4,0.05);
+    
+//     if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
+//       reset_all_motors();
+//       resetFlag = false;
+//     }
+//   }
+  
+//   if (current_tab == 4) { // On monitoring tab
+    
+//     if (process_variable == "pos"){
+//       delayMS(80);
+//       read_angle(1);
+//       delayMS(80);
+//       read_angle(2);
+//       delayMS(80);
+//       read_angle(3);
+//     } else if (process_variable == "vel"){
+//       delayMS(80);
+//       read_velocity(1); 
+//       delayMS(80);
+//       read_velocity(2); 
+//       delayMS(80);
+//       read_velocity(3); 
+    
+//     } else if (process_variable == "cur"){
+//       delayMS(80);
+//       read_current(1);
+//       delayMS(80);
+//       read_current(2); 
+//       delayMS(80);
+//       read_current(3); 
+//     }
+//   }
+// }
+
+void read_currents(){
+  process_variable = "cur";
+  delayMS(CAN_DELAY);
+  read_current(1);
+  delayMS(CAN_DELAY);
+  read_current(2); 
+  delayMS(CAN_DELAY);
+  read_current(3);  
+}
+
+void read_positions(){
+  delayMS(CAN_DELAY);
+  read_angle(1);
+  delayMS(CAN_DELAY);
+  read_angle(2); 
+  delayMS(CAN_DELAY);
+  read_angle(3);  
 }
