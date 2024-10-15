@@ -1229,7 +1229,7 @@ void setup() {
 void loop() {
   read_current(3);
   delayMS(10);
-  split16bits(PV1_read, current_Array);
+  split16bits(PV3_read, current_Array);
 
   Serial.write(current_Array, 2);
 }
