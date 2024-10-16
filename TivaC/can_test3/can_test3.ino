@@ -72,6 +72,7 @@ int32_t PV3 = 1;
 int16_t PV1_cur;
 int16_t PV2_cur;
 int16_t PV3_cur;
+uint8_t current_Array[2];
 bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
@@ -144,7 +145,7 @@ void print_data(uint8_t arr[8]) {
   }
   
   // Salto de línea al final
-  /Serial.println();
+  //Serial.println();
 }
 // ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real
@@ -1222,14 +1223,14 @@ void setup() {
 
     // Set up de lectura de corriente
     process_variable = "cur";
-    uint8_t current_Array[2];
+
 }
 // ----- Main Loop -----
 
 void loop() {
   read_current(3);
   delayMS(10);
-  split16bits(PV3_read, current_Array);
+  split16bits(PV3_cur, current_Array);
 
   Serial.write(current_Array, 2);
 }
