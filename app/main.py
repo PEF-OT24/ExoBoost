@@ -39,6 +39,7 @@ from threading import Thread, Timer
 import platform
 import json
 import webbrowser
+from time import sleep
 
 # Clase para mostrar el teclado en los text fields
 from kivy.core.window import Window
@@ -75,7 +76,8 @@ class ButtonParameters(MDFlatButton, MDToggleButton): pass  # Clase para crear b
 
 # Clases para el manejo de popups
 class ErrorPopup(Popup): pass      # Pop-up de error
-class MotorPopup(Popup): pass
+class MotorPopup(Popup): pass      # Pop-up de motores
+class CalibratePopup(Popup): pass  # Pop-up de proceso de calibración
 
 class ExoBoostApp(MDApp):
     #------------------------------------------------------- Métodos de inicio -----------------------------------------------------#
@@ -209,7 +211,7 @@ class ExoBoostApp(MDApp):
     def build(self):
         """Carga kivy design file"""
         if not(self.kv_loaded):
-            self.root = Builder.load_file("test.kv")
+            self.root = Builder.load_file("design.kv")
             self.kv_loaded = True
 
         # Diccionario de TextFields de sintonización para accceso rápido 
@@ -237,6 +239,12 @@ class ExoBoostApp(MDApp):
             "motor2": self.root.get_screen('Main Window').ids.pv_motor2,
             "motor3": self.root.get_screen('Main Window').ids.pv_motor3
         }
+
+        # Deshabilitar botones de movimiento hasta que se realice calibración
+        self.calibrating: bool = False
+        self.root.get_screen('Main Window').ids.standup_sitdown_mode.disabled = True
+        self.root.get_screen('Main Window').ids.walk_mode.disabled = True
+        self.root.get_screen('Main Window').ids.stop_mode.disabled = True
 
         # Se retorna la pantalla de inicio
         return self.root
@@ -463,8 +471,59 @@ class ExoBoostApp(MDApp):
             # self.read_thread.join() # Stops reading thread
 
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
+    # ---------------- Proceso de calibración ----------------
+    def calibrate(self):
+        '''Método para iniciar calibración del movimiento en otra ventana'''
+
+        # Se extrae el texto del contenido
+        try:
+            self.info_calibracion = open("info_calibracion.txt", 'r', encoding='utf-8').read()
+        except:
+            self.info_calibracion = "No hay archivo de calibración"
+
+        # Se abre la pop-up para información de calibración
+        self.calibrate_popup = CalibratePopup()
+        self.calibrate_popup.open()
+
+    def perform_calibration(self):
+        '''Manda un comando para calibrar'''
+
+        def listo_text():
+            self.calibrate_popup.ids.calibrar_button.text = "Listo!"
+            Timer(1, end_calibration).start()
+        
+        def end_calibration():
+            # Se habilitan los botones después de la calibración
+            self.root.get_screen('Main Window').ids.standup_sitdown_mode.disabled = False
+            self.root.get_screen('Main Window').ids.walk_mode.disabled = False
+            self.root.get_screen('Main Window').ids.stop_mode.disabled = False
+
+            # Se cierra la ventana
+            self.calibrate_popup.dismiss()
+            self.calibrating = False
+        
+        # Primer paso para calibración
+        if self.calibrating: return
+        self.calibrating = True
+
+        # Se manda comando de calibrar
+        self.calibrate_popup.ids.calibrar_button.text = "Calibrando..."
+
+        # Configuración del mensaje por BLE
+        json_data = {"state": "calibrate"}
+        service_uuid = str(self.uuid_manager.uuids_services["Commands"]) # Se convierte a string
+        char_uuid = str(self.uuid_manager.uuids_chars["Commands"]["MODE"]) # Se convierte a string
+
+        # Se manda el comando
+        try: 
+            self.ble.write_json(service_uuid, char_uuid, json_data) 
+        except: 
+            print("Error")
+        
+        Timer(5, listo_text).start()
+
     # ---------------- Valor del slider ----------------
-    def on_slider_value(self, value):
+    def on_slider_value(self, value): # AHORA SIN USO 
         '''Handle the slider value change'''
         print(f"Assitance Level: {value}")
 
