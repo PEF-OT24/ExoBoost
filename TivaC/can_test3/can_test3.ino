@@ -56,6 +56,12 @@ uint16_t SP_motor1;
 uint32_t SP_motor2;
 uint32_t SP_motor3;
 uint16_t max_speed = 500; // Leer Nota 
+
+// Zeros de movimiento (se puede cambiar)
+int32_t zero_1 = -122;
+int32_t zero_2 = 4.5;
+int32_t zero_3 = -140;
+
 /*
 Nota: max_spsed controla la velocidad máxima con la que se ejecutan comandos de control de posición. 
 Si max_speed = 0, entonces la velocidad será la calculada por el controlador PI, de otra manera, 
@@ -174,7 +180,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           if (commandCAN != CANBUSReceive[0]){
             return;
           }
-          //Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+          Serial.print("New response");
           
           // Se formatea la información dependiendo del comando recibido
           if (process_variable == "pos"){ // Formateo para posición
@@ -292,7 +298,7 @@ void ConfigureTimer0(float period_in_seconds) {
 void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
   
   // Omitir el motor 3
-  if (ID == 3){return;}
+  //if (ID == 3){return;}
   
   // Objetos para la comunicación CAN
   tCANMsgObject Message_Tx;
@@ -501,7 +507,7 @@ void set_acceleration(int8_t ID, int64_t accel_ref, bool show){
   send_cmd(ID, CAN_data_TX, show);
 }
 
-void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, bool show){ // NO FUNCIONA
+void set_absolute_position(int8_t ID, int32_t position_ref, int16_t max_speed, bool show){ 
   // Función para establecer la posición absoluta
   
   // Objetos para la comunicación CAN
@@ -838,33 +844,80 @@ void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, floa
 }
 
 void walk_mode_sequence(float kp, float kd){
-  int angle_sim_hip[8] = {30, 22, 3, 10, 3, 17, 27, 30};
-  int angle_sim_knee[8] = {3, 12, 3, 3, 35, 55, 25, 3};
-  int angle_sim_ankle[8] = {0, 7, 7, 10, 20, 7, 0, 0};
-  
-  for (int i = 0; i<=7; i++){
+
+  /*Rangos de movimiento
+   * Cadera (motor 1): 
+   * Zero: -122°
+   * Rango de movimiento: 140° 
+   * Lim inferior: -162°
+   * Lim superior: -22°
+   * 
+   * Rodilla (motor2):
+   * Zero: -13°
+   * Rango de movimiento: 120°
+   * Lim inferior: -12°
+   * Lim superior: 108°
+   * 
+   * Tobillo (motor 3):
+   * Zero: -76°
+   * Rango de movimiento: 79°
+   * Lim inferior: -108°
+   * Lim superior: -37°
+  */
+  float angle_sim_hip[] = {0.00, 1.36, 2.71, 4.07, 5.42, 6.78, 8.14, 9.49, 10.85, 12.20, 13.56, 
+                           14.92, 16.27, 17.63, 18.98, 20.34, 21.69, 23.05, 24.41, 25.76, 27.12, 
+                           28.47, 29.83, 31.19, 32.54, 33.90, 35.25, 36.61, 37.97, 39.32, 40.68, 
+                           42.03, 43.39, 44.75, 46.10, 47.46, 48.81, 50.17, 51.53, 52.88, 54.24, 
+                           55.59, 56.95, 58.31, 59.66, 61.02, 62.37, 63.73, 65.08, 66.44, 67.80, 
+                           69.15, 70.51, 71.86, 73.22, 74.58, 75.93, 77.29, 78.64, 80.00};
+  float angle_sim_knee[] = {0.00, 1.44, 2.88, 4.32, 5.76, 7.20, 8.64, 10.08, 11.53, 12.97, 14.41, 
+                           15.85, 17.29, 18.73, 20.17, 21.61, 23.05, 24.49, 25.93, 27.37, 28.81, 
+                           30.25, 31.69, 33.14, 34.58, 36.02, 37.46, 38.90, 40.34, 41.78, 43.22, 
+                           44.66, 46.10, 47.54, 48.98, 50.42, 51.86, 53.31, 54.75, 56.19, 57.63, 
+                           59.07, 60.51, 61.95, 63.39, 64.83, 66.27, 67.71, 69.15, 70.59, 72.03,
+                           73.47, 74.92, 76.36, 77.80, 79.24, 80.68, 82.12, 83.56, 85.00};
+  float angle_sim_ankle[] = {0.00, 0.93, 1.86, 2.80, 3.73, 4.66, 5.59, 6.53, 7.46, 8.39, 
+                             9.32, 10.25, 11.19, 12.12, 13.05, 13.98, 14.92, 15.85, 16.78, 
+                             17.71, 18.64, 19.58, 20.51, 21.44, 22.37, 23.31, 24.24, 25.17, 
+                             26.10, 27.03, 27.97, 28.90, 29.83, 30.76, 31.69, 32.63, 33.56, 
+                             34.49, 35.42, 36.36, 37.29, 38.22, 39.15, 40.08, 41.02, 41.95, 
+                             42.88, 43.81, 44.75, 45.68, 46.61, 47.54, 48.47, 49.41, 50.34, 
+                             51.27, 52.20, 53.14, 54.07, 55.00};
+
+//  Serial.println("Start");
+  for (int i = 0; i<60; i++){
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,zero_1 + angle_sim_hip[i],0,0.8,0,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(2,zero_2 + angle_sim_knee[i],0,0.7,0,0,true);
     /*
-    read_angle(1);
     delayMS(CAN_DELAY);
-    read_angle(2);
-    delayMS(CAN_DELAY);
-    read_angle(3);
+    motion_mode_command(3,zero_3 + angle_sim_ankle[i],0,0.6,0,0,true);
     */
+
+    if(walk_flag == 0){
+      Serial.print("stopped");
+      stop_all_motors();
+      return;
+    }
+  }
+
+  // De regreso 
+//  Serial.println("Regreso");
+  for (int i = 59; i >= 0; i--) {
     delayMS(CAN_DELAY);
-    motion_mode_command(1,angle_sim_hip[i],0,1.4,0.1,0,true);
-    delayMS(CAN_DELAY); // delay 
-    motion_mode_command(2,angle_sim_knee[i],0,1.1,0.05,0,true);
+    motion_mode_command(1,zero_1 + angle_sim_hip[i],0,0.8,0,0,true);
     delayMS(CAN_DELAY);
-    motion_mode_command(3,angle_sim_ankle[i],0,1.1,0.05,0,true);
+    motion_mode_command(2,zero_2 + angle_sim_knee[i],0,0.7,0,0,true);
     /*
     delayMS(CAN_DELAY);
-    read_angle(1);
-    delayMS(CAN_DELAY);
-    read_angle(2);
-    delayMS(CAN_DELAY);
-    read_angle(3);
-    delayMS(500); // delay
+    motion_mode_command(3,zero_3 + angle_sim_ankle[i],0,0.6,0,0,true);
     */
+    if(walk_flag == 0){
+      Serial.print("stopped");
+      stop_all_motors();
+      return;
+    }
   }
 }
 
@@ -927,7 +980,7 @@ void onReceive(int len){
         return;
       }
       else if (!jsonrec["assistance_level"].is<String>()){
-        //Serial.println("Información en formato incorrcto");
+        //Serial.println("Información en formato incorrecto");
         clearI2C();
         return;
       }
@@ -1056,12 +1109,12 @@ void onReceive(int len){
       process_variable = jsonrec["monitoring"].as<String>();
       if (resetFlag){ // Se resetean los motores si es necesario
         reset_all_motors();
-        resetFlag = false;
+        resetFlag = false;  
       }
       
       if (process_variable == "pos"){
         // Control de posición
-        Serial.println("Control de posición");
+        Serial.println("POS");
         set_absolute_position(1, SP_motor1, max_speed, false);
         delayMS(CAN_DELAY); // delay 
         set_absolute_position(2, SP_motor2, max_speed, false);
@@ -1154,6 +1207,7 @@ void onReceive(int len){
       if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
         //Serial.println("Deteniendo motores");
         walk_flag = 0;
+
         stop_motor(1, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(2, false);
@@ -1174,11 +1228,11 @@ void onReceive(int len){
         read_angle(3);
         delayMS(CAN_DELAY);
         */
-        motion_mode_command(1,+90,0,1,0.1,0,false); 
+        motion_mode_command(1,zero_1,0,1,0,0,false); 
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,-90,0,1,0.1,0,false);
+        motion_mode_command(2,zero_2,0,1,0,0,false);
         delayMS(CAN_DELAY);
-        motion_mode_command(3,0,0,1,0.1,0,false);
+        motion_mode_command(3,zero_3,0,1,0,0,false);
         delayMS(CAN_DELAY); // delay
         /*
         delayMS(CAN_DELAY);
@@ -1199,11 +1253,11 @@ void onReceive(int len){
         read_angle(3);
         delayMS(CAN_DELAY);
         */
-        motion_mode_command(1,-90,0,1,0.1,0,false);
+        motion_mode_command(1,zero_1,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,+90,0,1,0.1,0,false);
+        motion_mode_command(2,zero_2,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
-        motion_mode_command(3,0,0,1,0.1,0,false);
+        motion_mode_command(3,zero_3,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
         /*
         delayMS(CAN_DELAY);
@@ -1215,6 +1269,7 @@ void onReceive(int len){
         */
       }
     }
+    Serial.print("walk: "); Serial.println(walk_flag);
     // Se limpia el buffer y el archivo json receptor
     mensaje_leido = "";
   }
@@ -1295,17 +1350,19 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
-  //write_zero(1,0);
-  /*
+  
   if (walk_flag == 1 && current_tab == 2){ // On assistance tab
+    Serial.println("walking");
     walk_mode_sequence(1.4,0.05);
     
     if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
+      Serial.println("Reset");
       reset_all_motors();
       resetFlag = false;
     }
   }
-  
+
+  /*
   if (current_tab == 4) { // On monitoring tab
     
     if (process_variable == "pos"){
@@ -1332,14 +1389,11 @@ void loop() {
       read_current(3); 
     }
   }
-  /*
-  read_currents();
-  //delayMS(1000);
+  */
 }
 
 void read_currents(){
   process_variable = "cur";
-  //Serial.println("NEW"); 
   delayMS(CAN_DELAY);
   read_current(1);
   delayMS(CAN_DELAY);
