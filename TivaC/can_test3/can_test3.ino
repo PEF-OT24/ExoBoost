@@ -72,7 +72,10 @@ int32_t PV3 = 1;
 int16_t PV1_cur;
 int16_t PV2_cur;
 int16_t PV3_cur;
-uint8_t current_Array[2];
+uint8_t current1_Array[2];
+uint8_t current2_Array[2];
+uint8_t current3_Array[2];
+uint8_t inByte = 0;
 bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
@@ -187,7 +190,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV1_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
             PV1 = PV1_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            int16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+            uint16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
             PV1_cur = PV1_read;
             // Serial.print("PV1 "); Serial.print(PV1_read); Serial.print(" ");
             //print_data(CANBUSReceive); 
@@ -212,7 +215,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
             PV2_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
             PV2 = PV2_read;
           } else if (process_variable == "cur"){ // Formateo para corriente
-            int16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+            uint16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
             PV2_cur = PV2_read; // Lectura en cA
             // Serial.print("PV2 "); Serial.println(PV2_read);
             //print_data(CANBUSReceive);
@@ -1225,14 +1228,47 @@ void setup() {
     process_variable = "cur";
 
 }
+
+void read_currents(){
+  process_variable = "cur";
+  delayMS(CAN_DELAY);
+  read_current(1);
+  delayMS(CAN_DELAY);
+  //read_current(2); 
+  //delayMS(CAN_DELAY);
+  //read_current(3);  
+}
+
+void read_positions(){
+  delayMS(CAN_DELAY);
+  read_angle(1);
+  delayMS(CAN_DELAY);
+  read_angle(2); 
+  delayMS(CAN_DELAY);
+  read_angle(3);  
+}
+
 // ----- Main Loop -----
 
 void loop() {
-  read_current(3);
+  read_currents();
   delayMS(10);
-  split16bits(PV3_cur, current_Array);
+  split16bits(PV1_cur, current1_Array);
 
-  Serial.write(current_Array, 2);
+  uint16_t PV2plus = PV1_cur + 10;
+  uint16_t PV3plus = PV1_cur + 20;
+
+  split16bits(PV2plus, current2_Array);
+  split16bits(PV3plus, current3_Array);
+
+  if (Serial.available() > 0){
+    inByte = Serial.read();
+    if (inByte == '#'){
+      Serial.write(current1_Array, 2);
+      Serial.write(current2_Array, 2);
+      Serial.write(current3_Array, 2);
+    }
+   }
 }
 
 // void loop() {
@@ -1272,22 +1308,3 @@ void loop() {
 //     }
 //   }
 // }
-
-void read_currents(){
-  process_variable = "cur";
-  delayMS(CAN_DELAY);
-  read_current(1);
-  delayMS(CAN_DELAY);
-  read_current(2); 
-  delayMS(CAN_DELAY);
-  read_current(3);  
-}
-
-void read_positions(){
-  delayMS(CAN_DELAY);
-  read_angle(1);
-  delayMS(CAN_DELAY);
-  read_angle(2); 
-  delayMS(CAN_DELAY);
-  read_angle(3);  
-}
