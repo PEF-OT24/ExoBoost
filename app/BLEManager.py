@@ -22,9 +22,6 @@ import json
 # Se establece la ruta de la librería para Android
 os.environ['CLASSPATH'] = 'javadev'
 
-# Base genérica para los UUID personalizados
-BASE_UUID = "00000000-0000-1000-8000-00805f9b34fb"
-
 # Se importan las clases de Android SDK (API v. 31) en el paquete con P4A
 Context = autoclass('android.content.Context')
 PythonActivity = autoclass('org.kivy.android.PythonActivity').mActivity
