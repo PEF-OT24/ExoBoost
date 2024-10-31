@@ -82,7 +82,6 @@ int16_t PV3_cur;
 uint8_t current1_Array[2];
 uint8_t current2_Array[2];
 uint8_t current3_Array[2];
-uint8_t inByte = 0;
 bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
@@ -106,6 +105,11 @@ tCANMsgObject Message_Rx_1;   // Objeto para leer mensajes del motor 1
 tCANMsgObject Message_Rx_2;   // Objeto para leer mensajes del motor 2
 tCANMsgObject Message_Rx_3;   // Objeto para leer mensajes del motor 3
 uint8_t motor_selected = 0;   // Indicador del motor seleccionado para lectura
+
+// ----------------- Variables para ADC -----------------
+uint8_t ADC_Buffer[5], inByte = 0, Toe, Left, Right, Heel, GaitPhase, Thresh;
+uint32_t adcValues[4];
+uint32_t dutyCycle = 0;
 
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {              // Función para dividir una variable de 32 bits en 4 bytes
@@ -932,6 +936,36 @@ void walk_mode_sequence(float kp, float kd){
     send_HMI();
   }
 }
+// ----------------------------------- Funciones de lectura ADC ------------------------------------------------
+void ReadADC(void){
+  // Ejecutar Conversión ADC
+  ADCProcessorTrigger(ADC0_BASE, 1);
+  
+  // Esperar por lectura
+  while (!ADCIntStatus(ADC0_BASE, 1, false));
+  
+  // Limpiar el buffer
+  ADCIntClear(ADC0_BASE, 1);
+  
+  // Leer valores
+  ADCSequenceDataGet(ADC0_BASE, 1, adcValues);
+
+  // Procesamiento de datos
+  ADC_Buffer[0] = map(adcValues[1], 0, 4095, 0, 255); // toe
+  ADC_Buffer[1] = map(adcValues[0], 0, 4095, 0, 255); // left
+  ADC_Buffer[2] = map(adcValues[2], 0, 4095, 0, 255); // right
+  ADC_Buffer[3] = map(adcValues[3], 0, 4095, 0, 255); // heel
+
+  /*
+  // Mandar datos a labview
+  if (Serial.available() > 0) {
+    inByte = Serial.read();
+    if( inByte == '#'){ 
+      Serial.write(ADC_Buffer, 4);
+    }
+  }
+  */
+}
 
 // ----------------------------------- Funciones de callback de manejo de I2C -----------------------------------
 // Función para reiniciar el bus I2C ante algún error
@@ -1303,6 +1337,29 @@ void onRequest(){
 }
 
 // ----------------------------------------------------- Setup ----------------------------------------------------
+void ConfigADC(){
+  // Enable ADC0 peripheral
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
+    
+  // Wait for the ADC0 module to be ready
+  while (!SysCtlPeripheralReady(SYSCTL_PERIPH_ADC0));
+
+  // Configure the following pins as ADC inputs.
+  GPIOPinTypeADC(GPIO_PORTE_BASE,GPIO_PIN_3 | GPIO_PIN_2 | GPIO_PIN_1 | GPIO_PIN_0);
+  
+  // Configure ADC sequence 1 (4 channels)
+  ADCSequenceConfigure(ADC0_BASE, 1, ADC_TRIGGER_PROCESSOR, 0);
+  
+  // Configure each step of the sequence for 4 channels
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH0);
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH1);
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 2, ADC_CTL_CH2);
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 3, ADC_CTL_CH3 | ADC_CTL_IE | ADC_CTL_END);  // Last step with interrupt
+  
+  // Enable sequence 1
+  ADCSequenceEnable(ADC0_BASE, 1);
+}
+
 void setup() {
     Serial.begin(9600);
 
@@ -1357,6 +1414,8 @@ void setup() {
     // Set up de lectura de corriente
     process_variable = "cur";
 
+    // Configuración de ADC    
+    ConfigADC();
 }
 
 void read_currents(){
@@ -1424,7 +1483,7 @@ void loop() {
 }
 
 void send_HMI(){
-
+  ReadADC();
   read_currents();
   delayMS(10);
   split16bits(PV1_cur, current1_Array);
@@ -1443,6 +1502,10 @@ void send_HMI(){
   if (Serial.available() > 0){
     inByte = Serial.read();
     if (inByte == '#'){
+      // Manda valores de ADC
+      Serial.write(ADC_Buffer, 4);
+      
+      // Manda valores de corriente
       Serial.write(current1_Array, 2);
       Serial.write(current2_Array, 2);
       Serial.write(current3_Array, 2);
