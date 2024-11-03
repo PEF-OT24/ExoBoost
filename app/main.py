@@ -128,7 +128,7 @@ class ExoBoostApp(MDApp):
         }
 
         # -------------------------- Parámetros de BLE --------------------------
-        if self.os_name == "Android":
+        if self.os_name == "Android" or self.os_name == "Linux":
             print("Importando librería de BLE")
             # Librería de BLE
             from BLEManager import BluetoothManager_App
@@ -474,6 +474,9 @@ class ExoBoostApp(MDApp):
     # ---------------- Proceso de calibración ----------------
     def calibrate(self):
         '''Método para iniciar calibración del movimiento en otra ventana'''
+        # Si no está conectado cancela la operaión
+        if not self.ble_found: return
+        if not self.ble.connected: return
 
         # Se extrae el texto del contenido
         try:
