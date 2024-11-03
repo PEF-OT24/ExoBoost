@@ -857,6 +857,7 @@ void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, floa
     motion_send_cmd(ID, CAN_message , true);
 }
 
+// ------------------------------------ Rutinas de caminata ---------------------------------- 
 void walk_mode_sequence(float kp, float kd){
 
   /*Rangos de movimiento
@@ -914,7 +915,7 @@ void walk_mode_sequence(float kp, float kd){
       stop_all_motors();
       return;
     }
-    send_HMI();
+    //send_HMI();
   }
 
   // De regreso 
@@ -933,9 +934,123 @@ void walk_mode_sequence(float kp, float kd){
       stop_all_motors();
       return;
     }
-    send_HMI();
+    //send_HMI();
   }
 }
+
+void Fase_Balanceo(){
+  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED);
+  // Se definen los setpoints de movimiento, 30 datos
+  int hip[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
+                11, 12, 13, 14, 15, 16, 17, 18, 19, 
+                20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};  
+  int knee[] = {30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60,
+                  57, 54, 51, 48, 45, 42, 39, 36, 33, 30,
+                  27, 24, 21, 18, 15, 12, 9, 6, 3};
+  int ankle[] = {-20, -18, -16, -14, -12, -10, -8, -6, -4, -2,
+                   1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                  10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+
+  // Se mandan los set points de movimiento
+  for(int i = 0; i < 30; i++){
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,zero_1 + hip[i],0,0.8,0,0,true);
+    //delayMS(CAN_DELAY);
+    //motion_mode_command(2,zero_2 + knee[i],0,0.7,0,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,zero_3 + ankle[i],0,0.6,0,0,true);
+    if(walk_flag == 0){
+      // Serial.print("stopped");
+      stop_all_motors();
+      return;
+    }
+  }          
+}
+
+void Fase_ContactoInicial(){
+  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED | GREEN_LED);
+
+  // Se definen los setpoints de movimiento, 30 datos
+  int hip[] = {30, 29, 28, 27, 26, 25, 24, 23, 22, 21};  
+  int knee[] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15};
+  int ankle[] = {1, 0, -1, -2, -3, -5, -7, -8, -9, -10};
+
+  // Se mandan los set points de movimiento
+  for(int i = 0; i < 10; i++){
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,zero_1 + hip[i],0,0.8,0,0,true);
+    //delayMS(CAN_DELAY);
+    //motion_mode_command(2,zero_2 + knee[i],0,0.7,0,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,zero_3 + ankle[i],0,0.6,0,0,true);
+    if(walk_flag == 0){
+      // Serial.print("stopped");
+      stop_all_motors();
+      return;
+    }
+  }          
+}
+
+void Fase_Apoyo(){
+  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED);
+  // Se definen los setpoints de movimiento, 30 datos
+  float hip[] = {20, 18, 17, 15, 14, 12, 11, 9, 8, 6, 
+                  5, 3, 2, 0, -1, -3, -4, -6, -7, -10};  
+  float knee[] = {15, 14, 14, 13, 12, 12, 11, 10, 10, 
+                  9, 8, 8, 7, 6, 6, 5, 4, 4, 3, 0};
+  float ankle[] = {-10, -8, -6, -4, -2, 0, 2, 4, 6, 
+                 8, 10, 12, 14, 15, 15, 15, 15, 15, 15, 15};
+
+  // Se mandan los set points de movimiento
+  for(int i = 0; i < 20; i++){
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,zero_1 + hip[i],0,0.8,0,0,true);
+    //delayMS(CAN_DELAY);
+    //motion_mode_command(2,zero_2 + knee[i],0,0.7,0,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,zero_3 + ankle[i],0,0.6,0,0,true);
+    if(walk_flag == 0){
+      // Serial.print("stopped");
+      stop_all_motors();
+      return;
+    }
+  }          
+}
+
+void Fase_PreBalanceo(){
+  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED);
+  // Se definen los setpoints de movimiento, 20 datos
+  float hip[] = {-10, -10, -9, -9, -8, -8, -7, -7, -6, -6, -5, 
+                  -5, -4, -4, -3, -3, -2, -2, -1, 0};  
+  float knee[] = {1, 3, 5, 7, 9, 10, 
+                11, 13, 14, 16, 18, 19, 
+                20, 21, 23, 24, 26, 28, 29, 30};
+  float ankle[] = {15, 13, 14, 12, 10, 7, 5, 2, 0, -3, -5, 
+                  -8, -10, -13, -15, -16, -17,-18, -19, -20};
+
+  // Se mandan los set points de movimiento
+  for(int i = 0; i < 20; i++){
+    delayMS(CAN_DELAY);
+    motion_mode_command(1,zero_1 + hip[i],0,0.8,0,0,true);
+    //delayMS(CAN_DELAY);
+    //motion_mode_command(2,zero_2 + knee[i],0,0.7,0,0,true);
+    delayMS(CAN_DELAY);
+    motion_mode_command(3,zero_3 + ankle[i],0,0.6,0,0,true);
+    if(walk_flag == 0){
+      // Serial.print("stopped");
+      stop_all_motors();
+      return;
+    }
+  }          
+}
+
+void gait_simulation(){
+  Fase_Balanceo();
+  Fase_ContactoInicial();
+  Fase_Apoyo();
+  Fase_PreBalanceo();
+}
+
 // ----------------------------------- Funciones de lectura ADC ------------------------------------------------
 void ReadADC(void){
   // Ejecutar Conversión ADC
@@ -1416,6 +1531,9 @@ void setup() {
 
     // Configuración de ADC    
     ConfigADC();
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED);
+
 }
 
 void read_currents(){
@@ -1442,14 +1560,16 @@ void loop() {
   
   if (walk_flag == 1 && current_tab == 2){ // On assistance tab
     // Serial.println("walking");
-    walk_mode_sequence(1.4,0.05);
+    //walk_mode_sequence(1.4,0.05);
+    gait_simulation();
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
     
     if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
       reset_all_motors();
       resetFlag = false;
     }
   }
-  send_HMI();
+  //send_HMI();
 
  
   /*
@@ -1483,6 +1603,7 @@ void loop() {
 }
 
 void send_HMI(){
+  // Función para mandar información de corrientes y FSRs al HMI en LabView
   ReadADC();
   read_currents();
   delayMS(10);
