@@ -128,7 +128,7 @@ class ExoBoostApp(MDApp):
         }
 
         # -------------------------- Parámetros de BLE --------------------------
-        if self.os_name == "Android" or self.os_name == "Linux":
+        if self.os_name == "Android":
             print("Importando librería de BLE")
             # Librería de BLE
             from BLEManager import BluetoothManager_App
