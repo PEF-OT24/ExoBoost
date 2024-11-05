@@ -121,7 +121,7 @@ void CalibrarADC(){
   uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;
   uint8_t THS[4];
   
-  for(int i = 0; i < 100; i++){ // proceso para recuperar 100 datos y realizar calibración
+  for(int i = 0; i < 400; i++){ // proceso para recuperar 100 datos y realizar calibración
     int8_t toe_value, left_value, right_value, heel_value;
     
     // Ejecutar Conversión ADC
