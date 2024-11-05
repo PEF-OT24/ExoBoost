@@ -170,17 +170,17 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
     uint8_t CANBUSReceive[8u];
     uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
     
-    // Check if the interrupt is caused by a status change
+    // Revisión de interrupción por un cambio de estado 
     if (ui32Status == CAN_INT_INTID_STATUS) {
         // Read the full status of the CAN controller
         ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
         // ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_NEWDAT);
         
     } 
-    // Check if the interrupt is caused by message object 1
-    else if (ui32Status == 1 || ui32Status == 2 || ui32Status == 3) { // motores
-        // Clear the message object interrupt
-        CANIntClear(CAN0_BASE, ui32Status);        // limpia la fuente del interrupt
+    // Interrupción por motores 1, 2 ó 3
+    else if (ui32Status == 1 || ui32Status == 2 || ui32Status == 3) { 
+        // Limpia el interrupt
+        CANIntClear(CAN0_BASE, ui32Status);        
 
         // procedimiento diferente dependiendo del motor leido
         
@@ -196,7 +196,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
           }
           // Serial.print("New response");
           
-          // Se formatea la información dependiendo del comando recibido
+          // Formato dependiendo del comando
           if (process_variable == "pos"){ // Formateo para posición
             PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
           } else if (process_variable == "vel"){ // Formateo para velocidad
@@ -1365,7 +1365,19 @@ void onReceive(int len){
       }
       
       const char* state_command = jsonrec["state"];
-      if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
+      if(strcmp(state_command, "calibrate") == 0){
+        // Proceso de calibración con duración de 3 segundos
+
+        Serial.println("Calibración");
+        // Calibración de zeros
+        read_positions();
+        // zero_1 = PV1;
+        // zero_2 = PV2;
+        // zero_3 = PV3;
+
+        // LÓGICA PARA CALIBRAR FSRs
+      }
+      else if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
         //Serial.println("Deteniendo motores");
         walk_flag = 0;
 
