@@ -373,6 +373,7 @@ class BLECallback_MODE : public BLECharacteristicCallbacks {
       {"state": "stand up"}
       {"state": "walk"}
       {"state": "stop"}
+      {"state": "calibrate"}
 
       Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
       {"state": "stop", "T", "H"}
