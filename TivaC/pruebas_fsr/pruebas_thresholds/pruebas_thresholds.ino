@@ -28,6 +28,7 @@ uint32_t adcValues[4];
 uint32_t dutyCycle = 0;
 uint8_t thresholds[4];
 int cont = 0;
+int gait_phase = 0;
 
 void delayMS(uint32_t milliseconds){                            // Función que ejecuta un delay de manera aproximada (las interrupciones tienen prioridad)
     uint32_t delay_cycles;
@@ -85,16 +86,47 @@ void ReadADC(void){
   sendBuffer[2] = map(adcValues[2], 0, 4095, 0, 255); // right
   sendBuffer[3] = map(adcValues[3], 0, 4095, 0, 255); // heel
 
+  // Se guardan los datos
+  Toe = sendBuffer[0];
+  Left = sendBuffer[1];
+  Right = sendBuffer[2];
+  Heel = sendBuffer[3];
+
+  bool FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
+  // Máquina de estados
+  if(gait_phase == 0){ // stance
+    if(!FSR2 && Heel > TH_heel){
+      gait_phase = 4;
+    }
+  } else if(gait_phase == 1){ // heel strike
+    if(FSR2 && Heel > TH_heel){
+      gait_phase = 2;
+    }
+  } else if(gait_phase == 2){ // foot landing
+    if(FSR2 && Heel < TH_heel){
+      gait_phase = 3;
+    }
+  } else if(gait_phase == 3){ // toe off 
+    if(!FSR2 && Heel < TH_heel){
+      gait_phase = 4;
+    }
+  } else if(gait_phase == 4){ // swing
+    if(Heel > TH_heel && !FSR2){
+      gait_phase = 1;
+    }
+  }
+
   /*
   // Mandar los datos al HMI
   if (Serial.available() > 0) {
     inByte = Serial.read();
-    if( inByte == '#'){ 
-      Serial.write("Y", 1);
+    if(inByte == '#'){ 
       Serial.write(sendBuffer, 4);
+      Serial.write(gait_phase);
     }
   }
   */
+  
 
   /*
   // Impresión de calibración
@@ -104,7 +136,12 @@ void ReadADC(void){
   Serial.print(" Heel: "); Serial.println(thresholds[3]);Serial.println(); // Salto de línea
   */
 
+  
   // Detección de thresholds
+  Serial.print("Back: "); Serial.print(Heel > TH_heel);
+  Serial.print(" Front: "); Serial.print(FSR2);
+  Serial.print(" Phase: "); Serial.println(gait_phase);
+  /*
   for(int i = 0; i<4; i++){
     if(i == 0){Serial.print("Toe: ");}
     if(i == 1){Serial.print("Left: ");}
@@ -113,7 +150,9 @@ void ReadADC(void){
     if(sendBuffer[i] > thresholds[i]){Serial.print("SI");}else{Serial.print("NO");}
     Serial.print(" ");
   }
-  Serial.println();
+  Serial.print("Phase: "); Serial.println(gait_phase);  
+  */
+  
 }
 
 void CalibrarADC(){
@@ -152,16 +191,22 @@ void CalibrarADC(){
   }
 
   // Se le agrega un offset
-  toe_max = toe_max;
-  left_max = left_max;
-  right_max = right_max;
-  heel_max = heel_max;
+  toe_max = toe_max - 2;
+  left_max = left_max - 2;
+  right_max = right_max - 2;
+  heel_max = heel_max - 2;
 
   // Se guardan los thresholds y se devuelven
   thresholds[0] = toe_max;
   thresholds[1] = left_max;
   thresholds[2] = right_max;
   thresholds[3] = heel_max;
+
+  // Se guardan 
+  TH_toe = thresholds[0];
+  TH_left = thresholds[1];
+  TH_right = thresholds[2];
+  TH_heel = thresholds[3];
 
   /*
   // Mandar los datos al HMI
