@@ -44,6 +44,7 @@
 #define CAN_DELAY 5
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
+
 // Parámetros de PI para un determinado motor
 uint8_t posKP; 
 uint8_t posKI; 
@@ -64,11 +65,6 @@ Si max_speed = 0, entonces la velocidad será la calculada por el controlador PI
 se limita al valor indicado. 
 */
 
-// Zeros de movimiento
-int32_t zero_1 = -122;
-int32_t zero_2 = 4.5;
-int32_t zero_3 = -95;
-
 // Variables de proceso para los motores
 String process_variable = "pos"; // Tipo de variable de proceso: pos, vel, cur, temp
 int32_t PV1 = 1;
@@ -82,12 +78,12 @@ int16_t PV3_cur;
 uint8_t current1_Array[2];
 uint8_t current2_Array[2];
 uint8_t current3_Array[2];
-bool walk_flag;
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 int8_t current_tab = 0; // Variable que almacena la ventana en la que se encuentra el usuario
 int8_t last_tab = 0;       // Variable que almacena la ventana antigua en la que se encontraba el usuario
 bool resetFlag = false; // Bandera que indica si es necesario un reset
+
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
 const int BUFFER_SIZE = 32;      // Tamaño máximo del buffer
@@ -110,36 +106,79 @@ uint8_t motor_selected = 0;   // Indicador del motor seleccionado para lectura
 uint8_t ADC_Buffer[5], inByte = 0, Toe, Left, Right, Heel;  // Variables para guardar cada FSR
 uint8_t TH_toe, TH_left, TH_right, TH_heel;                 // Variables para el TH de cada FSR
 bool FSR2;
-uint32_t adcValues[4];
-uint32_t dutyCycle = 0;
+uint32_t adcValues[4]; // Lectura de FSRs
+
+//--------------------- Variables para el algoritmo de caminata ---------------------
+// Zeros de movimiento
+int32_t zero_1 = -122;
+int32_t zero_2 = 4.5;
+int32_t zero_3 = -95;
+
+bool walk_flag = false;  // Bandera de caminata
+bool start_flag = false; // Bandera de inicio 
+bool stop_flag = false;  // Bandera de stop
+
+uint8_t gait_phase = 0; // Fase de caminata
+/*
+gait_phase = 0: espera
+gait_phase = 1: Balanceo
+gait_phase = 2: Contacto Inicial
+gait_phase = 3: Apoyo
+gait_phase = 4: Pre Balanceo
+*/
+
+// -- Vectores de caminata --
+// Para cada fase, el tamaño de los vectores por articulación debe ser el mismo
+int count = 0; // Conteo de setpoints
+
+// Fase 1 - Balanceo (4 valores)
+int8_t hip_balanceo[] = {0, 10, 20, 30};
+int8_t knee_balanceo[] = {30, 60, 30, 0};
+int8_t ankle_balanceo[] = {-20, 0, 10, 0};
+
+// Fase 2 - Contacto Inicial (3 valores)
+int8_t hip_contacto_inicial[] = {30, 25, 20};
+int8_t knee_contacto_inicial[] = {5, 10, 15};
+int8_t ankle_contacto_inicial[] = {0, 5, 10};
+
+// Fase 3 - Apoyo (4 valores)
+int8_t hip_apoyo[] = {20, 10, 0, -10};
+int8_t knee_apoyo[] = {15, 10, 5, 0};
+int8_t ankle_apoyo[] = {-10, 0, 10, 15};
+
+// Fase 4 - Pre balanceo (3 valores)
+int8_t hip_pre_balanceo[] = {-10, -5, 0};
+int8_t knee_pre_balanceo[] = {0, 15, 30};
+int8_t ankle_pre_balanceo[] = {15, 0, -20};
 
 // ----------------------------------- Funciones de uso general -----------------------------------
-void split32bits(int32_t number, uint8_t *byteArray) {              // Función para dividir una variable de 32 bits en 4 bytes
-  // Se divide el número en 4 enteros de 8 bits
+void split32bits(int32_t number, uint8_t *byteArray) {              
+  // Función para dividir una variable de 32 bits en 4 bytes
   byteArray[0] = (number >> 24) & 0xFF;  // byte más significativo
   byteArray[1] = (number >> 16) & 0xFF;
   byteArray[2] = (number >> 8) & 0xFF;
   byteArray[3] = number & 0xFF;  // byte menos significativo
 }
 
-void split16bits(int16_t number, uint8_t *byteArray) {            // Función para dividir una variable de 16 bits en 2 bytes
-    // Se divide el número en 2 enteros de 8 bits
-    byteArray[0] = (number >> 8) & 0xFF; // byte más significativo  
-    byteArray[1] = number & 0xFF;  // byte menos significativo
+void split16bits(int16_t number, uint8_t *byteArray) {            
+  // Función para dividir una variable de 16 bits en 2 bytes
+  byteArray[0] = (number >> 8) & 0xFF; // byte más significativo  
+  byteArray[1] = number & 0xFF;  // byte menos significativo
 }
 
-void delayMS(uint32_t milliseconds){                            // Función que ejecuta un delay de manera aproximada (las interrupciones tienen prioridad)
-    uint32_t delay_cycles;
-    
-    // Get the system clock frequency in Hz
-    uint32_t sysClock = SysCtlClockGet();
+void delayMS(uint32_t milliseconds){                            
+  // Función que ejecuta un delay de manera aproximada (las interrupciones tienen prioridad)
+  uint32_t delay_cycles;
+  
+  // Get the system clock frequency in Hz
+  uint32_t sysClock = SysCtlClockGet();
 
-    // Calculate the number of delay cycles needed for the given milliseconds
-    // Avoid overflow by dividing first
-    delay_cycles = (sysClock / 3000) * milliseconds;
+  // Calculate the number of delay cycles needed for the given milliseconds
+  // Avoid overflow by dividing first
+  delay_cycles = (sysClock / 3000) * milliseconds;
 
-    // Call SysCtlDelay to create the delay
-    SysCtlDelay(delay_cycles);
+  // Call SysCtlDelay to create the delay
+  SysCtlDelay(delay_cycles);
 }
 
 void print_data(uint8_t arr[8]) {
@@ -159,121 +198,119 @@ void print_data(uint8_t arr[8]) {
       //Serial.print(" ");
     }
   }
-  
-  // Salto de línea al final
-  //Serial.println();
 }
+
 // ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real
-    doControlFlag = true;
+  doControlFlag = true;
 }
 
 void CAN0IntHandler(void) { // Función de interrupción para recepción de mensajes de CAN
-    uint8_t CANBUSReceive[8u];
-    uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
-    
-    // Revisión de interrupción por un cambio de estado 
-    if (ui32Status == CAN_INT_INTID_STATUS) {
-        // Read the full status of the CAN controller
-        ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
-        // ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_NEWDAT);
-        
-    } 
-    // Interrupción por motores 1, 2 ó 3
-    else if (ui32Status == 1 || ui32Status == 2 || ui32Status == 3) { 
-        // Limpia el interrupt
-        CANIntClear(CAN0_BASE, ui32Status);        
+  uint8_t CANBUSReceive[8u];
+  uint32_t ui32Status = CANIntStatus(CAN0_BASE, CAN_INT_STS_CAUSE);
+  
+  // Revisión de interrupción por un cambio de estado 
+  if (ui32Status == CAN_INT_INTID_STATUS) {
+    // Read the full status of the CAN controller
+    ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
+    // ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_NEWDAT);
+      
+  } 
+  // Interrupción por motores 1, 2 ó 3
+  else if (ui32Status == 1 || ui32Status == 2 || ui32Status == 3) { 
+    // Limpia el interrupt
+    CANIntClear(CAN0_BASE, ui32Status);        
 
-        // No realiza lectura si no es necesario
-        if(commandCAN != 0x92 && commandCAN != 0x9C){
-          return; // Solo lectura de posición, velocidad o corriente
-        }
-        
-        // -------- Lectura del motor 1 ---------
-        if (motor_selected == 1){                  
-          // Se obtiene el mensaje
-          Message_Rx_1.pui8MsgData = CANBUSReceive;
-          CANMessageGet(CAN0_BASE, 1, &Message_Rx_1, false);
-  
-          // Validación del mensaje
-          if (commandCAN != CANBUSReceive[0]){
-            return;
-          }
-          // Serial.print("New response");
-          
-          // Formato dependiendo del comando
-          if (process_variable == "pos"){ // Formateo para posición
-            PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-          } else if (process_variable == "vel"){ // Formateo para velocidad
-            int16_t PV1_read;
-            PV1_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
-            PV1 = PV1_read;
-          } else if (process_variable == "cur"){ // Formateo para corriente
-            uint16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
-            PV1_cur = PV1_read;
-            // Serial.print("PV1 "); Serial.print(PV1_read); Serial.print(" ");
-            //print_data(CANBUSReceive); 
-          }
-          //Serial.print("PV1: "); Serial.println(PV1);
-        // -------- Lectura del motor 2 ---------
-        } else if (motor_selected == 2){           
-          // Se obtiene el mensaje
-          Message_Rx_2.pui8MsgData = CANBUSReceive;
-          CANMessageGet(CAN0_BASE, 2, &Message_Rx_2, false);
-  
-          // Validación del mensaje
-          if (commandCAN != CANBUSReceive[0]){
-            return;
-          }
-          //Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
-          
-          // Se formatea la información dependiendo del comando recibido
-          if (process_variable == "pos"){ // Formateo para posición
-            PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-          } else if (process_variable == "vel"){ // Formateo para velocidad
-            int16_t PV2_read;
-            PV2_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
-            PV2 = PV2_read;
-          } else if (process_variable == "cur"){ // Formateo para corriente
-            uint16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
-            PV2_cur = PV2_read; // Lectura en cA
-            // Serial.print("PV2 "); Serial.println(PV2_read);
-            //print_data(CANBUSReceive);
-          }
-          //Serial.print("PV2: "); Serial.println(PV2);
-          
-        // -------- Lectura del motor 3 ---------
-        } else if (motor_selected == 3){           // motor 3
-          // Se obtiene el mensaje
-          Message_Rx_3.pui8MsgData = CANBUSReceive;
-          CANMessageGet(CAN0_BASE, 3, &Message_Rx_3, false);
-  
-          // Validación del mensaje
-          if (commandCAN != CANBUSReceive[0]){
-            return;
-          }
-          // Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
-          
-          // Se formatea la información dependiendo del comando recibido
-          if (process_variable == "pos"){ // Formateo para posición
-            PV3 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-          } else if (process_variable == "vel"){ // Formateo para velocidad
-            int16_t PV3_read;
-            PV3_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
-            PV3 = PV3_read;
-          } else if (process_variable == "cur"){ // Formateo para corriente
-            int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
-            PV3_cur = PV3_read; // Lectura en cA
-            // Serial.print("PV3 "); Serial.println(PV3_cur);
-            //print_data(CANBUSReceive);
-          }
-          //Serial.print("PV3: "); Serial.println(PV3);
-        }
-
-    } else {
-        // Handle unexpected interrupts
-        CANIntClear(CAN0_BASE, ui32Status);
+    // No realiza lectura si no es necesario
+    if(commandCAN != 0x92 && commandCAN != 0x9C){
+      return; // Solo lectura de posición, velocidad o corriente
     }
+    
+    // -------- Lectura del motor 1 ---------
+    if (motor_selected == 1){                  
+      // Se obtiene el mensaje
+      Message_Rx_1.pui8MsgData = CANBUSReceive;
+      CANMessageGet(CAN0_BASE, 1, &Message_Rx_1, false);
+
+      // Validación del mensaje
+      if (commandCAN != CANBUSReceive[0]){
+        return;
+      }
+      // Serial.print("New response");
+      
+      // Formato dependiendo del comando
+      if (process_variable == "pos"){ // Formateo para posición
+        PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
+      } else if (process_variable == "vel"){ // Formateo para velocidad
+        int16_t PV1_read;
+        PV1_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+        PV1 = PV1_read;
+      } else if (process_variable == "cur"){ // Formateo para corriente
+        uint16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+        PV1_cur = PV1_read;
+        // Serial.print("PV1 "); Serial.print(PV1_read); Serial.print(" ");
+        //print_data(CANBUSReceive); 
+      }
+      //Serial.print("PV1: "); Serial.println(PV1);
+    // -------- Lectura del motor 2 ---------
+    } else if (motor_selected == 2){           
+      // Se obtiene el mensaje
+      Message_Rx_2.pui8MsgData = CANBUSReceive;
+      CANMessageGet(CAN0_BASE, 2, &Message_Rx_2, false);
+
+      // Validación del mensaje
+      if (commandCAN != CANBUSReceive[0]){
+        return;
+      }
+      //Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+      
+      // Se formatea la información dependiendo del comando recibido
+      if (process_variable == "pos"){ // Formateo para posición
+        PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
+      } else if (process_variable == "vel"){ // Formateo para velocidad
+        int16_t PV2_read;
+        PV2_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+        PV2 = PV2_read;
+      } else if (process_variable == "cur"){ // Formateo para corriente
+        uint16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+        PV2_cur = PV2_read; // Lectura en cA
+        // Serial.print("PV2 "); Serial.println(PV2_read);
+        //print_data(CANBUSReceive);
+      }
+      //Serial.print("PV2: "); Serial.println(PV2);
+      
+    // -------- Lectura del motor 3 ---------
+    } else if (motor_selected == 3){           // motor 3
+      // Se obtiene el mensaje
+      Message_Rx_3.pui8MsgData = CANBUSReceive;
+      CANMessageGet(CAN0_BASE, 3, &Message_Rx_3, false);
+
+      // Validación del mensaje
+      if (commandCAN != CANBUSReceive[0]){
+        return;
+      }
+      // Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+      
+      // Se formatea la información dependiendo del comando recibido
+      if (process_variable == "pos"){ // Formateo para posición
+        PV3 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
+      } else if (process_variable == "vel"){ // Formateo para velocidad
+        int16_t PV3_read;
+        PV3_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
+        PV3 = PV3_read;
+      } else if (process_variable == "cur"){ // Formateo para corriente
+        int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
+        PV3_cur = PV3_read; // Lectura en cA
+        // Serial.print("PV3 "); Serial.println(PV3_cur);
+        //print_data(CANBUSReceive);
+      }
+      //Serial.print("PV3: "); Serial.println(PV3);
+    }
+
+  } else {
+    // Handle unexpected interrupts
+    CANIntClear(CAN0_BASE, ui32Status);
+  }
 }
 // Función de interrupción del Timer 0
 void Timer0IntHandler(void) {
@@ -416,6 +453,50 @@ void motion_send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función 
   }
 }
 
+void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, float kp, float kd, float t_ff, bool show) {
+    uint16_t p_des_hex, v_des_hex, kp_hex, kd_hex, t_ff_hex;
+
+    // Convertir posición de grados a radianes y normalizar
+    float p_des_rad = p_des_deg * DEG_TO_RAD;
+    p_des_hex = (uint16_t)(((p_des_rad + 12.5) / 25.0) * 65535);
+
+    // Convertir velocidad de grados por segundo a radianes por segundo y normalizar
+    float v_des_rad_per_s = v_des_deg_per_s * DEG_TO_RAD;
+    v_des_hex = (uint16_t)(((v_des_rad_per_s + 45.0) / 90.0) * 4095);
+    v_des_hex &= 0x0FFF; //Mask para asegurar que la variable entra en 12 bits
+
+    // Normalizar kd de 0 a 500
+    kp_hex = (uint16_t)((kp / 500.0) * 4095);
+    kp_hex &= 0x0FFF;
+
+    // Normalizar kd de 0 a 5
+    kd_hex = (uint16_t)((kd / 5.0) * 4095);
+    kd_hex &= 0x0FFF;
+
+    // Normalizar torque de feedforward de -24 a 24
+    t_ff_hex = (uint16_t)(((t_ff + 24.0) / 48.0) * 4095);
+    t_ff_hex &= 0x0FFF; 
+
+    // Buffer de mensaje de CAN
+    uint8_t CAN_message[8];
+
+    // Llenar el Buffer del mensaje de CAN
+    CAN_message[0] = (p_des_hex >> 8) & 0xFF;         // High byte de p_des
+    CAN_message[1] = p_des_hex & 0xFF;                // Low byte de p_des
+    CAN_message[2] = ((v_des_hex >> 4) & 0xFF);       // High 8 bits de v_des
+    CAN_message[3] = ((v_des_hex & 0x0F) << 4)        // Low 4 bits de v_des
+                     | ((kp_hex >> 8) & 0x0F);        // High 4 bits de kp
+    CAN_message[4] = kp_hex & 0xFF;                   // Low byte de kp
+    CAN_message[5] = ((kd_hex >> 4) & 0xFF);          // High 8 bits de kd
+    CAN_message[6] = ((kd_hex & 0x0F) << 4)           // Low 4 bits de kd
+                     | ((t_ff_hex >> 8) & 0x0F);      // High 4 bits de t_ff
+    CAN_message[7] = t_ff_hex & 0xFF;                 // Low byte de t_ff
+
+    // Se manda el mensaje por CAN
+    motion_send_cmd(ID, CAN_message , true);
+}
+
+// ------------------------------ Comandos para los motores por CAN -----------------------------
 void SendParameters(uint8_t ID, uint8_t PosKP, uint8_t PosKI, uint8_t SpdKP, uint8_t SpdKI, uint8_t CurrKP, uint8_t CurrKI){
   // Función para enviar los valores de los parámetros PI
 
@@ -839,47 +920,38 @@ void read_current(int8_t ID){
   send_cmd(ID, CAN_data_TX, false);
 }
 
-void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, float kp, float kd, float t_ff, bool show) {
-    uint16_t p_des_hex, v_des_hex, kp_hex, kd_hex, t_ff_hex;
+// Rutinas para leer parámetros
+void read_currents(){
+  // Función para leer corrientes de los tres motores
+  process_variable = "cur";
+  delayMS(CAN_DELAY);
+  read_current(1);
+  delayMS(CAN_DELAY);
+  read_current(2); 
+  delayMS(CAN_DELAY);
+  read_current(3);  
+}
 
-    // Convert position from degrees to radians and normalize
-    float p_des_rad = p_des_deg * DEG_TO_RAD;
-    p_des_hex = (uint16_t)(((p_des_rad + 12.5) / 25.0) * 65535);
+void read_positions(){
+  // Función para leer posiciones de los tres motores
+  process_variable = "pos";
+  delayMS(CAN_DELAY);
+  read_angle(1);
+  delayMS(CAN_DELAY);
+  read_angle(2); 
+  delayMS(CAN_DELAY);
+  read_angle(3);  
+}
 
-    // Convert velocity from degrees/second to radians/second and normalize
-    float v_des_rad_per_s = v_des_deg_per_s * DEG_TO_RAD;
-    v_des_hex = (uint16_t)(((v_des_rad_per_s + 45.0) / 90.0) * 4095);
-    v_des_hex &= 0x0FFF; //Mask para asegurar que la variable entra en 12 bits
-
-    // Normalize kp to the range 0 to 500
-    kp_hex = (uint16_t)((kp / 500.0) * 4095);
-    kp_hex &= 0x0FFF;
-
-    // Normalize kd to the range 0 to 5
-    kd_hex = (uint16_t)((kd / 5.0) * 4095);
-    kd_hex &= 0x0FFF;
-
-    // Normalize feedforward torque to the range -24 to 24 Nm
-    t_ff_hex = (uint16_t)(((t_ff + 24.0) / 48.0) * 4095);
-    t_ff_hex &= 0x0FFF; 
-
-    // Pack the CAN data into an 8-byte array
-    uint8_t CAN_message[8];
-
-    // Packing into CAN_message array
-    CAN_message[0] = (p_des_hex >> 8) & 0xFF;         // High byte of p_des
-    CAN_message[1] = p_des_hex & 0xFF;                // Low byte of p_des
-    CAN_message[2] = ((v_des_hex >> 4) & 0xFF);       // High 8 bits of v_des
-    CAN_message[3] = ((v_des_hex & 0x0F) << 4)        // Low 4 bits of v_des
-                     | ((kp_hex >> 8) & 0x0F);        // High 4 bits of kp
-    CAN_message[4] = kp_hex & 0xFF;                   // Low byte of kp
-    CAN_message[5] = ((kd_hex >> 4) & 0xFF);          // High 8 bits of kd
-    CAN_message[6] = ((kd_hex & 0x0F) << 4)           // Low 4 bits of kd
-                     | ((t_ff_hex >> 8) & 0x0F);      // High 4 bits of t_ff
-    CAN_message[7] = t_ff_hex & 0xFF;                 // Low byte of t_ff
-
-    // Send the CAN message (replace send_CAN with your CAN send function)
-    motion_send_cmd(ID, CAN_message , true);
+void read_velocities(){
+  // Función para leer velocidades de los tres motores
+  process_variable = "vel";
+  delayMS(CAN_DELAY);
+  read_velocity(1);
+  delayMS(CAN_DELAY);
+  read_velocity(2); 
+  delayMS(CAN_DELAY);
+  read_velocity(3);  
 }
 
 // ------------------------------------ Rutinas de caminata ---------------------------------- 
@@ -927,7 +999,6 @@ void walk_mode_sequence(float kp, float kd){
   Serial.println();
 
   // De regreso 
-//  Serial.println("Regreso");
   for (int i = 4; i >= 0; i--) {
     delayMS(15);
     motion_mode_command(1,angle_sim_hip[i],0,0.8,0,0,true);
@@ -976,7 +1047,6 @@ void Fase_Balanceo(){
   while (1){
     // Lectura de variables de entrada
     ReadADC();
-    FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
     // Debugging
@@ -1013,7 +1083,6 @@ void Fase_ContactoInicial(){
   while (1){
     // Lectura de variables de entrada
     ReadADC();
-    FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
     // Debugging
@@ -1051,7 +1120,6 @@ void Fase_Apoyo(){
   while (1){
     // Lectura de variables de entrada
     ReadADC();
-    FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
     // Debugging
@@ -1090,7 +1158,6 @@ void Fase_PreBalanceo(){
   while (1){
     // Lectura de variables de entrada
     ReadADC();
-    FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
     // Debugging
@@ -1107,10 +1174,14 @@ void gait_simulation(){
   Fase_ContactoInicial();
   Fase_Apoyo();
   Fase_PreBalanceo();
+  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
 }
 
 // ----------------------------------- Funciones de lectura ADC ------------------------------------------------
 void ReadADC(void){
+  // Lectura de las FSRs de la plantilla
+  // Se obtiene el valor en Heel y en FSR2 (front)
+
   // Ejecutar Conversión ADC
   ADCProcessorTrigger(ADC0_BASE, 1);
   
@@ -1134,6 +1205,8 @@ void ReadADC(void){
   Left = ADC_Buffer[1];
   Right = ADC_Buffer[2];
   Heel = ADC_Buffer[3];
+
+  FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
 
   /*
   // Mandar datos a labview
@@ -1349,7 +1422,7 @@ void onReceive(int len){
       }
       else if(process_variable == "vel"){
         // Control de velocidad
-        //Serial.println("Control de velocidad");
+        //Serial.println("VEL");
         set_speed(1, SP_motor1, false);
         delayMS(CAN_DELAY); // delay 
         set_speed(2, SP_motor2, false);
@@ -1359,7 +1432,7 @@ void onReceive(int len){
       }
       else if (process_variable == "cur"){
         // Control de torque
-        //Serial.println("Control de torque");
+        //Serial.println("TOR");
         set_torque(1, SP_motor1, false);
         delayMS(CAN_DELAY); // delay 
         set_torque(2, SP_motor2, false);
@@ -1483,19 +1556,21 @@ void onReceive(int len){
         read_positions();
 
         // Impresión de ceros
+        /*
         Serial.print("Z1: ");Serial.print(PV1);
         Serial.print(" Z2: ");Serial.print(PV1);
         Serial.print(" Z3: ");Serial.println(PV1);
+        */
         
         zero_1 = PV1;
         zero_2 = PV2;
         zero_3 = PV3;
         
         // Se le agrega un offset y se guarda
-        TH_toe = toe_max - 2;
-        TH_left = left_max - 2;
-        TH_right = right_max - 2;
-        TH_heel = heel_max - 2;
+        TH_toe = toe_max - 0;
+        TH_left = left_max - 0;
+        TH_right = right_max - 0;
+        TH_heel = heel_max - 0;
 
         GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0); // Se apaga el indicador
       }
@@ -1585,7 +1660,7 @@ void onRequest(){
   }
 }
 
-// ----------------------------------------------------- Setup ----------------------------------------------------
+// ----------------------------------------------------- Configuración ----------------------------------------------------
 void ConfigADC(){
   // Enable ADC0 peripheral
     SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
@@ -1665,90 +1740,145 @@ void setup() {
     process_variable = "cur";
 }
 
-void read_currents(){
-  // Función para leer corrientes de los tres motores
-  process_variable = "cur";
-  delayMS(CAN_DELAY);
-  read_current(1);
-  delayMS(CAN_DELAY);
-  read_current(2); 
-  delayMS(CAN_DELAY);
-  read_current(3);  
-}
-
-void read_positions(){
-  // Función para leer corrientes de los tres motores
-  process_variable = "pos";
-  delayMS(CAN_DELAY);
-  read_angle(1);
-  delayMS(CAN_DELAY);
-  read_angle(2); 
-  delayMS(CAN_DELAY);
-  read_angle(3);  
-}
-
-int count = 0;
-
 // ----- Main Loop -----
-void loop() {
-  count ++;
-  
-  if (walk_flag == 1 && current_tab == 2){ // On assistance tab
-    //walk_mode_sequence(1.4,0.05);
-    while(1){
-      read_currents();
-      Serial.print("cur: "); Serial.println(PV2_cur);
-      if(PV2_cur > 90 || PV2_cur < -90){break;}
-    }
-    Serial.println("Walking...");
-    gait_simulation();
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
+void loop() {  
+  if (walk_flag == 1 && current_tab == 2){ // Rutina de caminata en la tab de assistance
     
+    // Condición para iniciar la rutina
+    if(!start_flag && gait_phase == 0){
+      ReadADC(); // Lectura de FSRs
+      read_currents(); // Lectura de corrientes
+
+      // Cuando se detecta la intención, se inicia la caminata
+      if((PV2_cur > 90 || PV2_cur < -90) || (Heel > TH_heel && FSR2)){ 
+        // Intención de caminata: Heel strike o detección de corriente en cadera
+        gait_phase = 1;
+        start_flag = true;
+      }
+
+      // Siguiente iteración
+      return;
+    }
+
+    // Condición para detener la rutina
+    if(stop_flag){
+      // Reinicia las variables de control
+      start_flag = false;
+      stop_flag = false;
+      walk_flag = 0;
+      gait_phase = 0;
+      count = 0;
+
+      // Se apagan los motores
+      reset_all_motors();
+
+      // Siguiente iteración
+      return;
+    }
+
+    // Máquina de estados
+    if(gait_phase == 1){ // Fase de Balanceo
+      if(count < 4){     // Set points en balanceo
+        motion_mode_command(1, hip_balanceo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, knee_balanceo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, ankle_balanceo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+
+        // Siguiente iteración
+        count++;
+        return;
+      } else { // Cambio de fase|
+        ReadADC(); // Lectura de FSRs
+        // read_positions(); // Lectura de posiciones (PENDIENTE)
+
+        if(!FSR2 && Heel > TH_heel){ // Condición para cambio de fase
+          gait_phase = 2;
+          count = 0;
+          return;
+        }
+      }
+    } else if (gait_phase == 2) { // Fase de Contacto Inicial
+      if(count < 3){     // Set points en contacto inicial
+        motion_mode_command(1, hip_contacto_inicial[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, knee_contacto_inicial[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, ankle_contacto_inicial[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+
+        // Siguiente iteración
+        count++;
+        return;
+      } else { // Cambio de fase|
+        ReadADC(); // Lectura de FSRs
+        // read_positions(); // Lectura de posiciones (PENDIENTE)
+
+        if(FSR2 && (Heel > TH_heel - 10)){ // Condición para cambio de fase
+          gait_phase = 3;
+          count = 0;
+          return;
+        }
+      }
+    } else if (gait_phase == 3) { // Fase de Apoyo
+      if(count < 4){     // Set points en apoyo
+        motion_mode_command(1, hip_apoyo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, knee_apoyo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, ankle_apoyo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+
+        // Siguiente iteración
+        count++;
+        return;
+      } else { // Cambio de fase
+        ReadADC(); // Lectura de FSRs
+        // read_positions(); // Lectura de posiciones (PENDIENTE)
+
+        if(FSR2 && Heel < TH_heel){ // Condición para cambio de fase
+          gait_phase = 4;
+          count = 0;
+          return;
+        }
+      }
+    } else if (gait_phase == 4){ // Fase de pre balanceo
+      if(count < 3){     // Set points en pre balanceo
+        motion_mode_command(1, hip_pre_balanceo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, knee_pre_balanceo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, ankle_pre_balanceo[count], 0, 0.8, 0, 0, true);
+        delayMS(CAN_DELAY);
+
+        // Siguiente iteración
+        count++;
+        return;
+      } else { // Cambio de fase
+        ReadADC(); // Lectura de FSRs
+        // read_positions(); // Lectura de posiciones (PENDIENTE)
+
+        if(!FSR2 && Heel < TH_heel){ // Condición para cambio de fase
+          gait_phase = 1;
+          count = 0;
+          return;
+        }
+      }
+    }
+
     if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
       reset_all_motors();
       resetFlag = false;
     }
   }
-
-  
-  // Lectura constante de posiciones
-  read_currents();
-  Serial.print("Cur 1: "); Serial.print(PV1_cur);
-  Serial.print(" Cur 2: "); Serial.print(PV2_cur);
-  Serial.print(" Cur 3: "); Serial.println(PV3_cur);
-  delayMS(CAN_DELAY);
-  
-  
-  //send_HMI();
-
-  /*
-  if (current_tab == 4) { // On monitoring tab
+  else if (current_tab == 4) { // En pantalla de monitoreo sin caminata
     
-    if (process_variable == "pos"){
-      delayMS(80);
-      read_angle(1);
-      delayMS(80);
-      read_angle(2);
-      delayMS(80);
-      read_angle(3);
-    } else if (process_variable == "vel"){
-      delayMS(80);
-      read_velocity(1); 
-      delayMS(80);
-      read_velocity(2); 
-      delayMS(80);
-      read_velocity(3); 
-    
-    } else if (process_variable == "cur"){
-      delayMS(80);
-      read_current(1);
-      delayMS(80);
-      read_current(2); 
-      delayMS(80);
-      read_current(3); 
-    }
+    // Lectura de variables según indicado
+    if (process_variable == "pos"){read_positions();} 
+    else if (process_variable == "vel"){read_velocities();} 
+    else if (process_variable == "cur"){read_currents();}
   }
-  */
 }
 
 void send_HMI(){
@@ -1762,13 +1892,7 @@ void send_HMI(){
 
   split16bits(PV2plus, current2_Array);
   split16bits(PV3_cur, current3_Array);
-  /*
-  if (1){
-    Serial.print(PV1_cur);
-    Serial.print(" - ");
-    Serial.println(PV3_cur);
-  }
-  */
+  
   if (Serial.available() > 0){
     inByte = Serial.read();
     if (inByte == '#'){
