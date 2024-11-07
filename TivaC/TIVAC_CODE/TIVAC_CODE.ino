@@ -1811,7 +1811,7 @@ void loop() {
         // Siguiente iteración
         count++;
         return;
-      } else { // Cambio de fase|
+      } else { // Cambio de fase
         ReadADC(); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
