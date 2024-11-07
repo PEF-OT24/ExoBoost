@@ -99,7 +99,7 @@ void ReadADC(void){
       gait_phase = 4;
     }
   } else if(gait_phase == 1){ // heel strike
-    if(FSR2 && Heel > TH_heel){
+    if(FSR2 && (Heel > TH_heel - 10)){
       gait_phase = 2;
     }
   } else if(gait_phase == 2){ // foot landing
@@ -138,7 +138,8 @@ void ReadADC(void){
 
   
   // Detección de thresholds
-  Serial.print("Back: "); Serial.print(Heel > TH_heel);
+  Serial.print("Back: "); 
+  if(gait_phase == 1){Serial.print(Heel > TH_heel - 10);}else{Serial.print(Heel > TH_heel);}
   Serial.print(" Front: "); Serial.print(FSR2);
   Serial.print(" Phase: "); Serial.println(gait_phase);
   /*
@@ -158,7 +159,6 @@ void ReadADC(void){
 void CalibrarADC(){
   GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED);
   uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;
-  uint8_t THS[4];
   
   for(int i = 0; i < 400; i++){ // proceso para recuperar 100 datos y realizar calibración
     int8_t toe_value, left_value, right_value, heel_value;
