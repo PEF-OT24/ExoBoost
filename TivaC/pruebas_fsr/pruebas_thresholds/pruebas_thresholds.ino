@@ -92,14 +92,14 @@ void ReadADC(void){
   Right = sendBuffer[2];
   Heel = sendBuffer[3];
 
-  bool FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
+  bool FSR2 = Toe > (TH_toe + 0)|| Left > (TH_left + 5) || Right > (TH_right + 5);
   // Máquina de estados
   if(gait_phase == 0){ // stance
     if(!FSR2 && Heel > TH_heel){
       gait_phase = 4;
     }
   } else if(gait_phase == 1){ // heel strike
-    if(FSR2 && (Heel > TH_heel - 10)){
+    if(FSR2 && (Heel > TH_heel)){
       gait_phase = 2;
     }
   } else if(gait_phase == 2){ // foot landing
@@ -139,7 +139,7 @@ void ReadADC(void){
   
   // Detección de thresholds
   Serial.print("Back: "); 
-  if(gait_phase == 1){Serial.print(Heel > TH_heel - 10);}else{Serial.print(Heel > TH_heel);}
+  if(gait_phase == 1){Serial.print(Heel > TH_heel);}else{Serial.print(Heel > TH_heel);}
   Serial.print(" Front: "); Serial.print(FSR2);
   Serial.print(" Phase: "); Serial.println(gait_phase);
   /*

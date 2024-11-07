@@ -979,10 +979,6 @@ void Fase_Balanceo(){
     FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
-    // Debugging
-    Serial.print("Back: ");Serial.print(FSR2);
-    Serial.print(" Front: ");Serial.println(Heel > TH_heel);
-    
     // Condición de transición
     if(!FSR2 && Heel > TH_heel){break;}
   }
@@ -1008,18 +1004,13 @@ void Fase_ContactoInicial(){
       stop_all_motors();
       return;
     }
-  }
-         
+  }       
   while (1){
     // Lectura de variables de entrada
     ReadADC();
     FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
-    // Debugging
-    Serial.print("Back: ");Serial.print(FSR2);
-    Serial.print(" Front: ");Serial.println(Heel > TH_heel);
-    
     // Condición de transición
     if(FSR2 && (Heel > TH_heel - 10)){break;}
   }   
@@ -1054,10 +1045,6 @@ void Fase_Apoyo(){
     FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
-    // Debugging
-    Serial.print("Back: ");Serial.print(FSR2);
-    Serial.print(" Front: ");Serial.println(Heel > TH_heel);
-    
     // Condición de transición
     if(FSR2 && Heel < TH_heel){break;}
   }     
@@ -1093,10 +1080,6 @@ void Fase_PreBalanceo(){
     FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
     read_currents();
 
-    // Debugging
-    Serial.print("Back: ");Serial.print(FSR2);
-    Serial.print(" Front: ");Serial.println(Heel > TH_heel);
-    
     // Condición de transición
     if(!FSR2 && Heel < TH_heel){break;}
   }          
@@ -1500,7 +1483,7 @@ void onReceive(int len){
         GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0); // Se apaga el indicador
       }
       else if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
-        Serial.println("Deteniendo motores");
+        //Serial.println("Deteniendo motores");
         walk_flag = 0;
 
         stop_motor(1, false);
@@ -1512,6 +1495,12 @@ void onReceive(int len){
       }
        else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
         walk_flag = 1;
+        while(1){
+          read_currents();
+          Serial.print("cur: "); Serial.println(PV2_cur);
+          if(PV2_cur > 90 || PV2_cur < -90){break;}
+        }
+        Serial.println("Walking...");
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
         walk_flag = 0;
@@ -1694,13 +1683,8 @@ void loop() {
   count ++;
   
   if (walk_flag == 1 && current_tab == 2){ // On assistance tab
+    // Serial.println("walking");
     //walk_mode_sequence(1.4,0.05);
-    while(1){
-      read_currents();
-      Serial.print("cur: "); Serial.println(PV2_cur);
-      if(PV2_cur > 90 || PV2_cur < -90){break;}
-    }
-    Serial.println("Walking...");
     gait_simulation();
     GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
     
