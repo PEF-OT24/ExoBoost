@@ -378,7 +378,7 @@ class BLECallback_USER: public BLECharacteristicCallbacks {
 
     // --------------- Procesamiento del archivo json para mandar ---------------
     // Formato y transmisión para I2C
-    jsonrec["T"] = "F"; // Se añade el tipo de mensaje 
+    jsonrec["T"] = "I"; // Se añade el tipo de mensaje 
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     stringsend += '\n'; // Se añade el caracter terminador

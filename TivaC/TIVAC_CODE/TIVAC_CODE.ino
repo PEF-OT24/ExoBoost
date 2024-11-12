@@ -116,7 +116,7 @@ uint8_t motor_selected = 0;   // Indicador del motor seleccionado para lectura
 
 // ----------------- Variables para ADC -----------------
 uint8_t ADC_Buffer[5], inByte = 0, Toe, Left, Right, Heel;  // Variables para guardar cada FSR
-uint8_t TH_toe, TH_left, TH_right, TH_heel;                 // Variables para el TH de cada FSR
+uint8_t TH_toe = 0, TH_left = 0, TH_right = 0, TH_heel = 0;                 // Variables para el TH de cada FSR
 bool FSR2;
 uint32_t adcValues[4]; // Lectura de FSRs
 
@@ -142,16 +142,18 @@ gait_phase = 3: Apoyo
 gait_phase = 4: Pre Balanceo
 */
 
+// Información del usuario
+uint8_t weight = 0;
+uint8_t height = 0;
+
 // -- Vectores de caminata --
 // Para cada fase, el tamaño de los vectores por articulación debe ser el mismo
 int count = 0; // Conteo de setpoints
 
 // Fase 1 - Balanceo (4 valores)
-
 int16_t hip_balanceo[4] = {0, 10, 20, 30};
 int16_t knee_balanceo[4] = {30, 60, 30, 5};
 int16_t ankle_balanceo[4] = {-20, 0, 10, 0};
-
 /*
 int16_t hip_balanceo[1] = {10};
 int16_t knee_balanceo[1] = {10};
@@ -159,7 +161,6 @@ int16_t ankle_balanceo[1] = {10};
 */
 
 // Fase 2 - Contacto Inicial (3 valores)
-
 int16_t hip_contacto_inicial[3] = {30, 25, 20};
 int16_t knee_contacto_inicial[3] = {5, 10, 15};
 int16_t ankle_contacto_inicial[3] = {0, -5, -10};
@@ -170,7 +171,6 @@ int16_t ankle_contacto_inicial[1] = {20};
 */
 
 // Fase 3 - Apoyo (4 valores)
-
 int16_t hip_apoyo[4] = {20, 10, 0, -10};
 int16_t knee_apoyo[4] = {15, 10, 5, 0};
 int16_t ankle_apoyo[4] = {-10, 0, 10, 15};
@@ -181,7 +181,6 @@ int16_t ankle_apoyo[1] = {30};
 */
 
 // Fase 4 - Pre balanceo (3 valores)
-
 int16_t hip_pre_balanceo[3] = {-10, -5, 0};
 int16_t knee_pre_balanceo[3] = {0, 15, 30};
 int16_t ankle_pre_balanceo[3] = {15, 0, -20};
@@ -1144,6 +1143,10 @@ void gait_simulation(){
   GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
 }
 
+void scale_TH(){
+  // Proceso para escalar los TH con base en el peso de la persona
+}
+
 // ----------------------------------- Funciones de lectura ADC ------------------------------------------------
 void ReadADC(void){
   // Lectura de las FSRs de la plantilla
@@ -1493,6 +1496,9 @@ void onReceive(int len){
         TH_right = right_max - 0;
         TH_heel = heel_max - 0;
 
+        // Se escala con el peso de ser necesario
+        if (weight > 60){scale_TH();}
+
         GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0); // Se apaga el indicador
       }
       else if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
@@ -1529,6 +1535,28 @@ void onReceive(int len){
         motion_mode_command(3,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
       }
+    }
+    else if (strcmp(type, "I") == 0){
+      // ------- Información del usuario -------
+      /* Ejemplo
+        {
+          "weight": "100",
+          "height": "100", 
+          "T", "I"
+         }
+      */
+      if (!jsonrec.containsKey("weigth") || !jsonrec.containsKey("height")){return;}     // Validación del mensaje
+      
+      // Se extrae la información
+      int8_t weigth_temp = jsonrec["weigth"].as<int>();
+      int8_t height_temp = jsonrec["height"].as<int>();
+
+      // Se comprueba la información recibida y se guarda
+      if(height_temp > 0){height = height_temp;}
+      if(weigth_temp > 0){weigth = weigth_temp;}
+
+      // Se escalan los thresholds con el peso de ser necesario
+      if(TH_heel > 0 && TH_left > 0 && TH_right > 0 && TH_toe > 0){scale_TH();}
     }
 
     // Se limpia el buffer 
