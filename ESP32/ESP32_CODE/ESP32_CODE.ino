@@ -552,17 +552,19 @@ void clearI2C() {
   }
 }
 
-// Función para mandar un mensaje a través de I2C
 void sendI2CMessage(uint8_t slaveAddress, const char* message) {
+// Función para mandar un mensaje a través de I2C
+
   int length = strlen(message);  // Calcular el tamaño del mensaje
   byte byteArray[length];        // Crear un arreglo de bytes del mismo tamaño 
   int buffer_size = 32;          // Número máximo de bytes a transmitir (por protocolo)
   int errorCode;
-  int errorCount = 0;
+  int errorCount = 0;            // Contador de errores
 
   do { // Intento de mandar información por I2C
     for (int i = 0; i < length; i += buffer_size) { 
-      Wire.beginTransmission(slaveAddress);                   // Iniciar transmisión con la dirección del esclavo
+      // Iniciar transmisión con la dirección del esclavo
+      Wire.beginTransmission(slaveAddress);                  
       
       // Cantidad de bytes a mandar
       int bytes_to_send = min(buffer_size, length - i);
@@ -591,26 +593,28 @@ void sendI2CMessage(uint8_t slaveAddress, const char* message) {
       delay(10);  // delay para evitar saturación del bus I2C
     }
   } while (errorCode != 0); // Se repite si encontró un error
-} //  fin de la función
+}
 
 String readI2CMessage(uint8_t slaveAddress) {
-  String message = "";
+  // Función para recibir un mensaje de un esclavo por I2C
+  String message = "";                    // Se inicializa el buffer
   bool messageComplete = false;
 
+  // Se recibe un mensaje hasta recibir un \n
   while (!messageComplete) {
     Wire.requestFrom(slaveAddress, 32);  // Solicita hasta 32 bytes
-    while (Wire.available()) {
+    while (Wire.available()) {           // Lee bytes disponibles
       char receivedChar = Wire.read();
       if (receivedChar == '\n') {
-        messageComplete = true;
-        break;
+        messageComplete = true;          // Mensaje completo al recibir un \n
+        break;      
       }
-      message += receivedChar;
+      message += receivedChar;           // Se guarda en el buffer
     }
-    delay(50);
+    delay(10);    // Delay para evitar saturación del bus
   }
 
-  return message;
+  return message; // Se devuelve el mensaje
 }
 
 void read_PV(){
