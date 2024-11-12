@@ -42,7 +42,7 @@
 
 // Delay entre mensajes de CAN en ms
 #define CAN_DELAY 20
-#define STEP_DELAY 100
+#define STEP_DELAY 350
 
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
@@ -87,6 +87,9 @@ int32_t PV3 = 1;
 int16_t PV1_cur;
 int16_t PV2_cur;
 int16_t PV3_cur;
+uint8_t current1_Array[2];
+uint8_t current2_Array[2];
+uint8_t current3_Array[2];
 
 bool doControlFlag = 0; // Bandera de control en tiempo real 
 int8_t current_tab = 0; // Variable que almacena la ventana en la que se encuentra el usuario
@@ -105,7 +108,7 @@ JsonDocument jsonsend_ESP32;
 int index_alt;
 
 // ----------------- Variables para CAN ------------------
-// lectura de CAN de múltiples motores
+// Lectura de CAN de múltiples motores
 tCANMsgObject Message_Rx_1;   // Objeto para leer mensajes del motor 1
 tCANMsgObject Message_Rx_2;   // Objeto para leer mensajes del motor 2
 tCANMsgObject Message_Rx_3;   // Objeto para leer mensajes del motor 3
@@ -248,11 +251,11 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
   
   // Revisión de interrupción por un cambio de estado 
   if (ui32Status == CAN_INT_INTID_STATUS) {
-    // Read the full status of the CAN controller
+    // Leer el estado de módulo CAN0
     ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_CONTROL);
-    // ui32Status = CANStatusGet(CAN0_BASE, CAN_STS_NEWDAT);
       
   } 
+
   // Interrupción por motores 1, 2 ó 3
   else if (ui32Status == 1 || ui32Status == 2 || ui32Status == 3) { 
     // Limpia el interrupt
@@ -260,7 +263,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
 
     // No realiza lectura si no es necesario
     if(commandCAN != 0x92 && commandCAN != 0x9C){
-      //return; // Solo lectura de posición, velocidad o corriente
+      return; // Solo lectura de posición, velocidad o corriente
     }
     
     // -------- Lectura del motor 1 ---------
@@ -270,13 +273,10 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
       CANMessageGet(CAN0_BASE, 1, &Message_Rx_1, false);
 
       // Validación del mensaje
-      if (commandCAN != CANBUSReceive[0]){
-        return;
-      }
-      // Serial.print("New response");
+      if (commandCAN != CANBUSReceive[0]){return;}
       
-      // Formato dependiendo del comando
-      if (process_variable == "pos"){ // Formateo para posición
+      // Formato de recepción
+      if (process_variable == "pos"){        // Formateo para posición
         PV1 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
       } else if (process_variable == "vel"){ // Formateo para velocidad
         int16_t PV1_read;
@@ -285,10 +285,8 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
       } else if (process_variable == "cur"){ // Formateo para corriente
         uint16_t PV1_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
         PV1_cur = PV1_read;
-        // Serial.print("PV1 "); Serial.print(PV1_read); Serial.print(" ");
-        //print_data(CANBUSReceive); 
       }
-      //Serial.print("PV1: "); Serial.println(PV1);
+
     // -------- Lectura del motor 2 ---------
     } else if (motor_selected == 2){           
       // Se obtiene el mensaje
@@ -296,59 +294,45 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
       CANMessageGet(CAN0_BASE, 2, &Message_Rx_2, false);
 
       // Validación del mensaje
-      if (commandCAN != CANBUSReceive[0]){
-        return;
-      }
-      //Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+      if (commandCAN != CANBUSReceive[0]){return;}
       
       // Se formatea la información dependiendo del comando recibido
-      if (process_variable == "pos"){ // Formateo para posición
+      if (process_variable == "pos"){         // Formateo para posición
         PV2 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-      } else if (process_variable == "vel"){ // Formateo para velocidad
+      } else if (process_variable == "vel"){  // Formateo para velocidad
         int16_t PV2_read;
         PV2_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
         PV2 = PV2_read;
       } else if (process_variable == "cur"){ // Formateo para corriente
         uint16_t PV2_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
         PV2_cur = PV2_read; // Lectura en cA
-        // Serial.print("PV2 "); Serial.println(PV2_read);
-        //print_data(CANBUSReceive);
       }
-      //Serial.print("PV2: "); Serial.println(PV2);
       
     // -------- Lectura del motor 3 ---------
-    } else if (motor_selected == 3){           // motor 3
+    } else if (motor_selected == 3){           
       // Se obtiene el mensaje
       Message_Rx_3.pui8MsgData = CANBUSReceive;
       CANMessageGet(CAN0_BASE, 3, &Message_Rx_3, false);
 
       // Validación del mensaje
-      if (commandCAN != CANBUSReceive[0]){
-        return;
-      }
-      // Serial.print("M");Serial.print(ui32Status);Serial.print(" ");
+      if (commandCAN != CANBUSReceive[0]){return;}
       
       // Se formatea la información dependiendo del comando recibido
-      if (process_variable == "pos"){ // Formateo para posición
+      if (process_variable == "pos"){         // Formateo para posición
         PV3 = int(round(((CANBUSReceive[7] << 24) | (CANBUSReceive[6] << 16) | (CANBUSReceive[5] << 8) | CANBUSReceive[4])/100));  
-      } else if (process_variable == "vel"){ // Formateo para velocidad
+      } else if (process_variable == "vel"){  // Formateo para velocidad
         int16_t PV3_read;
         PV3_read = int(round((CANBUSReceive[5] << 8) | CANBUSReceive[4]));  
         PV3 = PV3_read;
-      } else if (process_variable == "cur"){ // Formateo para corriente
+      } else if (process_variable == "cur"){  // Formateo para corriente
         int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
-        PV3_cur = PV3_read; // Lectura en cA
-        // Serial.print("PV3 "); Serial.println(PV3_cur);
-        //print_data(CANBUSReceive);
+        PV3_cur = PV3_read; // Lectura en A / 100
       }
-      //Serial.print("PV3: "); Serial.println(PV3);
     }
 
-  } else {
-    // Handle unexpected interrupts
-    CANIntClear(CAN0_BASE, ui32Status);
-  }
+  } else {CANIntClear(CAN0_BASE, ui32Status);} // Eliminar interrupciones inesperadas
 }
+
 // Función de interrupción del Timer 0
 void Timer0IntHandler(void) {
     // Limpia la interrupción del timer
@@ -387,43 +371,39 @@ void ConfigureTimer0(float period_in_seconds) {
     // Activa el timer
     TimerEnable(TIMER0_BASE, TIMER_A);
 }
+
 // ----------------------------------- Funciones de manejo de CAN -----------------------------------
-void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ // Función para enviar un mensaje por CAN
+void send_cmd(uint8_t ID, uint8_t *messageArray, bool show){ 
+  // Función para enviar un mensaje por CAN
   
-  // Omitir el motor 2
-  //if (ID == 2){return;}
-  
-  // Objetos para la comunicación CAN
+  // Objeto para la comunicación CAN
   tCANMsgObject Message_Tx;
   
+  // Buffer para la recepción del mensaje
   uint8_t CAN_data_RX[8u];
 
   // Define el mensaje para mandar por CAN
-  Message_Tx.ui32MsgID = 0x140 + ID;
-  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;
-  Message_Tx.ui32MsgLen = 8u;
-  Message_Tx.ui32Flags = MSG_OBJ_TX_INT_ENABLE; // Habilita interrupciones en el envío de mensaje
-  Message_Tx.pui8MsgData = messageArray;
+  Message_Tx.ui32MsgID = 0x140 + ID;       // Se le asigna el ID de destino
+  Message_Tx.ui32MsgIDMask = 0xFFFFFFFF;   // Se configura una máscara sin filtro de mensajes
+  Message_Tx.ui32MsgLen = 8u;              // Longitud de 8 bytes
+  Message_Tx.pui8MsgData = messageArray;   // Payload del mensaje
 
-  if (ID == 1){       // Establecimiento de mensajes para el motor 1
-    // Define el mensaje para leer por CAN
+  if (ID == 1){       // Lectura de mensajes para el motor 1
     Message_Rx_1.ui32MsgID = 0x241;
-    Message_Rx_1.ui32MsgIDMask = 0xFFFFFFFF; // Lee todos los mensajes
-    Message_Rx_1.ui32Flags = MSG_OBJ_RX_INT_ENABLE; // Habilita interrupciones en la recepción del mensaje
+    Message_Rx_1.ui32MsgIDMask = 0xFFFFFFFF; 
+    Message_Rx_1.ui32Flags = MSG_OBJ_RX_INT_ENABLE; // Interrupción en recepción
     Message_Rx_1.ui32MsgLen = 8u;
     Message_Rx_1.pui8MsgData = CAN_data_RX;
-  } else if (ID == 2){ // Establecimiento de mensajes para el motor 2
-    // Define el mensaje para leer por CAN
+  } else if (ID == 2){  // Lectura de mensajes para el motor 2
     Message_Rx_2.ui32MsgID = 0x242;
     Message_Rx_2.ui32MsgIDMask = 0xFFFFFFFF; 
-    Message_Rx_2.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
+    Message_Rx_2.ui32Flags = MSG_OBJ_RX_INT_ENABLE; // Interrupción en recepción
     Message_Rx_2.ui32MsgLen = 8u;
     Message_Rx_2.pui8MsgData = CAN_data_RX;
-  } else if (ID == 3){ // Establecimiento de mensajes para el motor 3
-    // Define el mensaje para leer por CAN
+  } else if (ID == 3){  // Lectura de mensajes para el motor 3
     Message_Rx_3.ui32MsgID = 0x243;
     Message_Rx_3.ui32MsgIDMask = 0xFFFFFFFF; 
-    Message_Rx_3.ui32Flags = MSG_OBJ_RX_INT_ENABLE; 
+    Message_Rx_3.ui32Flags = MSG_OBJ_RX_INT_ENABLE; // Interrupción en recepción
     Message_Rx_3.ui32MsgLen = 8u;
     Message_Rx_3.pui8MsgData = CAN_data_RX;
   }
@@ -500,11 +480,11 @@ void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, floa
     // Convertir velocidad de grados por segundo a radianes por segundo y normalizar
     float v_des_rad_per_s = v_des_deg_per_s * DEG_TO_RAD;
     v_des_hex = (uint16_t)(((v_des_rad_per_s + 45.0) / 90.0) * 4095);
-    v_des_hex &= 0x0FFF; //Mask para asegurar que la variable entra en 12 bits
+    v_des_hex &= 0x0FFF; // Máscara para asegurar que la variable entra en 12 bits
 
     // Normalizar kd de 0 a 500
     kp_hex = (uint16_t)((kp / 500.0) * 4095);
-    kp_hex &= 0x0FFF;
+    kp_hex &= 0x0FFF;    // Máscara de 12 bits
 
     // Normalizar kd de 0 a 5
     kd_hex = (uint16_t)((kd / 5.0) * 4095);
@@ -512,7 +492,7 @@ void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, floa
 
     // Normalizar torque de feedforward de -24 a 24
     t_ff_hex = (uint16_t)(((t_ff + 24.0) / 48.0) * 4095);
-    t_ff_hex &= 0x0FFF; 
+    t_ff_hex &= 0x0FFF;  // Máscara de 12 bits
 
     // Buffer de mensaje de CAN
     uint8_t CAN_message[8];
@@ -1283,9 +1263,7 @@ void onReceive(int len){
     DeserializationError error = deserializeJson(jsonrec, value);
   
     // Se revisan errores
-    if (error) { // Error al deserializar
-      // Serial.print("Error al analizar JSON: ");
-      // Serial.println(error.c_str());
+    if (error) {  // Error al deserializar
       clearI2C();
       return;
     }
@@ -1295,7 +1273,6 @@ void onReceive(int len){
       return;
     }
     else if (!jsonrec["T"].is<const char*>()){ // Contenido en "tipo" incorrecto
-      //Serial.println("Tipo de dato erróneo");
       clearI2C();
       return;   
     }
@@ -1306,24 +1283,19 @@ void onReceive(int len){
     // Serial.println(type);
     if (strcmp(type, "A") == 0){ 
       // ------------- Nivel de asistencia -------------
-      // Ejemplo: {"T": "A","assistance_level": "100"}
 
       // Se revisan errores en el JSON
       if (!jsonrec.containsKey("assistance_level")){ // Si si no contiene el tipo
-        //Serial.print("Información no encontrada");
         clearI2C();
         return;
       }
       else if (!jsonrec["assistance_level"].is<String>()){
-        //Serial.println("Información en formato incorrecto");
         clearI2C();
         return;
       }
   
       // Se extrae la información recibida
       assistance_level = jsonrec["assistance_level"].as<int>(); // Se guarda el valor
-      // Serial.print("Nivel de asistencia: ");
-      // Serial.println(assistance_level);
     }
     else if (strcmp(type, "B") == 0 || strcmp(type, "C") == 0 || strcmp(type, "D") == 0){ // Parámetros PI para cualquier motor
       // ------------- Parámetros de PI -------------
@@ -1341,29 +1313,24 @@ void onReceive(int len){
       char address = 0; // dirección del motor
       JsonDocument json_motor;
       if (jsonrec.containsKey("motor1")){ // Si contiene el motor 1
-        //Serial.println("Parámetros del motor 1");
         address = 1;
         json_motor = jsonrec["motor1"];
       }  
       else if (jsonrec.containsKey("motor2")){
-        //Serial.println("Parámetros del motor 2");
         address = 2; 
         json_motor = jsonrec["motor2"];
       }
       else if (jsonrec.containsKey("motor3")){
-        //Serial.println("Parámetros del motor 3");
         address = 3;
         json_motor = jsonrec["motor3"];
       }
       else {
-        //Serial.print("Información no encontrada");
         clearI2C();
         return;  
       }
 
       // Revisión de errores dentro del nuevo archivo JSON
       if (!json_motor.containsKey("pos") || !json_motor.containsKey("vel") || !json_motor.containsKey("cur")){
-        //Serial.print("Error en los datos encontrados");
         clearI2C();
         return;
       }
@@ -1372,7 +1339,6 @@ void onReceive(int len){
       // Procesamiento para parámetros de posición
       json_parametros = json_motor["pos"];
       if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
-        //Serial.println("Parámetros no encontrados");
         clearI2C();
         return;
       }
@@ -1383,7 +1349,6 @@ void onReceive(int len){
       // Procesamiento para parámetros de velocidad
       json_parametros = json_motor["vel"];
       if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
-        //Serial.println("Parámetros no encontrados");
         clearI2C();
         return;
       }
@@ -1394,7 +1359,6 @@ void onReceive(int len){
       // Procesamiento para parámetros de corriente
       json_parametros = json_motor["cur"];
       if (!json_parametros.containsKey("kc") || !json_parametros.containsKey("ti")){
-        //Serial.println("Parámetros no encontrados");
         clearI2C();
         return;
       }
@@ -1402,19 +1366,6 @@ void onReceive(int len){
       curKI = json_parametros["ti"].as<int>();
       json_parametros.clear();
 
-      // Se mandan los parámetros
-      /*Serial.print("kc: "); 
-      Serial.println(posKP);
-      Serial.print("ti: ");
-      Serial.println(posKI);
-      Serial.print("kc: "); 
-      Serial.println(velKP);
-      Serial.print("ti: ");
-      Serial.println(velKI);
-      Serial.print("kc: "); 
-      Serial.println(curKP);
-      Serial.print("ti: ");
-      Serial.println(curKI);*/
       SendParameters(address, posKP, posKI, velKP, velKI, curKP, curKI);
     }
     else if(strcmp(type, "E") == 0) {
@@ -1430,7 +1381,6 @@ void onReceive(int len){
       */
       // Se revisan errores
       if (!jsonrec.containsKey("monitoring") || !jsonrec.containsKey("motor1") || !jsonrec.containsKey("motor2") || !jsonrec.containsKey("motor3")){
-        //Serial.print("Información no encontrada");
         clearI2C();
         return;
       }
@@ -1449,7 +1399,6 @@ void onReceive(int len){
       
       if (process_variable == "pos"){
         // Control de posición
-        // Serial.println("POS");
         set_absolute_position(1, SP_motor1, max_speed, false);
         delayMS(CAN_DELAY); // delay 
         set_absolute_position(2, SP_motor2, max_speed, false);
@@ -1459,7 +1408,6 @@ void onReceive(int len){
       }
       else if(process_variable == "vel"){
         // Control de velocidad
-        //Serial.println("VEL");
         set_speed(1, SP_motor1, false);
         delayMS(CAN_DELAY); // delay 
         set_speed(2, SP_motor2, false);
@@ -1469,7 +1417,6 @@ void onReceive(int len){
       }
       else if (process_variable == "cur"){
         // Control de torque
-        //Serial.println("TOR");
         set_torque(1, SP_motor1, false);
         delayMS(CAN_DELAY); // delay 
         set_torque(2, SP_motor2, false);
@@ -1514,13 +1461,9 @@ void onReceive(int len){
         return;  
       }
 
-      last_tab = current_tab; // Se guarda la tab anterior para reset motores
-      current_tab = jsonrec["tab"].as<int8_t>(); // Se extrae la información
-      // Serial.print("Tab: ");
-      // Serial.println(current_tab);
-      if (current_tab < 0 || current_tab > 4){
-        return; // Error encontrado en el valor  
-      }
+      last_tab = current_tab;                            // Se guarda la tab anterior para reset motores
+      current_tab = jsonrec["tab"].as<int8_t>();         // Se extrae la información
+      if (current_tab < 0 || current_tab > 4){return; }  // Error encontrado en el valor  
 
       // Si hay un cambio de tab, se resetean los motores
       if (current_tab != last_tab){
@@ -1533,10 +1476,7 @@ void onReceive(int len){
       /* Ejemplo
         {"state": "stop", "T", "H"}
       */
-      if (!jsonrec.containsKey("state")){ // Validación del mensaje
-        //Serial.println("Información no disponible");
-        return;  
-      }
+      if (!jsonrec.containsKey("state")){return;}     // Validación del mensaje
       
       const char* state_command = jsonrec["state"];
       if(strcmp(state_command, "calibrate") == 0){
@@ -1544,7 +1484,7 @@ void onReceive(int len){
         Serial.println("Calibración");
 
         GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED); // Indicador azul
-        uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0; // Variables para calibración 
+        uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;          // Variables para calibración 
 
         // Restablecer ceros
         write_zeros();
@@ -1592,13 +1532,7 @@ void onReceive(int len){
         // Se guardan los zeros
         read_positions();
 
-        // Impresión de ceros
-        /*
-        Serial.print("Z1: ");Serial.print(PV1);
-        Serial.print(" Z2: ");Serial.print(PV1);
-        Serial.print(" Z3: ");Serial.println(PV1);
-        */
-        
+        // Se guardan los zeros
         zero_1 = PV1;
         zero_2 = PV2;
         zero_3 = PV3;
@@ -1628,58 +1562,26 @@ void onReceive(int len){
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
         walk_flag = 0;
-        /*
-        read_angle(1);
-        delayMS(CAN_DELAY);
-        read_angle(2);
-        delayMS(CAN_DELAY);
-        read_angle(3);
-        delayMS(CAN_DELAY);
-        */
         motion_mode_command(1,0,0,1,0,0,false); 
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0,0,false);
         delayMS(CAN_DELAY);
         motion_mode_command(3,0,0,1,0,0,false);
         delayMS(CAN_DELAY); // delay
-        /*
-        delayMS(CAN_DELAY);
-        read_angle(1);
-        delayMS(CAN_DELAY);
-        read_angle(2);
-        delayMS(CAN_DELAY);
-        read_angle(3);
-        */
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         walk_flag = 0;
         start_flag = 0;
-        /*
-        read_angle(1);
-        delayMS(CAN_DELAY);
-        read_angle(2);
-        delayMS(CAN_DELAY);
-        read_angle(3);
-        delayMS(CAN_DELAY);
-        */
         motion_mode_command(1,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
         motion_mode_command(3,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay
-        /*
-        delayMS(CAN_DELAY);
-        read_angle(1);
-        delayMS(CAN_DELAY);
-        read_angle(2);
-        delayMS(CAN_DELAY);
-        read_angle(3);
-        */
       }
     }
-    // Serial.print("walk: "); Serial.println(walk_flag);
-    // Se limpia el buffer y el archivo json receptor
+
+    // Se limpia el buffer 
     mensaje_leido = "";
   }
 }
@@ -1691,12 +1593,10 @@ void onRequest(){
   // Se manda un fragmento del mensaje
   int bytesToSend = min(32, stringsend_ESP32.length() - index_alt);
   Wire.write(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str(), bytesToSend);
-  //Serial.println(stringsend_ESP32.substring(index_alt, index_alt + bytesToSend).c_str());
   index_alt += bytesToSend;
 
-  if (index_alt >= stringsend_ESP32.length()) { // Se llega al final del mensaje
-    index_alt = 0;       
-  }
+  // Cuando se llega al final del mensaje
+  if (index_alt >= stringsend_ESP32.length()) {index_alt = 0;}
 }
 
 // ----------------------------------------------------- Configuración ----------------------------------------------------
@@ -1721,6 +1621,33 @@ void ConfigADC(){
   
   // Enable sequence 1
   ADCSequenceEnable(ADC0_BASE, 1);
+}
+
+// #include "driverlib/can.h"
+void ConfigCAN(){
+  // Habilitar pines del puerto B
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB); 
+  while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB)) {} // En espera de habilitar
+  GPIOPinConfigure(GPIO_PB4_CAN0RX);
+  GPIOPinConfigure(GPIO_PB5_CAN0TX);
+  GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5); // CAN en PB4 y PB5
+  IntMasterEnable();
+
+  // Habilitar módulo CAN0
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
+  while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {} // En espera de habilitar
+  CANInit(CAN0_BASE);                                   // Inicializar módulo CAN0
+  CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u); // Establecer la velocidad de transmisión
+  CANEnable(CAN0_BASE);                                 // Habilitar módulo CAN0
+  CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS); 
+  IntEnable(INT_CAN0);                                  // Habilitar interrupción
+  CANIntRegister(CAN0_BASE,CAN0IntHandler);             // Registrar interrupción
+}
+
+void configI2C(){
+  Wire.begin(I2C_DEV_ADDR);  // Inicializa el protocolo I2C
+  Wire.onReceive(onReceive); // Se registra el evento de onreceive
+  Wire.onRequest(onRequest); // register event
 }
 
 void setup() { 
@@ -1753,21 +1680,7 @@ void setup() {
     UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
 
     // ------ Configuración de CAN ------
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB)) {}
-    GPIOPinConfigure(GPIO_PB4_CAN0RX);
-    GPIOPinConfigure(GPIO_PB5_CAN0TX);
-    GPIOPinTypeCAN(GPIO_PORTB_BASE, GPIO_PIN_4 | GPIO_PIN_5);
-    IntMasterEnable();
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_CAN0);
-    
-    while (!SysCtlPeripheralReady(SYSCTL_PERIPH_CAN0)) {}
-    CANInit(CAN0_BASE);
-    CANBitRateSet(CAN0_BASE, SysCtlClockGet(), 1000000u);
-    CANEnable(CAN0_BASE);
-    CANIntEnable(CAN0_BASE, CAN_INT_MASTER | CAN_INT_ERROR | CAN_INT_STATUS);
-    IntEnable(INT_CAN0); 
-    CANIntRegister(CAN0_BASE,CAN0IntHandler);
+    ConfigCAN();
     
     // ------ Configuración de Tiempo Real ------
     /* Configuración de tiempo real 
@@ -1778,9 +1691,7 @@ void setup() {
     */
 
     // ------ Configuración de I2C ------
-    Wire.begin(I2C_DEV_ADDR);  // Inicializa el protocolo I2C
-    Wire.onReceive(onReceive); // Se registra el evento de onreceive
-    Wire.onRequest(onRequest); // register event
+    configI2C();
 
     // Set up de lectura de corriente
     process_variable = "cur";
