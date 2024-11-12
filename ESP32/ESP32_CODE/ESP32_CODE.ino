@@ -28,6 +28,7 @@ String readI2CMessage(uint8_t slaveAddress);
 #define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI
 #define CHARACTERISTIC_UUID_SP "0000000f-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de SP
 #define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // Característica para el nivel de asistencia del motor
+#define CHARACTERISTIC_UUID_USER "000000a1-0000-1000-8000-00805f9b34fa" // Característica para la altura y el peso de la persona
 
 // Servicio para las variables de proceso
 #define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
@@ -54,8 +55,9 @@ BLEAdvertising* pAdvertising;
 
 // Declara variables de las características
 BLECharacteristic *pCharacteristic_PI;
-BLECharacteristic *pCharacteristic_LEVEL;
 BLECharacteristic *pCharacteristic_SP;
+BLECharacteristic *pCharacteristic_LEVEL;
+BLECharacteristic *pCharacteristic_USER;
 BLECharacteristic *pCharacteristic_PV;
 BLECharacteristic *pCharacteristic_VAR;   // NO SE USA 
 BLECharacteristic *pCharacteristic_MODE;
@@ -326,6 +328,68 @@ class BLECallback_LEVEL: public BLECharacteristicCallbacks {
 
     // Enviar notificación de éxito en formato JSON
     pCharacteristic_LEVEL->notify();
+  } // fin de onWrite
+};
+
+// Clase callback que maneja la altura y el peso escrita desde el cliente BLE
+class BLECallback_USER: public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica USER leída");
+  } // fin de onRead
+
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica nueva en BLE: " + String(value.c_str()));
+
+    // Procesa los datos recibidos en formato JSON
+    DynamicJsonDocument jsonrec(40);
+    DeserializationError error = deserializeJson(jsonrec, value);
+
+    // --- Revisión de errores ---
+    if (error) { // Error en la deserialización
+      Serial.print("Error al analizar JSON: ");
+      Serial.println(error.c_str());
+      return;
+    }
+    else if (!jsonrec.containsKey("weight") || !jsonrec.containsKey("height")){ // Error de key
+      Serial.println("Tipo no encontrado en el JSON");
+      return;
+    }
+    else if (!jsonrec["weight"].is<String>() || !jsonrec["height"].is<String>()){ // Error de tipo de dato
+      Serial.println("Tipo de dato erróneo");
+      return;  
+    }
+
+    /* Ejemplo de archivo 
+      {
+        "weigth": "100",
+        "height": "100"
+      }
+
+      Ejemplo de mensaje por I2C para que la TIVA lo reciba: 
+      { 
+        "T": "F",
+        "weigth": "100",
+        "height": "100"
+      }
+    */
+
+    // --------------- Procesamiento del archivo json para mandar ---------------
+    // Formato y transmisión para I2C
+    jsonrec["T"] = "F"; // Se añade el tipo de mensaje 
+    String stringsend = "";
+    serializeJson(jsonrec, stringsend);
+    stringsend += '\n'; // Se añade el caracter terminador
+    sendI2CMessage(SLAVE_ADDRESS, stringsend.c_str());
+
+    // Impresión de información
+    Serial.print("Info: ");
+    Serial.print(stringsend);
+
+    // Enviar notificación de éxito en formato JSON
+    pCharacteristic_USER->notify();
   } // fin de onWrite
 };
 
@@ -626,15 +690,6 @@ void setup() {
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic_PI->setCallbacks(new BLECallback_PI());
-  // Crea la característica BLE para recibir el nivel de asistencia del slider
-  pCharacteristic_LEVEL = pService_PARAMS->createCharacteristic(
-                                         CHARACTERISTIC_UUID_LEVEL,
-                                         BLECharacteristic::PROPERTY_READ |
-                                         BLECharacteristic::PROPERTY_WRITE |
-                                         BLECharacteristic::PROPERTY_NOTIFY |
-                                         BLECharacteristic::PROPERTY_INDICATE
-                                       );
-  pCharacteristic_LEVEL->setCallbacks(new BLECallback_LEVEL());
   // Crea la característica BLE para recibir el SP del proceso
   pCharacteristic_SP = pService_PARAMS->createCharacteristic(
                                          CHARACTERISTIC_UUID_SP,
@@ -644,6 +699,24 @@ void setup() {
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic_SP->setCallbacks(new BLECallback_SP());
+  // Crea la característica BLE para recibir el nivel de asistencia del slider
+  pCharacteristic_LEVEL = pService_PARAMS->createCharacteristic(
+                                         CHARACTERISTIC_UUID_LEVEL,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_LEVEL->setCallbacks(new BLECallback_LEVEL());
+  // Crea la característica BLE para recibir la información del usuario
+  pCharacteristic_USER = pService_PARAMS->createCharacteristic(
+                                         CHARACTERISTIC_UUID_USER,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_USER->setCallbacks(new BLECallback_USER());
 
   // Crea el servicio de envío de parámetros de PV
   BLEService *pService_PV = pServer->createService(SERVICE_UUID_PROCESS);

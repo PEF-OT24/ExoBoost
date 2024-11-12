@@ -630,6 +630,9 @@ WindowManager:
                                 hint_text_color_normal: app.colors["Black"]
                                 hint_text_color_focus: app.colors["Light Orange"]
 
+                                on_text_validate:  
+                                    app.on_entry_text("height", "user", height_input.text)
+
                     # ------------------------ Peso ----------------------------
                         BoxLayout:
                             orientation: 'horizontal'
@@ -645,7 +648,7 @@ WindowManager:
                                 theme_text_color: "Custom"
                                 text_color: app.colors["White"]
 
-                            MDTextField:
+                            CustomTextEntry:
                                 id: weight_input
                                 multiline: False
                                 halign: "center"
@@ -656,7 +659,9 @@ WindowManager:
                                 fill_color: app.colors["White"]
                                 hint_text_color_normal: app.colors["Black"]
                                 hint_text_color_focus: app.colors["Light Orange"]
-                            
+
+                                on_text_validate:  
+                                    app.on_entry_text("weight", "user", weight_input.text)
 
             #-------------------------- Botón de Calibración ---------------------------------
                     BoxLayout: #3
@@ -937,9 +942,9 @@ WindowManager:
                                 CustomTextEntry: # col 1
                                     id: kc_motor1
                                     hint_text: "Kc:"
-                                    
                                     on_text_validate:
                                         app.on_entry_text("kc", "motor1", kc_motor1.text)
+
                                 CustomTextEntry: # col 2
                                     id: ti_motor1
                                     hint_text: "Ti:"

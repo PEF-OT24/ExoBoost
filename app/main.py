@@ -32,7 +32,7 @@ from kivymd.uix.behaviors.toggle_behavior import MDToggleButton
 
 # GNZHT-CXNFD-H982D-WE7H3-29YL3
 
-Clock.max_iteration = 2000  # Increase this value if necessary
+Clock.max_iteration = 2000
 
 # Importar librerías secundarias
 from threading import Thread, Timer
@@ -100,7 +100,13 @@ class ExoBoostApp(MDApp):
             "Left leg": ["Hip Motor", "Knee Motor", "Ankle Motor"],
             "Right arm": ["motor1", "motor2", "motor3"],
             "Left arm": ["motor1", "motor2", "motor3"],
-            
+        }
+
+        # Diccionario de información del usuario
+        # Valores default como -1 para no procesar
+        self.user_info = {
+            "weight": "-1",
+            "height": "-1"
         }
         
         # Límites de los parámetros PI de los motores
@@ -144,9 +150,6 @@ class ExoBoostApp(MDApp):
         self.connection_successful: bool = False   # Indica si la conexión fue exitosa
         self.reading: bool = False                 # Indica si la lectura de datos se encuentra activa
 
-        # Se inicializa el hilo secundario de la lectura de datos y su supervisor.
-        # self.read_thread = Thread(target=self.read_pv_cycle, args=(100,), daemon=True)
-
         # -------- Manejo de los UUID según la ESP32 ---------
         self.uuid_manager = UUIDManager() # Ver UUIDManager.py
         names = ["Parameters", "Process", "Commands"] # Nombres de los servicios
@@ -155,7 +158,7 @@ class ExoBoostApp(MDApp):
 
         # Se generan las carcacterísticas para los servicios
         # --- Servicio de Parameters ---
-        self.uuid_manager.generate_uuids_chars(names[0], ["PI", "SP","LEVEL"], [0x000a, 0x000f, 0x000d])
+        self.uuid_manager.generate_uuids_chars(names[0], ["PI", "SP","LEVEL", "USER"], [0x000a, 0x000f, 0x000d, 0x00ab])
         # --- Servicio de Process ---
         self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
@@ -764,22 +767,41 @@ class ExoBoostApp(MDApp):
                   motor -> número de motor {'motor1', 'motor2', 'motor3'}
                   value -> valor ingresado
         """
+
+        def send_user():
+            print(self.user_info)
+            # Función embebida para mandar la información por BLE de la altura o peso
+            if not self.ble_found: return
+
+            # Se define la información a mandar
+            json_data = self.user_info
+
+            # Selección de destino: se definen los UUIDs de la característica y el servicio 
+            service_uuid = str(self.uuid_manager.uuids_services["Parameters"]) 
+            char_uuid = str(self.uuid_manager.uuids_chars["Parameters"]["USER"]) 
+
+            # Se mandan los datos si hay conexión 
+            if not self.ble.connected: return
+            self.ble.write_json(service_uuid, char_uuid, json_data) 
+        
         if not self.is_valid(value, 1) and not self.is_valid(value, 1.0): # Valida si es int o float
             # Se pone el valor anteriormente guardado
             if param in ["kc", "ti"]:
                 self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][self.selected_param][param]
-            else: 
+            elif not(param == "weight" or param == "height"): 
                 self.param_pi_entries[motor][param].text = "0"
             return
 
         if param in ["kc", "ti"]: # Parámetros de sintonización
-            
             max_value = self.motor_params_lims[self.selected_limb][motor][param]
             if float(value) <= float(max_value) and float(value) >= 0.0: # Validación de valor máximo y posistivo
                 # Si es válido, se actualiza el diccionario de parámetros
                 self.motor_parameters_pi[motor][self.selected_param][param] = value
             else: # Valor no válido, reescribe el texto
                 self.param_pi_entries[motor][param].text = self.motor_parameters_pi[motor][self.selected_param][param]
+        elif param == "weight" or param == "height": # Procesamiento para peso y/o altura
+            self.user_info[param] = str(value) # Se guarda el dato 
+            send_user()                        # Se manda por BLE
         else: # Parámetro de set point
             self.motor_setpoints[motor] = value
 
