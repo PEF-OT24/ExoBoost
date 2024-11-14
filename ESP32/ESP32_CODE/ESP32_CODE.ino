@@ -40,6 +40,15 @@ String readI2CMessage(uint8_t slaveAddress);
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
 #define CHARACTERISTIC_UUID_TAB "000000aa-0000-1000-8000-00805f9b34fa" // Característica para indicar en qué ventana se encuentra el usuario
 
+// Declara variables de las características
+BLECharacteristic *pCharacteristic_PI;
+BLECharacteristic *pCharacteristic_SP;
+BLECharacteristic *pCharacteristic_LEVEL;
+BLECharacteristic *pCharacteristic_USER;
+BLECharacteristic *pCharacteristic_PV;
+BLECharacteristic *pCharacteristic_MODE;
+BLECharacteristic *pCharacteristic_TAB;
+
 // ------- Constantes para I2C -------
 #define SLAVE_ADDRESS 0x55     // Dirección del esclavo I2C para Right Leg
 #define BUFFER_SIZE 300        // Tamaño del buffer para recibir datos ELIMINAR
@@ -52,16 +61,6 @@ bool client_connected = false;
 // Variables del servidor
 BLEServer* pServer;
 BLEAdvertising* pAdvertising;
-
-// Declara variables de las características
-BLECharacteristic *pCharacteristic_PI;
-BLECharacteristic *pCharacteristic_SP;
-BLECharacteristic *pCharacteristic_LEVEL;
-BLECharacteristic *pCharacteristic_USER;
-BLECharacteristic *pCharacteristic_PV;
-BLECharacteristic *pCharacteristic_VAR;   // NO SE USA 
-BLECharacteristic *pCharacteristic_MODE;
-BLECharacteristic *pCharacteristic_TAB;
 
 // Variables para guardar los valores recibidos
 // Parámetros PI de los motores
@@ -378,7 +377,7 @@ class BLECallback_USER: public BLECharacteristicCallbacks {
 
     // --------------- Procesamiento del archivo json para mandar ---------------
     // Formato y transmisión para I2C
-    jsonrec["T"] = "F"; // Se añade el tipo de mensaje 
+    jsonrec["T"] = "I"; // Se añade el tipo de mensaje 
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     stringsend += '\n'; // Se añade el caracter terminador
@@ -398,7 +397,8 @@ class BLECallback_PV : public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
     // Método que notifica cuando el cliente lee la característica
     Serial.println("Característica PV leída");
-  } // fin de onRead
+  } 
+
   void onWrite(BLECharacteristic *pCharacteristic) {
     // Método que recibe un nuevo valor de la característica
     std::string value = std::string(pCharacteristic->getValue().c_str());
@@ -694,6 +694,7 @@ void setup() {
                                          BLECharacteristic::PROPERTY_INDICATE
                                        );
   pCharacteristic_PI->setCallbacks(new BLECallback_PI());
+
   // Crea la característica BLE para recibir el SP del proceso
   pCharacteristic_SP = pService_PARAMS->createCharacteristic(
                                          CHARACTERISTIC_UUID_SP,
