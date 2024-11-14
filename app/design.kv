@@ -610,28 +610,6 @@ WindowManager:
                             padding: dp(20)
                             spacing: dp(5)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            
-                    # ------------------------ Altura -----------------------
-                            MDLabel:
-                                text: "Height (m)"
-                                halign: "left"
-                                theme_text_color: "Custom"
-                                text_color: app.colors["White"]
-
-                            MDTextField:
-                                id: height_input
-                                multiline: False
-                                size_hint_x: None
-                                width: dp(100)
-                                halign: "center"
-                                hint_text: " "
-                                mode: "fill"
-                                fill_color: app.colors["White"]
-                                hint_text_color_normal: app.colors["Black"]
-                                hint_text_color_focus: app.colors["Light Orange"]
-
-                                on_text_validate:  
-                                    app.on_entry_text("height", "user", height_input.text)
 
                     # ------------------------ Peso ----------------------------
                         BoxLayout:
@@ -662,6 +640,31 @@ WindowManager:
 
                                 on_text_validate:  
                                     app.on_entry_text("weight", "user", weight_input.text)
+                            
+                    # # ------------------------ Altura -----------------------
+                    #         MDLabel:
+                    #             text: "Height (m)"
+                    #             halign: "left"
+                    #             theme_text_color: "Custom"
+                    #             text_color: app.colors["White"]
+
+                    #         MDTextField:
+                    #             id: height_input
+                    #             multiline: False
+                    #             size_hint_x: None
+                    #             width: dp(100)
+                    #             halign: "center"
+                    #             hint_text: " "
+                    #             mode: "fill"
+                    #             fill_color: app.colors["White"]
+                    #             hint_text_color_normal: app.colors["Black"]
+                    #             hint_text_color_focus: app.colors["Light Orange"]
+
+                    #             on_text_validate:  
+                    #                 app.on_entry_text("height", "user", height_input.text)
+
+                    # ------------------------ Fase de la marcha -----------------------
+                    
 
             #-------------------------- Botón de Calibración ---------------------------------
                     BoxLayout: #3
