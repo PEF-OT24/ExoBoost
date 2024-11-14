@@ -173,17 +173,20 @@ class ExoBoostApp(MDApp):
             "motor1": {
                 "pos": {"kc": "100", "ti": "50"},
                 "vel": {"kc": "100", "ti": "50"},
-                "cur": {"kc": "100", "ti": "50"}
+                "cur": {"kc": "100", "ti": "50"},
+                "mm": {"kc": "100", "ti": "50"}
                 },
             "motor2": {
                 "pos": {"kc": "100", "ti": "50"},
                 "vel": {"kc": "100", "ti": "50"},
-                "cur": {"kc": "100", "ti": "50"}
+                "cur": {"kc": "100", "ti": "50"},
+                "mm": {"kc": "100", "ti": "50"}
                 },
             "motor3": {
                 "pos": {"kc": "100", "ti": "50"},
                 "vel": {"kc": "100", "ti": "50"},
-                "cur": {"kc": "100", "ti": "50"}
+                "cur": {"kc": "100", "ti": "50"},
+                "mm": {"kc": "100", "ti": "50"}
                 }
         }
 
@@ -739,6 +742,8 @@ class ExoBoostApp(MDApp):
                     self.selected_param = "vel"
                 case "Current":
                     self.selected_param = "cur"
+                case "Motion Mode":
+                    self.selected_param = "mm"
             
             # Se guarda la variable seleccionada
             self.motor_setpoints["monitoring"] = self.selected_param

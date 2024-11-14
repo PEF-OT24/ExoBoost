@@ -878,8 +878,8 @@ WindowManager:
                             size_hint: None, None
                             size: (root.width, dp(45))
                             # spacing: dp(15)
-                            #          left   top    right  bottom
-                            padding: (dp(60),dp(30),dp(50),dp(10))
+                            #          left   top   right   bottom
+                            padding: (dp(15),dp(15),dp(15),dp(15))
 
                             # ---------- Botones para seleccionar variable de proceso --------
                             BoxLayout:
@@ -888,7 +888,6 @@ WindowManager:
                                     group: "process_vars"
                                     text: "Position"
                                     state: "down"   # Inicialmente seleccionado
-                                    # md_bg_color: app.colors["Light Orange"] # Inicialmente seleccionado
                                     
                                     on_state: app.process_var_select(self, self.state)
 
@@ -907,14 +906,14 @@ WindowManager:
                                     text: "Current"
 
                                     on_state: app.process_var_select(self, self.state)
-                            
-                            # ButtonParameters: 
-                            #     id: process_button4
-                            #     group: "process_vars"
-                            #     text: "Tem"
-                            #     pos_hint: {"center_x": .5, "center_y": .5}
 
-                            #     on_state: app.process_var_select(self, self.state)
+                            BoxLayout:
+                                ButtonParameters: 
+                                    id: process_button4
+                                    group: "process_vars"
+                                    text: "Motion Mode"
+
+                                    on_state: app.process_var_select(self, self.state)
 
             # --------------------------- Parámetros PI del motor 1 ------------------------- 
                         BoxLayout: #ROW 4

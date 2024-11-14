@@ -221,25 +221,6 @@ void delayMS(uint32_t milliseconds){
   SysCtlDelay(delay_cycles);
 }
 
-void print_data(uint8_t arr[8]) {
-  // Inicia la comunicación serial
-  Serial.begin(9600);
-
-  // Recorre el array e imprime cada valor en formato hexadecimal
-  for (int i = 0; i < 8; i++) {
-    if (arr[i] < 0x10) {
-      // Si el valor es menor que 0x10, imprime un 0 para mantener formato de 2 dígitos
-      //Serial.print("0");
-    }
-    //Serial.print(arr[i], HEX);
-    
-    // Imprime un espacio entre los valores, pero no después del último
-    if (i < 7) {
-      //Serial.print(" ");
-    }
-  }
-}
-
 // ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real
   doControlFlag = true;
@@ -326,7 +307,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
         PV3 = PV3_read;
       } else if (process_variable == "cur"){  // Formateo para corriente
         int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
-        PV3_cur = PV3_read; // Lectura en A / 100
+        PV3_cur = PV3_read; // Lectura en A * 100
       }
     }
 
@@ -334,7 +315,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
 }
 
 // Función de interrupción del Timer 0
-void Timer0IntHandler(void) {
+void Timer0IntHandler(void) { // NO SE USA
     // Limpia la interrupción del timer
     TimerIntClear(TIMER0_BASE, TIMER_TIMA_TIMEOUT);
     
@@ -351,7 +332,7 @@ void Timer0IntHandler(void) {
 
 // ---------------------------------- Configuración del Timer 0 --------------------------------------
 // Función para configurar el Timer0 con un periodo dado
-void ConfigureTimer0(float period_in_seconds) {
+void ConfigureTimer0(float period_in_seconds) { // NO SE USA
     // Habilita el periférico Timer0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_TIMER0);
     
