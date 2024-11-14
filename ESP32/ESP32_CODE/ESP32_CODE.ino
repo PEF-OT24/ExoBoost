@@ -13,6 +13,9 @@
 // Pin del LED integrado en la ESP32
 #define LED_PIN 2
 
+// Entrada digital de interrupción
+const int interruptPin = 23; // Pin de interrupción
+
 // ----------------------------------- Declaración de funciones prototipo ------------------------------------------
 void sendI2CMessage(uint8_t slaveAddress, const char* message);
 String readI2CMessage(uint8_t slaveAddress);
@@ -666,6 +669,18 @@ void read_PV(){
   }
 }
 
+void handle_tiva_interrupt() {
+  Serial.println("Cambio detectado");
+
+  // Realizar lectura por I2C
+
+  // Procesa la información
+
+  // Guardarla en una característica por BLE
+
+  // Mandar la info por BLE a la app
+}
+
 void setup() {
   // Inicializa el puerto serie para la depuración
   Serial.begin(115200);
@@ -677,6 +692,10 @@ void setup() {
   // Inicializa el pin del LED
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);  
+
+  // Configuración del pin de entrada
+  pinMode(interruptPin, INPUT); // Configura el pin como entrada
+  attachInterrupt(digitalPinToInterrupt(interruptPin), handle_tiva_interrupt, RISING);
 
   // Inicializa el dispositivo BLE y el servidor
   BLEDevice::init(DEVICE_NAME);

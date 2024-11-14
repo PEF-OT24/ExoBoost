@@ -48,17 +48,17 @@
 int8_t assistance_level = 0; // Nivel de asistencia
 
 // Sintonización
-// Posición deg
+// Cadera
 float kp_hip = 1.8;
-float kp_knee = 1.9;
-float kp_ankle = 2.8;
-// Velocidad deg/s
 float kd_hip = 0.8;
-float kd_knee = 0.1;
-float kd_ankle = 0.7;
-// Torque de feedforward Nm
 float tff_hip = 0.5;
+// Rodilla
+float kp_knee = 2.1;
+float kd_knee = 0.55;
 float tff_knee = 0.5;
+// Tobillo
+float kp_ankle = 2.8;
+float kd_ankle = 0.7;
 float tff_ankle = 0.5;
 
 // Parámetros de PI para un determinado motor
@@ -1756,10 +1756,11 @@ void loop() {
         debug_ADC();
 
         // !FSR2 && Heel > TH_heel
+        // !toe_button && heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(!FSR2 && Heel > TH_heel){ // Condición para cambio de fase
+        if(!toe_button && heel_button){ // Condición para cambio de fase
           gait_phase = 2;
           count = 0;
           // Serial.println("Transición de balanceo a Contacto Inicial");
@@ -1792,10 +1793,11 @@ void loop() {
 
         debug_ADC();
         // FSR2 && (Heel > TH_heel - 10)
+        // toe_button && heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(FSR2 && (Heel > TH_heel)){ // Condición para cambio de fase
+        if(toe_button && heel_button){ // Condición para cambio de fase
           gait_phase = 3;
           count = 0;
           // Serial.println("Transición de Contacto Inicial a Apoyo");
@@ -1829,10 +1831,11 @@ void loop() {
         debug_ADC();
         //
         //FSR2 && Heel < TH_heel
+        //toe_button && !heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(FSR2 && Heel < TH_heel){ // Condición para cambio de fase
+        if(toe_button && !heel_button){ // Condición para cambio de fase
           gait_phase = 4;
           count = 0;
           // Serial.println("Transición de Apoyo a Pre Balanceo");
@@ -1865,10 +1868,11 @@ void loop() {
 
         debug_ADC();
         // !FSR2 && Heel < TH_heel
+        // !toe_button && !heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(!FSR2 && Heel < TH_heel){ // Condición para cambio de fase
+        if(!toe_button && !heel_button){ // Condición para cambio de fase
           gait_phase = 1;
           count = 0;
           // Serial.println("Transición de Pre Balanceo a Balanceo");
