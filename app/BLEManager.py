@@ -455,11 +455,6 @@ class BluetoothManager_App:
             self.python_gatt_callback.CharToRead(service_uuid, characteristic_uuid)
             self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
 
-            # # Espera hasta que la característica se pueda leer
-            # self.python_gatt_callback.show_info = False # Mensaje no mostrado 
-            # while not(self.python_gatt_callback.isReady_to_read()): sleep(0.01) # Espera 10 ms hasta que la lectura esté disponible
-            # self.python_gatt_callback.reset_reading()  # Reinicia la bandera
-
             # Se devuelve el valor de la característica
             return self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string
 
