@@ -91,10 +91,10 @@ uint8_t current1_Array[2];
 uint8_t current2_Array[2];
 uint8_t current3_Array[2];
 
-bool doControlFlag = 0; // Bandera de control en tiempo real 
-int8_t current_tab = 0; // Variable que almacena la ventana en la que se encuentra el usuario
+bool doControlFlag = 0;    // Bandera de control en tiempo real 
+int8_t current_tab = 0;    // Variable que almacena la ventana en la que se encuentra el usuario
 int8_t last_tab = 0;       // Variable que almacena la ventana antigua en la que se encontraba el usuario
-bool resetFlag = false; // Bandera que indica si es necesario un reset
+bool resetFlag = false;    // Bandera que indica si es necesario un reset
 
 // ----------------- Variables para I2C ------------------
 #define I2C_DEV_ADDR 0x55        // Dirección del esclavo
