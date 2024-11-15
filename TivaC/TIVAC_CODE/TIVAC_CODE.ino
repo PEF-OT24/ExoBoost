@@ -1169,16 +1169,16 @@ void ReadADC(void){
   ADCSequenceDataGet(ADC0_BASE, 1, adcValues);
 
   // Procesamiento de datos
-  ADC_Buffer[0] = map(adcValues[1], 0, 4095, 0, 255); // toe
-  ADC_Buffer[1] = map(adcValues[0], 0, 4095, 0, 255); // left
-  ADC_Buffer[2] = map(adcValues[2], 0, 4095, 0, 255); // right
-  ADC_Buffer[3] = map(adcValues[3], 0, 4095, 0, 255); // heel
+  ADC_Buffer[0] = map(adcValues[0], 0, 4095, 0, 255); // right
+  ADC_Buffer[1] = map(adcValues[1], 0, 4095, 0, 255); // heel
+  ADC_Buffer[2] = map(adcValues[2], 0, 4095, 0, 255); // toe
+  ADC_Buffer[3] = map(adcValues[3], 0, 4095, 0, 255); // left
 
   // Se guardan los valores
-  Toe = ADC_Buffer[0];
-  Left = ADC_Buffer[1];
-  Right = ADC_Buffer[2];
-  Heel = ADC_Buffer[3];
+  Right = ADC_Buffer[0];
+  Heel = ADC_Buffer[1];
+  Toe = ADC_Buffer[2];
+  Left = ADC_Buffer[3];
 
   FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
 
@@ -1472,17 +1472,17 @@ void onReceive(int len){
           ADCSequenceDataGet(ADC0_BASE, 1, adcValues);
           
           // Procesamiento de datos 
-          toe_value = map(adcValues[0], 0, 4095, 0, 255); // toe
-          left_value = map(adcValues[1], 0, 4095, 0, 255); // left
-          right_value = map(adcValues[2], 0, 4095, 0, 255); // right
-          heel_value = map(adcValues[3], 0, 4095, 0, 255); // heel
+          right_value = map(adcValues[0], 0, 4095, 0, 255); // right
+          heel_value = map(adcValues[1], 0, 4095, 0, 255); // heel
+          toe_value = map(adcValues[2], 0, 4095, 0, 255); // toe
+          left_value = map(adcValues[3], 0, 4095, 0, 255); // left
       
           // Detección de máximos
-          if(toe_value > toe_max){toe_max = toe_value;}
-          if(left_value > left_max){left_max = left_value;}
           if(right_value > right_max){right_max = right_value;}
           if(heel_value > heel_max){heel_max = heel_value;}
-      
+          if(toe_value > toe_max){toe_max = toe_value;}
+          if(left_value > left_max){left_max = left_value;}
+          
           delayMS(10); // ligero delay en ms
         }
 
@@ -1495,10 +1495,10 @@ void onReceive(int len){
         zero_3 = PV3;
         
         // Se le agrega un offset y se guarda
-        TH_toe = toe_max - 0;
-        TH_left = left_max - 0;
         TH_right = right_max - 0;
         TH_heel = heel_max - 0;
+        TH_toe = toe_max - 0;
+        TH_left = left_max - 0;
 
         // Se escala con el peso de ser necesario
         if (weight > 60){scale_TH();}
@@ -1760,7 +1760,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(!toe_button && heel_button){ // Condición para cambio de fase
+        if(!FSR2 && Heel > TH_heel){ // Condición para cambio de fase
           gait_phase = 2;
           count = 0;
           // Serial.println("Transición de balanceo a Contacto Inicial");
@@ -1792,12 +1792,12 @@ void loop() {
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         debug_ADC();
-        // FSR2 && (Heel > TH_heel - 10)
+        // FSR2 && (Heel > TH_heel)
         // toe_button && heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(toe_button && heel_button){ // Condición para cambio de fase
+        if(FSR2 && (Heel > TH_heel)){ // Condición para cambio de fase
           gait_phase = 3;
           count = 0;
           // Serial.println("Transición de Contacto Inicial a Apoyo");
@@ -1835,7 +1835,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(toe_button && !heel_button){ // Condición para cambio de fase
+        if(FSR2 && Heel < TH_heel){ // Condición para cambio de fase
           gait_phase = 4;
           count = 0;
           // Serial.println("Transición de Apoyo a Pre Balanceo");
@@ -1872,7 +1872,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(!toe_button && !heel_button){ // Condición para cambio de fase
+        if(!FSR2 && Heel < TH_heel){ // Condición para cambio de fase
           gait_phase = 1;
           count = 0;
           // Serial.println("Transición de Pre Balanceo a Balanceo");

@@ -78,7 +78,7 @@ void loop(){
   if (Serial.available() > 0) {
     inByte = Serial.read();
     if( inByte == '#'){ 
-      Serial.write(sendBuffer, 4);
+      Serial.write(sendBuffer, 4);}
     }
   }
 }

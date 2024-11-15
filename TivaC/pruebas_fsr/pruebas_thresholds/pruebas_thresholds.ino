@@ -58,10 +58,10 @@ void ConfigADC(){
   ADCSequenceConfigure(ADC0_BASE, 1, ADC_TRIGGER_PROCESSOR, 0);
 
   // Configura la secuencia de lectura de 4 canales
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH0); // toe
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH1); // left
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 2, ADC_CTL_CH2); // right
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 3, ADC_CTL_CH3 | ADC_CTL_IE | ADC_CTL_END);  // heel, interrupción
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH1); // Right
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH0); // Heel 
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 2, ADC_CTL_CH2); // Toe
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 3, ADC_CTL_CH3 | ADC_CTL_IE | ADC_CTL_END);  // Left
   
   // Enable sequence 1
   ADCSequenceEnable(ADC0_BASE, 1);
@@ -81,18 +81,18 @@ void ReadADC(void){
   ADCSequenceDataGet(ADC0_BASE, 1, adcValues);
   
   // Procesamiento de datos 
-  sendBuffer[0] = map(adcValues[0], 0, 4095, 0, 255); // toe
-  sendBuffer[1] = map(adcValues[1], 0, 4095, 0, 255); // left
-  sendBuffer[2] = map(adcValues[2], 0, 4095, 0, 255); // right
-  sendBuffer[3] = map(adcValues[3], 0, 4095, 0, 255); // heel
+  sendBuffer[0] = map(adcValues[0], 0, 4095, 0, 255); // Right
+  sendBuffer[1] = map(adcValues[1], 0, 4095, 0, 255); // Heel
+  sendBuffer[2] = map(adcValues[2], 0, 4095, 0, 255); // Toe
+  sendBuffer[3] = map(adcValues[3], 0, 4095, 0, 255); // Left
 
   // Se guardan los datos
-  Toe = sendBuffer[0];
-  Left = sendBuffer[1];
-  Right = sendBuffer[2];
-  Heel = sendBuffer[3];
+  Right = sendBuffer[0];
+  Heel = sendBuffer[1];
+  Toe = sendBuffer[2];
+  Left = sendBuffer[3];
 
-  bool FSR2 = Toe > (TH_toe + 0)|| Left > (TH_left + 5) || Right > (TH_right + 5);
+  bool FSR2 = Toe > (TH_toe + 0)|| Left > (TH_left + 0) || Right > (TH_right + 0);
   // Máquina de estados
   if(gait_phase == 0){ // stance
     if(!FSR2 && Heel > TH_heel){
@@ -116,7 +116,7 @@ void ReadADC(void){
     }
   }
 
-  /*
+  
   // Mandar los datos al HMI
   if (Serial.available() > 0) {
     inByte = Serial.read();
@@ -125,7 +125,7 @@ void ReadADC(void){
       Serial.write(gait_phase);
     }
   }
-  */
+  
   
 
   /*
@@ -136,13 +136,13 @@ void ReadADC(void){
   Serial.print(" Heel: "); Serial.println(thresholds[3]);Serial.println(); // Salto de línea
   */
 
-  
+  /*
   // Detección de thresholds
   Serial.print("Back: "); 
   if(gait_phase == 1){Serial.print(Heel > TH_heel);}else{Serial.print(Heel > TH_heel);}
   Serial.print(" Front: "); Serial.print(FSR2);
   Serial.print(" Phase: "); Serial.println(gait_phase);
-  /*
+  
   for(int i = 0; i<4; i++){
     if(i == 0){Serial.print("Toe: ");}
     if(i == 1){Serial.print("Left: ");}
@@ -176,10 +176,10 @@ void CalibrarADC(){
     ADCSequenceDataGet(ADC0_BASE, 1, adcValues);
     
     // Procesamiento de datos 
-    toe_value = map(adcValues[0], 0, 4095, 0, 255); // toe
-    left_value = map(adcValues[1], 0, 4095, 0, 255); // left
-    right_value = map(adcValues[2], 0, 4095, 0, 255); // right
-    heel_value = map(adcValues[3], 0, 4095, 0, 255); // heel
+    right_value = map(adcValues[0], 0, 4095, 0, 255); // right
+    heel_value = map(adcValues[1], 0, 4095, 0, 255); // heel
+    toe_value = map(adcValues[2], 0, 4095, 0, 255); // toe
+    left_value = map(adcValues[3], 0, 4095, 0, 255); // left
 
     // Detección de máximos
     if(toe_value > toe_max){toe_max = toe_value;}
@@ -191,22 +191,22 @@ void CalibrarADC(){
   }
 
   // Se le agrega un offset
-  toe_max = toe_max - 2;
-  left_max = left_max - 2;
-  right_max = right_max - 2;
-  heel_max = heel_max - 2;
+  toe_max = toe_max - 0;
+  left_max = left_max - 0;
+  right_max = right_max - 0;
+  heel_max = heel_max - 0;
 
   // Se guardan los thresholds y se devuelven
-  thresholds[0] = toe_max;
-  thresholds[1] = left_max;
-  thresholds[2] = right_max;
-  thresholds[3] = heel_max;
+  thresholds[0] = right_max;
+  thresholds[1] = heel_max;
+  thresholds[2] = toe_max;
+  thresholds[3] = left_max;
 
   // Se guardan 
-  TH_toe = thresholds[0];
-  TH_left = thresholds[1];
-  TH_right = thresholds[2];
-  TH_heel = thresholds[3];
+  TH_right = thresholds[0];
+  TH_heel = thresholds[1];
+  TH_toe  = thresholds[2];
+  TH_left = thresholds[3];
 
   /*
   // Mandar los datos al HMI
