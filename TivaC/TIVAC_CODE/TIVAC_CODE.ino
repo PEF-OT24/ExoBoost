@@ -199,6 +199,8 @@ int16_t testing_sp_hip[30] = {-30, -26, -22, -18, -14, -10, -6, -2, 2, 6, 10, 14
                           26, 22, 18, 14, 10, 6, 2, -2, -8, -12, -14, -18, -22, -26};
 int16_t testing_sp_knee[30] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 
                           60, 56, 52, 48, 44, 40, 36, 32, 28, 24, 20, 16, 12, 8, 4};
+int16_t testing_sp_ankle[30] = {-20 -17 -14 -11  -8  -5  -2   1   4   7  10  13  16  19  20, 
+                                 20  17  14  11   8   5   2  -1  -4  -7 -10 -13 -16 -19 -20};
                           
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {              
@@ -1537,9 +1539,10 @@ void onReceive(int len){
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0,0,false);
         delayMS(CAN_DELAY);
+        motion_mode_command(3,0,0,1,0,0,false);
+        delayMS(CAN_DELAY); // delay
+
         Serial.println("stand up");
-        //motion_mode_command(3,0,0,1,0,0,false);
-        //delayMS(CAN_DELAY); // delay
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         walk_flag = 0;
@@ -1704,13 +1707,9 @@ void loop() {
         delayMS(CAN_DELAY);
         motion_mode_command(2, testing_sp_knee[count], 0, kp_knee, kd_knee, tff_knee, true);
         delayMS(CAN_DELAY);
+        motion_mode_command(3, testing_sp_ankle[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
         delayMS(CAN_DELAY);
-        /* testing para cadera
-        motion_mode_command(2, knee_balanceo[count], 0, kp_knee, kd_knee, tff_knee, true);
-        delayMS(CAN_DELAY);
-        motion_mode_command(3, ankle_balanceo[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
-        */
-
+        
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre Set Points
         Serial.println(count);
