@@ -41,8 +41,8 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 20
-#define STEP_DELAY 350
+#define CAN_DELAY 5
+#define STEP_DELAY 1000
 
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
@@ -195,6 +195,33 @@ int16_t ankle_pre_balanceo[1] = {20};
 */
 
 // ----------------------------------- Funciones de uso general -----------------------------------
+void LED(const char* color){ // Enciende el LED RGB integrado según el comando indicado 
+  if (strcmp(color, "GREEN") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED); // Verde
+  }
+  else if (strcmp(color, "RED") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED);   // Rojo 
+  }
+  else if (strcmp(color, "BLUE") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED);  // Azul
+  }
+  else if (strcmp(color, "OFF") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0); // Apagado
+  }
+  else if (strcmp(color, "YELLOW") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | GREEN_LED); // Amarillo
+  }
+  else if (strcmp(color, "PURPLE") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | BLUE_LED); // Morado
+  }
+  else if (strcmp(color, "CYAN") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED | BLUE_LED); // Morado
+  }
+  else if (strcmp(color, "WHITE") == 0){
+    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | GREEN_LED | BLUE_LED); // Blanco
+  }
+}
+
 void split32bits(int32_t number, uint8_t *byteArray) {              
   // Función para dividir una variable de 32 bits en 4 bytes
   byteArray[0] = (number >> 24) & 0xFF;  // byte más significativo
@@ -861,17 +888,14 @@ void reset_motor(int8_t ID){
 
 void reset_all_motors(){
   // Función para mandar un stop y shutdown a los motores con ID 1, 2 y 3
-  if (last_tab == 2 || current_tab == 2 || current_tab == 1){
-    stop_all_motors();
-  
-    delayMS(CAN_DELAY); // delay de 100 ms entre el stop y shutdown
-    shutdown_motor(1, false);
-    delayMS(CAN_DELAY);   
-    shutdown_motor(2, false);
-    delayMS(CAN_DELAY);
-    shutdown_motor(3, false);
-  
-  }
+  stop_all_motors();
+
+  delayMS(CAN_DELAY); // delay de 100 ms entre el stop y shutdown
+  shutdown_motor(1, false);
+  delayMS(CAN_DELAY);   
+  shutdown_motor(2, false);
+  delayMS(CAN_DELAY);
+  shutdown_motor(3, false);
 }
 
 void read_angle(int8_t ID){
@@ -976,7 +1000,7 @@ void read_velocities(){
 
 // ------------------------------------ Rutinas de caminata ---------------------------------- 
 void walk_mode_sequence(float kp, float kd){
-  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED);
+  LED("GREEN");
   /*Rangos de movimiento
    * Cadera (motor 1): 
    * Zero: -122°
@@ -1038,7 +1062,7 @@ void walk_mode_sequence(float kp, float kd){
 }
 
 void Fase_Balanceo(){
-  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED);
+  LED("BLUE");
   // Se definen los setpoints de movimiento, 30 datos
   int hip[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
                 11, 12, 13, 14, 15, 16, 17, 18, 19, 
@@ -1066,7 +1090,7 @@ void Fase_Balanceo(){
 }
 
 void Fase_ContactoInicial(){
-  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED | GREEN_LED);
+  LED("CYAN");
 
   // Se definen los setpoints de movimiento, 30 datos
   int hip[] = {30, 29, 28, 27, 26, 25, 24, 23, 22, 21};  
@@ -1089,7 +1113,7 @@ void Fase_ContactoInicial(){
 }
 
 void Fase_Apoyo(){
-  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED);
+  LED("GREEN");
   // Se definen los setpoints de movimiento, 30 datos
   float hip[] = {20, 18, 17, 15, 14, 12, 11, 9, 8, 6, 
                   5, 3, 2, 0, -1, -3, -4, -6, -7, -10};  
@@ -1114,7 +1138,7 @@ void Fase_Apoyo(){
 }
 
 void Fase_PreBalanceo(){
-  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED);
+  LED("RED");
   // Se definen los setpoints de movimiento, 20 datos
   float hip[] = {-10, -10, -9, -9, -8, -8, -7, -7, -6, -6, -5, 
                   -5, -4, -4, -3, -3, -2, -2, -1, 0};  
@@ -1144,7 +1168,7 @@ void gait_simulation(){
   Fase_ContactoInicial();
   Fase_Apoyo();
   Fase_PreBalanceo();
-  GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
+  LED("OFF");
 }
 
 void scale_TH(){
@@ -1349,10 +1373,6 @@ void onReceive(int len){
       
       // Control dependiendo del tipo 
       process_variable = jsonrec["monitoring"].as<String>();
-      if (resetFlag){ // Se resetean los motores si es necesario
-        reset_all_motors();
-        resetFlag = false;  
-      }
       
       if (process_variable == "pos"){
         // Control de posición
@@ -1424,10 +1444,17 @@ void onReceive(int len){
 
       // Si hay un cambio de tab, se resetean los motores
       if (current_tab != last_tab){
-        reset_all_motors();
         resetFlag = true;
+        reset_all_motors();
+        
+        // Se resetean variables de control
+        walk_flag = 0;
+        start_flag = 0;
+        stop_flag = 0;
+        count = 0;
       }
     }
+
     else if (strcmp(type, "H") == 0){
       // ------- Comandos a los motores -------
       /* Ejemplo
@@ -1440,7 +1467,7 @@ void onReceive(int len){
         // Proceso de calibración con duración de 3 segundos
         Serial.println("Calibración");
 
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED); // Indicador azul
+        LED("BLUE");
         uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;          // Variables para calibración 
 
         // Restablecer ceros
@@ -1503,27 +1530,39 @@ void onReceive(int len){
         // Se escala con el peso de ser necesario
         if (weight > 60){scale_TH();}
 
-        GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0); // Se apaga el indicador
+        LED("OFF");
       }
       else if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
-        Serial.println("Deteniendo motores");
+        Serial.println("Stop");
+        // Reinicio de variables lógicas
         walk_flag = 0;
         start_flag = 0;
         gait_phase = 0;
-        GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, 0);
+        LED("OFF");
 
+        // Se apagan los motores
         stop_motor(1, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(2, false);
         delayMS(CAN_DELAY); // delay 
         stop_motor(3, false);
         delayMS(CAN_DELAY); // delay
+
+        reset_all_motors();
       }
        else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
+        Serial.println("Walk");
         walk_flag = 1;
+        start_flag = 0;
+        gait_phase = 0;
+        count = 0;
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
+        Serial.println("Stand up");
         walk_flag = 0;
+        start_flag = 0;
+        gait_phase = 0;
+        count = 0;
         motion_mode_command(1,0,0,1,0,0,false); 
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0,0,false);
@@ -1532,8 +1571,10 @@ void onReceive(int len){
         delayMS(CAN_DELAY); // delay
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
+        Serial.println("Sit down");
         walk_flag = 0;
         start_flag = 0;
+        gait_phase = 0;
         motion_mode_command(1,0,0,1,0.1,0,false);
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0.1,0,false);
@@ -1679,6 +1720,8 @@ void setup() {
 
     // Set up de lectura de corriente
     process_variable = "cur";
+
+    Serial.println("Listo!");
 }
 
 // ----- Main Loop -----
@@ -1686,11 +1729,12 @@ void loop() {
   if (walk_flag == 1 && current_tab == 2){ // Rutina de caminata en la tab de assistance
     
     // Condición para iniciar la rutina
-    if(!start_flag && gait_phase == 0){
+    if(gait_phase == 0){
       ReadADC(); // Lectura de FSRs
       read_currents(); // Lectura de corrientes
 
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | GREEN_LED | BLUE_LED);
+      LED("WHITE");
+      Serial.println("Inicio");
       //debug_ADC();
 
       // (Heel > TH_heel && FSR2) // condicion anterior
@@ -1698,6 +1742,8 @@ void loop() {
       toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
       
       // Cuando se detecta la intención, se inicia la caminata
+      gait_phase = 1;
+      count = 0;
       if((PV2_cur > 90 || PV2_cur < -90) || (!heel_button && toe_button)){ 
         // Intención de caminata: Heel strike o detección de corriente en cadera
         gait_phase = 1;
@@ -1710,10 +1756,13 @@ void loop() {
       return;
     }
 
-    /*
+    
     // Condición para detener la rutina
-    if(stop_flag){
+    if(stop_flag || resetFlag){
+      Serial.println("Stop");
+
       // Reinicia las variables de control
+      resetFlag = 0;
       start_flag = false;
       stop_flag = false;
       walk_flag = 0;
@@ -1721,17 +1770,16 @@ void loop() {
       count = 0;
 
       // Se apagan los motores
-      Serial.println("STOP");
       reset_all_motors();
 
       // Siguiente iteración
       return;
     }
-    */
 
     // -------- Máquina de estados --------
     if(gait_phase == 1){ // Fase de Balanceo
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED);
+      Serial.println("Balanceo");
+      LED("BLUE");
       if(count < 3){     // Set points en balanceo
         
         motion_mode_command(1, hip_balanceo[count], 0, kp_hip, kd_hip, tff_hip, true);
@@ -1744,9 +1792,6 @@ void loop() {
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre set points
         
-        Serial.print(hip_balanceo[count]);Serial.print(" ");
-        Serial.print(knee_balanceo[count]);Serial.print(" ");
-        Serial.println(ankle_balanceo[count]);
         count++;
         return;
       } else { // Cambio de fase
@@ -1767,9 +1812,9 @@ void loop() {
           return;
         }
       }
-    }
-    if (gait_phase == 2) { // Fase de Contacto Inicial
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED);
+    } else if (gait_phase == 2) { // Fase de Contacto Inicial
+      Serial.println("Contacto Inicial");
+      LED("GREEN");
       if(count <3){     // Set points en contacto inicial
         
         motion_mode_command(1, hip_contacto_inicial[count], 0, kp_hip, kd_hip, tff_hip, true);
@@ -1782,9 +1827,6 @@ void loop() {
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre set points
         
-        Serial.print(hip_contacto_inicial[count]);Serial.print(" ");
-        Serial.print(knee_contacto_inicial[count]);Serial.print(" ");
-        Serial.println(ankle_contacto_inicial[count]);
         count++;
         return;
       } else { // Cambio de fase
@@ -1804,9 +1846,9 @@ void loop() {
           return;
         }
       }
-    } 
-    if (gait_phase == 3) { // Fase de Apoyo
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | BLUE_LED);
+    } else if (gait_phase == 3) { // Fase de Apoyo
+      Serial.println("Apoyo");
+      LED("PURPLE");
       if(count < 4){     // Set points en apoyo
          
         motion_mode_command(1, hip_apoyo[count], 0, kp_hip, kd_hip, tff_hip, true);
@@ -1819,9 +1861,6 @@ void loop() {
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre set points
         
-        Serial.print(hip_apoyo[count]);Serial.print(" ");
-        Serial.print(knee_apoyo[count]);Serial.print(" ");
-        Serial.println(ankle_apoyo[count]);
         count++;
         return;
       } else { // Cambio de fase
@@ -1842,9 +1881,9 @@ void loop() {
           return;
         }
       }
-    }
-    if (gait_phase == 4){ // Fase de pre balanceo
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | GREEN_LED);
+    } else if (gait_phase == 4){ // Fase de pre balanceo
+      Serial.println("Pre Balanceo");
+      LED("YELLOW");
       if(count < 3){     // Set points en pre balanceo
         
         motion_mode_command(1, hip_pre_balanceo[count], 0, kp_hip, kd_hip, tff_hip, true);
@@ -1857,9 +1896,6 @@ void loop() {
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre set points
         
-        Serial.print(hip_pre_balanceo[count]);Serial.print(" ");
-        Serial.print(knee_pre_balanceo[count]);Serial.print(" ");
-        Serial.println(ankle_pre_balanceo[count]);
         count++;
         return;
       } else { // Cambio de fase
@@ -1871,7 +1907,7 @@ void loop() {
         // !toe_button && !heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
-        
+
         if(!FSR2 && Heel < TH_heel){ // Condición para cambio de fase
           gait_phase = 1;
           count = 0;
@@ -1880,17 +1916,11 @@ void loop() {
         }
       }
     }
-
-    /*
-    if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
-      reset_all_motors();
-      resetFlag = false;
-    }
-    */
-  }
-  else if (current_tab == 4) { // En pantalla de monitoreo sin caminata
-
-    GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, 0);
+  } else if (resetFlag){ // Se resetean los motores si es necesario
+    resetFlag = 0;
+    reset_all_motors();
+  } else if (current_tab == 4) { // En pantalla de monitoreo sin caminata
+    LED("OFF");
     
     // Lectura de variables según indicado
     if (process_variable == "pos"){read_positions();} 
