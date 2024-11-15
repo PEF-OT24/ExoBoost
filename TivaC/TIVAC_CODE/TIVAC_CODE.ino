@@ -888,7 +888,7 @@ void reset_motor(int8_t ID){
 
 void reset_all_motors(){
   // Función para mandar un stop y shutdown a los motores con ID 1, 2 y 3
-  Serial.println("Shutting down motors");
+  Serial.println("Total reset");
 
   stop_all_motors();
 
