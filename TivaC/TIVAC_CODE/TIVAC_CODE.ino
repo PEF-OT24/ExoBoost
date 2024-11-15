@@ -41,8 +41,8 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 20
-#define STEP_DELAY 350
+#define CAN_DELAY 5
+#define STEP_DELAY 33
 
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
@@ -194,6 +194,12 @@ int16_t knee_pre_balanceo[1] = {20};
 int16_t ankle_pre_balanceo[1] = {20};
 */
 
+// Set Points de sintonización
+int16_t testing_sp_hip[30] = {-30, -26, -22, -18, -14, -10, -6, -2, 2, 6, 10, 14, 18, 22, 26, 30,
+                          26, 22, 18, 14, 10, 6, 2, -2, -8, -12, -14, -18, -22, -26};
+int16_t testing_sp_knee[30] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 
+                          60, 56, 52, 48, 44, 40, 36, 32, 28, 24, 20, 16, 12, 8, 4};
+                          
 // ----------------------------------- Funciones de uso general -----------------------------------
 void split32bits(int32_t number, uint8_t *byteArray) {              
   // Función para dividir una variable de 32 bits en 4 bytes
@@ -1510,6 +1516,7 @@ void onReceive(int len){
         walk_flag = 0;
         start_flag = 0;
         gait_phase = 0;
+        count = 0;
         GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, 0);
 
         stop_motor(1, false);
@@ -1521,6 +1528,8 @@ void onReceive(int len){
       }
        else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
         walk_flag = 1;
+        gait_phase = 1;
+        Serial.println("walk");
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
         walk_flag = 0;
@@ -1528,8 +1537,9 @@ void onReceive(int len){
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0,0,false);
         delayMS(CAN_DELAY);
-        motion_mode_command(3,0,0,1,0,0,false);
-        delayMS(CAN_DELAY); // delay
+        Serial.println("stand up");
+        //motion_mode_command(3,0,0,1,0,0,false);
+        //delayMS(CAN_DELAY); // delay
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         walk_flag = 0;
@@ -1685,74 +1695,34 @@ void setup() {
 void loop() {  
   if (walk_flag == 1 && current_tab == 2){ // Rutina de caminata en la tab de assistance
     
-    // Condición para iniciar la rutina
-    if(!start_flag && gait_phase == 0){
-      ReadADC(); // Lectura de FSRs
-      read_currents(); // Lectura de corrientes
-
-      GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, RED_LED | GREEN_LED | BLUE_LED);
-      //debug_ADC();
-
-      // (Heel > TH_heel && FSR2) // condicion anterior
-      heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
-      toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
-      
-      // Cuando se detecta la intención, se inicia la caminata
-      if((PV2_cur > 90 || PV2_cur < -90) || (!heel_button && toe_button)){ 
-        // Intención de caminata: Heel strike o detección de corriente en cadera
-        gait_phase = 1;
-        // Serial.println("Comenzando con Balanceo: ");
-        start_flag = true;
-        count = 0; // Reiniciar contador
-      }
-
-      // Siguiente iteración
-      return;
-    }
-
-    /*
-    // Condición para detener la rutina
-    if(stop_flag){
-      // Reinicia las variables de control
-      start_flag = false;
-      stop_flag = false;
-      walk_flag = 0;
-      gait_phase = 0;
-      count = 0;
-
-      // Se apagan los motores
-      Serial.println("STOP");
-      reset_all_motors();
-
-      // Siguiente iteración
-      return;
-    }
-    */
-
     // -------- Máquina de estados --------
     if(gait_phase == 1){ // Fase de Balanceo
       GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, BLUE_LED);
-      if(count < 3){     // Set points en balanceo
-        
-        motion_mode_command(1, hip_balanceo[count], 0, kp_hip, kd_hip, tff_hip, true);
+      if(count < 30){     // Set points en balanceo
+
+        motion_mode_command(1, testing_sp_hip[count], 0, kp_hip, kd_hip, tff_hip, true);
         delayMS(CAN_DELAY);
+        motion_mode_command(2, testing_sp_knee[count], 0, kp_knee, kd_knee, tff_knee, true);
+        delayMS(CAN_DELAY);
+        delayMS(CAN_DELAY);
+        /* testing para cadera
         motion_mode_command(2, knee_balanceo[count], 0, kp_knee, kd_knee, tff_knee, true);
         delayMS(CAN_DELAY);
         motion_mode_command(3, ankle_balanceo[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
-        delayMS(CAN_DELAY);
+        */
 
         // Siguiente iteración
-        delayMS(STEP_DELAY); // delay entre set points
-        
-        Serial.print(hip_balanceo[count]);Serial.print(" ");
-        Serial.print(knee_balanceo[count]);Serial.print(" ");
-        Serial.println(ankle_balanceo[count]);
+        delayMS(STEP_DELAY); // delay entre Set Points
+        Serial.println(count);
         count++;
-        return;
-      } else { // Cambio de fase
-        //ReadADC(); // Lectura de FSRs
-        // read_positions(); // Lectura de posiciones (PENDIENTE)
+        //return;
+        
+      } else { // Reinicio
+        count = 0;
 
+        //ReadADC(); // Lectura de FSRs
+        //read_positions(); // Lectura de posiciones (PENDIENTE)
+        /*
         debug_ADC();
 
         // !FSR2 && Heel > TH_heel
@@ -1765,9 +1735,9 @@ void loop() {
           count = 0;
           // Serial.println("Transición de balanceo a Contacto Inicial");
           return;
+        */
         }
       }
-    }
     if (gait_phase == 2) { // Fase de Contacto Inicial
       GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED);
       if(count <3){     // Set points en contacto inicial
@@ -1879,7 +1849,7 @@ void loop() {
           return;
         }
       }
-    }
+
 
     /*
     if (resetFlag){ // Se resetean los motores si es indicado y se baja la bandera
@@ -1887,6 +1857,7 @@ void loop() {
       resetFlag = false;
     }
     */
+    }
   }
   else if (current_tab == 4) { // En pantalla de monitoreo sin caminata
 
@@ -1896,6 +1867,9 @@ void loop() {
     if (process_variable == "pos"){read_positions();} 
     else if (process_variable == "vel"){read_velocities();} 
     else if (process_variable == "cur"){read_currents();}
+  } 
+  else if (gait_phase == 0){
+    //reset_all_motors(); // stop 
   }
 }
 
