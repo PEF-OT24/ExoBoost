@@ -41,8 +41,8 @@
 #endif
 
 // Delay entre mensajes de CAN en ms
-#define CAN_DELAY 5
-#define STEP_DELAY 1000
+#define CAN_DELAY 15
+#define STEP_DELAY 33
 
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
@@ -51,15 +51,15 @@ int8_t assistance_level = 0; // Nivel de asistencia
 // Cadera
 float kp_hip = 1.8;
 float kd_hip = 0.8;
-float tff_hip = 0.5;
+float tff_hip = 0.8;
 // Rodilla
 float kp_knee = 2.1;
 float kd_knee = 0.55;
-float tff_knee = 0.5;
+float tff_knee = 0.8;
 // Tobillo
-float kp_ankle = 2.8;
-float kd_ankle = 0.7;
-float tff_ankle = 0.5;
+float kp_ankle = 4;
+float kd_ankle = 0.1;
+float tff_ankle = 0.35;
 
 // Parámetros de PI para un determinado motor
 uint8_t posKP; 
@@ -194,6 +194,14 @@ int16_t knee_pre_balanceo[1] = {20};
 int16_t ankle_pre_balanceo[1] = {20};
 */
 
+// Set Points de sintonización
+int16_t testing_sp_hip[30] = {-30, -26, -22, -18, -14, -10, -6, -2, 2, 6, 10, 14, 18, 22, 26, 30,
+                          26, 22, 18, 14, 10, 6, 2, -2, -8, -12, -14, -18, -22, -26};
+int16_t testing_sp_knee[30] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 
+                          60, 56, 52, 48, 44, 40, 36, 32, 28, 24, 20, 16, 12, 8, 4};
+int16_t testing_sp_ankle[30] = {-20, -17, -14, -11,  -8,  -5,  -2,   1,   4,   7,  10,  13,  16,  19,  20, 
+                                 20,  17,  14,  11,   8,   5,   2,  -1,  -4,  -7, -10, -13, -16, -19, -20};
+                          
 // ----------------------------------- Funciones de uso general -----------------------------------
 void LED(const char* color){ // Enciende el LED RGB integrado según el comando indicado 
   if (strcmp(color, "GREEN") == 0){
@@ -804,6 +812,8 @@ void write_zero(int8_t ID){
 }
 
 void write_zeros(){
+  Serial.println("Reset zeros");
+  
   write_zero(1);
   delayMS(CAN_DELAY);  
   write_zero(2);
@@ -888,16 +898,19 @@ void reset_motor(int8_t ID){
 
 void reset_all_motors(){
   // Función para mandar un stop y shutdown a los motores con ID 1, 2 y 3
-  Serial.println("Total reset");
+  if (last_tab == 2 || current_tab == 2 || current_tab == 1){
+    stop_all_motors();
+  
+    delayMS(CAN_DELAY); 
+    shutdown_motor(1, false);
+    delayMS(CAN_DELAY);   
+    shutdown_motor(2, false);
+    delayMS(CAN_DELAY);
+    shutdown_motor(3, false);
 
-  stop_all_motors();
-
-  delayMS(CAN_DELAY); // delay de 100 ms entre el stop y shutdown
-  shutdown_motor(1, false);
-  delayMS(CAN_DELAY);   
-  shutdown_motor(2, false);
-  delayMS(CAN_DELAY);
-  shutdown_motor(3, false);
+    Serial.println("Reset all motors");
+  
+  }
 }
 
 void read_angle(int8_t ID){
@@ -1482,7 +1495,8 @@ void onReceive(int len){
         delayMS(CAN_DELAY);
         reset_motor(3);
         delayMS(CAN_DELAY);
-        reset_all_motors();
+        
+        //reset_all_motors();
 
         for(int i = 0; i < 300; i++){ 
           // Proceso para recuperar 300 datos y realizar calibración
@@ -1540,6 +1554,7 @@ void onReceive(int len){
         walk_flag = 0;
         start_flag = 0;
         gait_phase = 0;
+        count = 0;
         LED("OFF");
 
         // Se apagan los motores
@@ -1555,9 +1570,9 @@ void onReceive(int len){
        else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
         Serial.println("Walk");
         walk_flag = 1;
-        start_flag = 0;
-        gait_phase = 0;
+        gait_phase = 1;
         count = 0;
+        Serial.println("walk");
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
         Serial.println("Stand up");
@@ -1571,6 +1586,8 @@ void onReceive(int len){
         delayMS(CAN_DELAY);
         motion_mode_command(3,0,0,1,0,0,false);
         delayMS(CAN_DELAY); // delay
+
+        Serial.println("stand up");
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         Serial.println("Sit down");
@@ -1791,15 +1808,25 @@ void loop() {
         motion_mode_command(3, ankle_balanceo[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
         delayMS(CAN_DELAY);
 
-        // Siguiente iteración
-        delayMS(STEP_DELAY); // delay entre set points
+        motion_mode_command(1, testing_sp_hip[count], 0, kp_hip, kd_hip, tff_hip, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, testing_sp_knee[count], 0, kp_knee, kd_knee, tff_knee, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, testing_sp_ankle[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
+        delayMS(CAN_DELAY);
         
+        // Siguiente iteración
+        delayMS(STEP_DELAY); // delay entre Set Points
+        Serial.println(count);
         count++;
-        return;
-      } else { // Cambio de fase
-        //ReadADC(); // Lectura de FSRs
-        // read_positions(); // Lectura de posiciones (PENDIENTE)
+        //return;
+        
+      } else { // Reinicio
+        count = 0;
 
+        //ReadADC(); // Lectura de FSRs
+        //read_positions(); // Lectura de posiciones (PENDIENTE)
+        /*
         debug_ADC();
 
         // !FSR2 && Heel > TH_heel
@@ -1812,7 +1839,7 @@ void loop() {
           count = 0;
           // Serial.println("Transición de balanceo a Contacto Inicial");
           return;
-        }
+        */
       }
     } else if (gait_phase == 2) { // Fase de Contacto Inicial
       Serial.println("Contacto Inicial");
@@ -1920,7 +1947,7 @@ void loop() {
     }
   } else if (resetFlag){ // Se resetean los motores si es necesario
     resetFlag = 0;
-    reset_all_motors();
+    // reset_all_motors();
   } else if (current_tab == 4) { // En pantalla de monitoreo sin caminata
     LED("OFF");
     
@@ -1928,6 +1955,9 @@ void loop() {
     if (process_variable == "pos"){read_positions();} 
     else if (process_variable == "vel"){read_velocities();} 
     else if (process_variable == "cur"){read_currents();}
+  } 
+  else if (gait_phase == 0){
+    //reset_all_motors(); // stop 
   }
 }
 
