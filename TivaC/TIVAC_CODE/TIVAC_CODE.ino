@@ -43,6 +43,7 @@
 // Delay entre mensajes de CAN en ms
 #define CAN_DELAY 15
 #define STEP_DELAY 33
+#define KNEE_DELAY 60
 
 // ----------------- Variables globales ------------------
 int8_t assistance_level = 0; // Nivel de asistencia
@@ -50,16 +51,23 @@ int8_t assistance_level = 0; // Nivel de asistencia
 // Sintonización
 // Cadera
 float kp_hip = 1.8;
-float kd_hip = 0.8;
-float tff_hip = 0.8;
+float kd_hip = 0;
+float tff_hip = 0;
+//float kd_hip = 0.8;
+//float tff_hip = 1.5;
 // Rodilla
 float kp_knee = 2.1;
-float kd_knee = 0.55;
-float tff_knee = 0.8;
+float kd_knee = 0.1;
+float tff_knee = 0;
+//float kd_knee = 0.55;
+//float tff_knee = 0.8;
+
 // Tobillo
-float kp_ankle = 4;
-float kd_ankle = 0.1;
-float tff_ankle = 0.35;
+float kp_ankle = 6;
+float kd_ankle = 0.5;
+float tff_ankle = 0;
+//float kd_ankle = 0.1;
+//float tff_ankle = 0.35;
 
 // Parámetros de PI para un determinado motor
 uint8_t posKP; 
@@ -153,41 +161,47 @@ uint8_t height = 0;
 // -- Vectores de caminata --
 // Para cada fase, el tamaño de los vectores por articulación debe ser el mismo
 int count = 0; // Conteo de setpoints
-
-// Fase 1 - Balanceo (3 valores)
-int16_t hip_balanceo[3] = {0, 10, 30};
-int16_t knee_balanceo[3] = {30, 70, 0};
-int16_t ankle_balanceo[3] = {-20, 10, 0};
 /*
-int16_t hip_balanceo[1] = {10};
-int16_t knee_balanceo[1] = {10};
-int16_t ankle_balanceo[1] = {10};
+// Fase 1 - Balanceo (30 valores)
+int16_t hip_balanceo[30] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
+int16_t knee_balanceo[30] = {30, 33, 36, 39, 42, 45, 48, 51, 54, 60,
+                            60, 57, 54, 51, 48, 45, 42, 39, 36, 30,
+                            30, 27, 24, 21, 18, 15, 12, 9, 6, 0};
+int16_t ankle_balanceo[30] = {-20, -18, -16, -14, -12, -10, -8, -6, -4, 0,
+                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                              10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
 */
+int16_t hip_balanceo[5] = {10, 30, 30, 30, 30};
+int16_t knee_balanceo[5] = {45, 60, 40, 20, 0};
+int16_t ankle_balanceo[5] = {-20, 10, 0, 0, 0};
 
-// Fase 2 - Contacto Inicial (3 valores)
-int16_t hip_contacto_inicial[3] = {30, 25, 20};
-int16_t knee_contacto_inicial[3] = {5, 10, 15};
-int16_t ankle_contacto_inicial[3] = {0, -5, -10};
+
+// Fase 2 - Contacto Inicial (1 valores)
+int16_t hip_contacto_inicial[5] = {30, 27, 25, 22, 20};
+int16_t knee_contacto_inicial[5] = {4, 7, 10, 12, 15};
+int16_t ankle_contacto_inicial[5] = {0, -2, -5, -7,-10};
 /*
 int16_t hip_contacto_inicial[1] = {20};
 int16_t knee_contacto_inicial[1] = {20};
 int16_t ankle_contacto_inicial[1] = {20};
 */
 
-// Fase 3 - Apoyo (4 valores)
+// Fase 3 - Apoyo (1 valores)
+
 int16_t hip_apoyo[4] = {20, 10, 0, -10};
 int16_t knee_apoyo[4] = {15, 10, 5, 0};
 int16_t ankle_apoyo[4] = {-10, 0, 10, 15};
+
 /*
-int16_t hip_apoyo[1] = {30};
-int16_t knee_apoyo[1] = {30};
-int16_t ankle_apoyo[1] = {30};
+int16_t hip_apoyo[1] = {-10};
+int16_t knee_apoyo[1] = {0};
+int16_t ankle_apoyo[1] = {15};
 */
 
-// Fase 4 - Pre balanceo (3 valores)
-int16_t hip_pre_balanceo[3] = {-10, -5, 0};
-int16_t knee_pre_balanceo[3] = {0, 15, 30};
-int16_t ankle_pre_balanceo[3] = {15, 0, -20};
+// Fase 4 - Pre balanceo (2 valores)
+int16_t hip_pre_balanceo[3] = {-10, 0, 10}; // -10 a 0
+int16_t knee_pre_balanceo[3] = {5, 15, 30}; // 0 a 30
+int16_t ankle_pre_balanceo[3] = {15, 0, -20}; // 15 a -20
 /*
 int16_t hip_pre_balanceo[1] = {20};
 int16_t knee_pre_balanceo[1] = {20};
@@ -1219,7 +1233,7 @@ void ReadADC(void){
   Toe = ADC_Buffer[2];
   Left = ADC_Buffer[3];
 
-  FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
+  FSR2 = (Toe > TH_toe) && (Left > TH_left) || (Left > TH_left && Right > TH_right) || (Right > TH_right && Toe > TH_toe);
 
   /*
   // Mandar datos a labview
@@ -1484,6 +1498,7 @@ void onReceive(int len){
 
         LED("BLUE");
         uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;          // Variables para calibración 
+        uint32_t toe_save = 0, left_save = 0, right_save = 0, heel_save = 0;
 
         // Restablecer ceros
         write_zeros();
@@ -1521,12 +1536,20 @@ void onReceive(int len){
           left_value = map(adcValues[3], 0, 4095, 0, 255); // left
       
           // Detección de máximos
+          /*
           if(right_value > right_max){right_max = right_value;}
           if(heel_value > heel_max){heel_max = heel_value;}
           if(toe_value > toe_max){toe_max = toe_value;}
           if(left_value > left_max){left_max = left_value;}
+          */
+
+          // Cálculo de promedios
+          toe_save = toe_save + toe_value;
+          right_save = right_save + right_value;
+          left_save = left_save + left_value;
+          heel_save = heel_save + heel_value;
           
-          delayMS(10); // ligero delay en ms
+          delayMS(5); // ligero delay en ms
         }
 
         // Se guardan los zeros
@@ -1538,10 +1561,21 @@ void onReceive(int len){
         zero_3 = PV3;
         
         // Se le agrega un offset y se guarda
+        /*
         TH_right = right_max - 0;
         TH_heel = heel_max - 0;
         TH_toe = toe_max - 0;
         TH_left = left_max - 0;
+        */
+        TH_right = right_save / 300;
+        TH_left = left_save / 300;
+        TH_toe = toe_save / 300;
+        TH_heel = (heel_save / 300)*0.8;
+
+        Serial.print("TH Right: "); Serial.print(TH_right);
+        Serial.print(" TH Left: "); Serial.print(TH_left);
+        Serial.print(" TH Toe: "); Serial.print(TH_toe);
+        Serial.print(" TH Heel: "); Serial.println(TH_heel);
 
         // Se escala con el peso de ser necesario
         if (weight > 60){scale_TH();}
@@ -1570,9 +1604,8 @@ void onReceive(int len){
        else if (strcmp(state_command, "walk") == 0){ // Comando de caminar
         Serial.println("Walk");
         walk_flag = 1;
-        gait_phase = 1;
+        gait_phase = 0;
         count = 0;
-        Serial.println("walk");
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
         Serial.println("Stand up");
@@ -1585,9 +1618,7 @@ void onReceive(int len){
         motion_mode_command(2,0,0,1,0,0,false);
         delayMS(CAN_DELAY);
         motion_mode_command(3,0,0,1,0,0,false);
-        delayMS(CAN_DELAY); // delay
-
-        Serial.println("stand up");
+        delayMS(CAN_DELAY); // delay                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
         Serial.println("Sit down");
@@ -1744,30 +1775,29 @@ void setup() {
 }
 
 // ----- Main Loop -----
-void loop() {  
+void loop() {
+  //Serial.println("0");  
   if (walk_flag == 1 && current_tab == 2){ // Rutina de caminata en la tab de assistance
-    
+
     // Condición para iniciar la rutina
     if(gait_phase == 0){
-      ReadADC(); // Lectura de FSRs
+      //ReadADC(); // Lectura de FSRs
       read_currents(); // Lectura de corrientes
 
       LED("WHITE");
-      Serial.println("Inicio");
-      //debug_ADC();
+      //Serial.println("Inicio");
+      debug_ADC();
 
       // (Heel > TH_heel && FSR2) // condicion anterior
+      // !heel_button && toe_button
       heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
       toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
       
       // Cuando se detecta la intención, se inicia la caminata
-      gait_phase = 1;
-      count = 0;
-      if((PV2_cur > 90 || PV2_cur < -90) || (!heel_button && toe_button)){ 
+      if((PV2_cur > 90 || PV2_cur < -90) || ((Heel > TH_heel && FSR2))){ 
         // Intención de caminata: Heel strike o detección de corriente en cadera
         gait_phase = 1;
-        // Serial.println("Comenzando con Balanceo: ");
-        start_flag = true;
+        start_flag = 1;
         count = 0; // Reiniciar contador
       }
 
@@ -1781,15 +1811,15 @@ void loop() {
       Serial.println("Stop");
 
       // Reinicia las variables de control
+      walk_flag = 0;
       resetFlag = 0;
       start_flag = false;
       stop_flag = false;
-      walk_flag = 0;
       gait_phase = 0;
       count = 0;
 
       // Se apagan los motores
-      reset_all_motors();
+      // reset_all_motors();
 
       // Siguiente iteración
       return;
@@ -1797,36 +1827,28 @@ void loop() {
 
     // -------- Máquina de estados --------
     if(gait_phase == 1){ // Fase de Balanceo
-      Serial.println("Balanceo");
+      //Serial.println("Balanceo FSR");
       LED("BLUE");
-      if(count < 3){     // Set points en balanceo
+      if(count < 5){     // Set points en balanceo
         
-        motion_mode_command(1, hip_balanceo[count], 0, kp_hip, kd_hip, tff_hip, true);
+        motion_mode_command(1, hip_balanceo[count], 0, 1.8, 0, 0, true);
         delayMS(CAN_DELAY);
-        motion_mode_command(2, knee_balanceo[count], 0, kp_knee, kd_knee, tff_knee, true);
+        motion_mode_command(2, knee_balanceo[count], 0, 2.1, 0.1, 0, true);
         delayMS(CAN_DELAY);
-        motion_mode_command(3, ankle_balanceo[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
+        motion_mode_command(3, ankle_balanceo[count], 0, 6, 0, 0, true);
         delayMS(CAN_DELAY);
 
-        motion_mode_command(1, testing_sp_hip[count], 0, kp_hip, kd_hip, tff_hip, true);
-        delayMS(CAN_DELAY);
-        motion_mode_command(2, testing_sp_knee[count], 0, kp_knee, kd_knee, tff_knee, true);
-        delayMS(CAN_DELAY);
-        motion_mode_command(3, testing_sp_ankle[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
-        delayMS(CAN_DELAY);
-        
         // Siguiente iteración
-        delayMS(STEP_DELAY); // delay entre Set Points
+        delayMS(KNEE_DELAY); // delay entre Set Points
         Serial.println(count);
         count++;
-        //return;
+        return;
         
       } else { // Reinicio
-        count = 0;
 
         //ReadADC(); // Lectura de FSRs
         //read_positions(); // Lectura de posiciones (PENDIENTE)
-        /*
+        
         debug_ADC();
 
         // !FSR2 && Heel > TH_heel
@@ -1834,17 +1856,18 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(!FSR2 && Heel > TH_heel){ // Condición para cambio de fase
+        if(Heel > TH_heel){ // Condición para cambio de fase
           gait_phase = 2;
           count = 0;
-          // Serial.println("Transición de balanceo a Contacto Inicial");
           return;
-        */
+        }
+        
       }
     } else if (gait_phase == 2) { // Fase de Contacto Inicial
-      Serial.println("Contacto Inicial");
+      //Serial.println("Contacto Inicial");
       LED("GREEN");
-      if(count <3){     // Set points en contacto inicial
+      if(count < 5){     // Set points en contacto inicial
+
         
         motion_mode_command(1, hip_contacto_inicial[count], 0, kp_hip, kd_hip, tff_hip, true);
         delayMS(CAN_DELAY);
@@ -1852,10 +1875,16 @@ void loop() {
         delayMS(CAN_DELAY);
         motion_mode_command(3, ankle_contacto_inicial[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
         delayMS(CAN_DELAY);
-
+        
+       /* motion_mode_command(1, hip_contacto_inicial[count], 0, 0, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, knee_contacto_inicial[count], 0, 0, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, ankle_contacto_inicial[count], 0, 0, 0, 0, true);
+        delayMS(CAN_DELAY);
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre set points
-        
+        */
         count++;
         return;
       } else { // Cambio de fase
@@ -1868,25 +1897,33 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(FSR2 && (Heel > TH_heel)){ // Condición para cambio de fase
+        if(FSR2 && (Heel > TH_heel*0.8)){ // Condición para cambio de fase
           gait_phase = 3;
           count = 0;
-          // Serial.println("Transición de Contacto Inicial a Apoyo");
           return;
         }
       }
     } else if (gait_phase == 3) { // Fase de Apoyo
-      Serial.println("Apoyo");
+      //Serial.println("Apoyo");
       LED("PURPLE");
       if(count < 4){     // Set points en apoyo
-         
+
+        
         motion_mode_command(1, hip_apoyo[count], 0, kp_hip, kd_hip, tff_hip, true);
         delayMS(CAN_DELAY);
         motion_mode_command(2, knee_apoyo[count], 0, kp_knee, kd_knee, tff_knee, true);
         delayMS(CAN_DELAY);
         motion_mode_command(3, ankle_apoyo[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
         delayMS(CAN_DELAY);
-
+        
+        /*
+        motion_mode_command(1, hip_apoyo[count], 0, 0, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(2, knee_apoyo[count], 0, 0, 0, 0, true);
+        delayMS(CAN_DELAY);
+        motion_mode_command(3, ankle_apoyo[count], 0, 0, 0, 0, true);
+        delayMS(CAN_DELAY);
+        */
         // Siguiente iteración
         delayMS(STEP_DELAY); // delay entre set points
         
@@ -1903,7 +1940,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
         
-        if(FSR2 && Heel < TH_heel){ // Condición para cambio de fase
+        if(FSR2){ // Condición para cambio de fase
           gait_phase = 4;
           count = 0;
           // Serial.println("Transición de Apoyo a Pre Balanceo");
@@ -1911,15 +1948,15 @@ void loop() {
         }
       }
     } else if (gait_phase == 4){ // Fase de pre balanceo
-      Serial.println("Pre Balanceo");
+      //Serial.println("Pre Balanceo");
       LED("YELLOW");
       if(count < 3){     // Set points en pre balanceo
-        
+
         motion_mode_command(1, hip_pre_balanceo[count], 0, kp_hip, kd_hip, tff_hip, true);
         delayMS(CAN_DELAY);
         motion_mode_command(2, knee_pre_balanceo[count], 0, kp_knee, kd_knee, tff_knee, true);
         delayMS(CAN_DELAY);
-        motion_mode_command(3, ankle_pre_balanceo[count], 0, kp_ankle, kd_ankle, tff_ankle, true);
+        motion_mode_command(3, ankle_pre_balanceo[count], 0, 4, kd_ankle, tff_ankle, true);
         delayMS(CAN_DELAY);
 
         // Siguiente iteración
@@ -1937,7 +1974,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if(!FSR2 && Heel < TH_heel){ // Condición para cambio de fase
+        if(!FSR2 && Heel < (TH_heel*0.4)){ // Condición para cambio de fase
           gait_phase = 1;
           count = 0;
           // Serial.println("Transición de Pre Balanceo a Balanceo");
