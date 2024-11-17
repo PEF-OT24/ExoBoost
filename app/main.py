@@ -312,7 +312,7 @@ class ExoBoostApp(MDApp):
             self.reading = False
         elif tab == "Assistance mode": 
             self.send_tab("assistance")
-            self.reading = False
+            self.reading = True
         elif tab == "Tuning mode": 
             self.send_tab("tuning")
             self.reading = False
