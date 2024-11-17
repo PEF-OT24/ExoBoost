@@ -713,13 +713,6 @@ WindowManager:
                         orientation: 'vertical'
                         size_hint_y: 0.4
 
-                        canvas.before:
-                            Color:
-                                rgba: app.colors["White"]
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-
                         Widget:
                             canvas:
                                 # Sección 1 (cuarto del círculo) - Color azul
@@ -772,12 +765,6 @@ WindowManager:
                         padding: dp(10)
                         spacing: dp(10)
                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                        canvas.before:
-                            Color:
-                                rgba: app.colors["White"]
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
 
                         MDFillRoundFlatButton:
                             id: calibrate_button
@@ -856,10 +843,11 @@ WindowManager:
                             ripple_effect: False
                             ripple_color: app.colors['Cyan']
                             md_bg_color: app.colors["Cyan"]
-                            width: 80
-                            height: 10
+
+                            # size_hint_y: 0.5
+                            width: dp(200)
+                            # height: dp(10)
                             halign: 'center'
-                            size_hint_y: 0.5
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                             on_press: 
                                 self.md_bg_color = app.colors["Light Orange"]
