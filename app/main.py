@@ -160,7 +160,7 @@ class ExoBoostApp(MDApp):
         # --- Servicio de Parameters ---
         self.uuid_manager.generate_uuids_chars(names[0], ["PI", "SP","LEVEL", "USER"], [0x000a, 0x000f, 0x000d, 0x00ab])
         # --- Servicio de Process ---
-        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
+        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "PHASE"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
         self.uuid_manager.generate_uuids_chars(names[2], ["MODE", "TAB"], [0x000c, 0x00aa])
 
@@ -820,37 +820,39 @@ class ExoBoostApp(MDApp):
             # Se lee el archivo JSON
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-            '''
-            Nota: De momento solamente se desea leer el parámetro PV.
+            print(json_dict)
 
-            Ejemplo de estructura deseada del json para PV
-            json_dict = {
-                "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
-                "monitoring": "pos", # {"pos", "vel", "cur"}
-                "motor1": "100",
-                "motor2": "100",
-                "motor3": "100"
-            }
-            '''
+            # '''
+            # Nota: De momento solamente se desea leer el parámetro PV.
 
-            # Se obtienen los valores del diccionario
-            limb_read = json_dict["limb"]      
-            monitoring_read = json_dict["monitoring"]      
-            motor1pv_read = json_dict["motor1"]            
-            motor2pv_read = json_dict["motor2"]            
-            motor3pv_read = json_dict["motor3"]    
+            # Ejemplo de estructura deseada del json para PV
+            # json_dict = {
+            #     "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+            #     "monitoring": "pos", # {"pos", "vel", "cur"}
+            #     "motor1": "100",
+            #     "motor2": "100",
+            #     "motor3": "100"
+            # }
+            # '''
 
-            # Si es la variable de proceso de interés, se despliega la información 
-            if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
+            # # Se obtienen los valores del diccionario
+            # limb_read = json_dict["limb"]      
+            # monitoring_read = json_dict["monitoring"]      
+            # motor1pv_read = json_dict["motor1"]            
+            # motor2pv_read = json_dict["motor2"]            
+            # motor3pv_read = json_dict["motor3"]    
+
+            # # Si es la variable de proceso de interés, se despliega la información 
+            # if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
                 
-            # Se guardan los valores en el diccionario
-            self.motor_parameters_pv["motor1"] = motor1pv_read
-            self.motor_parameters_pv["motor2"] = motor2pv_read
-            self.motor_parameters_pv["motor3"] = motor3pv_read
+            # # Se guardan los valores en el diccionario
+            # self.motor_parameters_pv["motor1"] = motor1pv_read
+            # self.motor_parameters_pv["motor2"] = motor2pv_read
+            # self.motor_parameters_pv["motor3"] = motor3pv_read
 
-            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-            if self.selected_limb == limb_read: 
-                Clock.schedule_once(self.update_process_variable)
+            # # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+            # if self.selected_limb == limb_read: 
+            #     Clock.schedule_once(self.update_process_variable)
 
         except Exception as e:
             print(f"Error la lectura: {e}")

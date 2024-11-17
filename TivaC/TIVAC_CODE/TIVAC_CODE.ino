@@ -25,11 +25,11 @@
 #include <ArduinoJson.h>
 
 // --------------------------------------- Constantes de uso general -----------------------------------------------
-
 // Definición de pines LED 
 #define RED_LED GPIO_PIN_1
 #define BLUE_LED GPIO_PIN_2
 #define GREEN_LED GPIO_PIN_3
+#define NOTIFY_PIN GPIO_PIN_4
 
 // Conversión de unidades
 #define DEG_TO_RAD (3.141592653589793 / 180.0)  // Conversión de grados a radianes
@@ -138,6 +138,7 @@ bool toe_button  = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
 //--------------------- Variables para el algoritmo de caminata ---------------------
 bool walk_flag = false;  // Bandera de caminata
 bool stop_flag = false;  // Bandera de stop
+bool notified = false;   // Bandera de notificación en fase 0
 
 uint8_t gait_phase = 0; // Fase de caminata
 /*
@@ -309,6 +310,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
 
     // No realiza lectura si no es necesario
     if(commandCAN != 0x92 && commandCAN != 0x9C){
+      Serial.println("NO MSG");
       return; // Solo lectura de posición, velocidad o corriente
     }
     
@@ -517,6 +519,7 @@ void motion_send_cmd(uint8_t ID, uint8_t *messageArray){ // Función para enviar
 }
 
 void motion_mode_command(int8_t ID, float p_des_deg, float v_des_deg_per_s, float kp, float kd, float t_ff) {
+    
     uint16_t p_des_hex, v_des_hex, kp_hex, kd_hex, t_ff_hex;
 
     // Convertir posición de grados a radianes y normalizar
@@ -853,6 +856,7 @@ void stop_motor(int8_t ID){
 
 void stop_all_motors(){
   // Función para detener el motor
+  Serial.println("Stop all motors");
   
   stop_motor(1);
   delayMS(CAN_DELAY);
@@ -905,6 +909,7 @@ void reset_motor(int8_t ID){
 }
 
 void reset_all_motors(){
+  Serial.println("Reset all motors");
   // Función para mandar un stop y shutdown a los motores en la red
   stop_all_motors();
 
@@ -914,8 +919,6 @@ void reset_all_motors(){
   shutdown_motor(2);
   delayMS(CAN_DELAY);
   shutdown_motor(3);
-
-  Serial.println("Reset all motors");
 }
 
 void read_angle(int8_t ID){
@@ -1580,9 +1583,10 @@ void onReceive(int len){
       }
       else if (strcmp(state_command, "stop") == 0){ // Comando de detenerse
         Serial.println("Stop");
-        // Reinicio de variables lógicas
+        // Reiniciar variables lógicas
         walk_flag = 0;
         gait_phase = 0;
+        notified = false;
         count = 0;
         LED("OFF");
 
@@ -1600,14 +1604,17 @@ void onReceive(int len){
         Serial.println("Walk");
         walk_flag = 1;
         gait_phase = 0;
+        notified = false;
         count = 0;
       }
        else if (strcmp(state_command, "stand up") == 0){ // Comando de levantarse
-        Serial.println("Stand up");
+        // Reinciar variables lógicas
         walk_flag = 0;
         gait_phase = 0;
+        notified = false;
         count = 0;
-        
+
+        // Mandar motores a 0 
         motion_mode_command(1,0,0,1,0,0); 
         delayMS(CAN_DELAY); // delay 
         motion_mode_command(2,0,0,1,0,0);
@@ -1616,16 +1623,18 @@ void onReceive(int len){
         delayMS(CAN_DELAY); // delay                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
       }
        else if (strcmp(state_command, "sit down") == 0){ // Comando de sentarse
-        Serial.println("Sit down");
+        // Reiniciar variables lógicas
         walk_flag = 0;
         gait_phase = 0;
+        notified = false;
         count = 0;
-        
-        motion_mode_command(1,0,0,1,0.1,0);
+
+        // Mandar motores a 0
+        motion_mode_command(1,0,0,1,0,0);
         delayMS(CAN_DELAY); // delay 
-        motion_mode_command(2,0,0,1,0.1,0);
+        motion_mode_command(2,0,0,1,0,0);
         delayMS(CAN_DELAY); // delay
-        motion_mode_command(3,0,0,1,0.1,0);
+        motion_mode_command(3,0,0,1,0,0);
         delayMS(CAN_DELAY); // delay
       }
     }
@@ -1694,7 +1703,6 @@ void ConfigADC(){
   ADCSequenceEnable(ADC0_BASE, 1);
 }
 
-// #include "driverlib/can.h"
 void ConfigCAN(){
   // Habilitar pines del puerto B
   SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB); 
@@ -1719,6 +1727,39 @@ void configI2C(){
   Wire.begin(I2C_DEV_ADDR);  // Inicializa el protocolo I2C
   Wire.onReceive(onReceive); // Se registra el evento de onreceive
   Wire.onRequest(onRequest); // register event
+}
+
+void configNotify(){
+  // Habilitar puerto A
+  SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+  while (!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOA)) {}
+
+  // Configurar PA2 como salida digital
+  GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, NOTIFY_PIN);
+  GPIOPinWrite(GPIO_PORTA_BASE, NOTIFY_PIN, 0); // Inicializa PA2 en LOW
+}
+
+void NotifyMaster() {
+  // Notificación sobre la fase actual 
+
+  // Formato del mensaje
+  jsonsend_ESP32.clear();    // Se limpia el JSON anterior
+  stringsend_ESP32 = "";     // Se reinicia el string anterior
+
+  // Se define el mensaje con los valores de la variable de proceso
+  jsonsend_ESP32["T"] = "J"; // Bandera indicadora
+  jsonsend_ESP32["limb"] = "Right leg";
+  jsonsend_ESP32["phase"] = String(gait_phase);
+
+  // Se construye el mensaje serializado para mandar
+  serializeJson(jsonsend_ESP32, stringsend_ESP32);
+  stringsend_ESP32 += '\n';  // terminador '\n'
+
+  // Notificación
+  // Genera un pulso HIGH en el pin de notificación
+  GPIOPinWrite(GPIO_PORTA_BASE, NOTIFY_PIN, NOTIFY_PIN);
+  delayMS(5); // Mantén el pulso breve
+  GPIOPinWrite(GPIO_PORTA_BASE, NOTIFY_PIN, 0); // Regresa a LOW
 }
 
 void setup() { 
@@ -1764,6 +1805,9 @@ void setup() {
     // ------ Configuración de I2C ------
     configI2C();
 
+    // ------ Configuración de bandera de notificación -------
+    configNotify();
+    
     // Set up de lectura de corriente
     process_variable = "cur";
 
@@ -1772,16 +1816,14 @@ void setup() {
 
 // ----- Main Loop -----
 void loop() {
- 
   if (walk_flag == 1 && current_tab == 2){ // Rutina de caminata en la tab de assistance
 
     // -------- Máquina de estados --------
     if(gait_phase == 0){ // Condición para iniciar la rutina
       LED("WHITE");
       
-      
       read_currents(false); // Lectura de corrientes
-      ReadADC(true); // Lectura de FSRs
+      ReadADC(false); // Lectura de FSRs
 
       // (Heel > TH_heel && FSR2) 
       // !heel_button && toe_button
@@ -1792,8 +1834,10 @@ void loop() {
       // Cuando se detecta la intención, se inicia la caminata
       if(PV2_cur > 90 || PV2_cur < -90){  // Intención para iniciar con el pie izquierdo, inicia en pre balanceo a balanceo
         gait_phase = 1;
+        NotifyMaster();
       } else if (!heel_button && toe_button){ // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
         gait_phase = 2;
+        NotifyMaster();
       }
 
       // Siguiente iteración
@@ -1806,7 +1850,7 @@ void loop() {
         delayMS(CAN_DELAY);
         motion_mode_command(2, knee_balanceo[count], 0, 2.1, 0.1, 0);
         delayMS(CAN_DELAY);
-        motion_mode_command(3, ankle_balanceo[count], 0, 6, 0, 0);
+        motion_mode_command(3, ankle_balanceo[count], 0, 6, 0.3, 0);
         delayMS(CAN_DELAY);
 
         // Siguiente iteración
@@ -1816,7 +1860,7 @@ void loop() {
         
       } else { // Reinicio
 
-        ReadADC(true); // Lectura de FSRs
+        ReadADC(false); // Lectura de FSRs
         //read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel > TH_heel
@@ -1827,10 +1871,10 @@ void loop() {
         
         if(!toe_button && heel_button){ // Condición para cambio de fase
           gait_phase = 2;
+          NotifyMaster();
           count = 0;
           return;
         }
-        
       }
     } else if (gait_phase == 2) { // Fase de Contacto Inicial
       //Serial.println("Contacto Inicial");
@@ -1848,7 +1892,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(true); // Lectura de FSRs
+        ReadADC(false); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
         
         // FSR2 && (Heel > TH_heel)*0.8
@@ -1858,6 +1902,7 @@ void loop() {
         
         if(toe_button && heel_button){ // Condición para cambio de fase
           gait_phase = 3;
+          NotifyMaster();
           count = 0;
           return;
         }
@@ -1881,10 +1926,9 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(true); // Lectura de FSRs
+        ReadADC(false); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
-        //
         //FSR2 && Heel < TH_heel // FSR2
         //toe_button && !heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
@@ -1892,6 +1936,7 @@ void loop() {
         
         if(toe_button && !heel_button){ // Condición para cambio de fase
           gait_phase = 4;
+          NotifyMaster();
           count = 0;
           // Serial.println("Transición de Apoyo a Pre Balanceo");
           return;
@@ -1914,7 +1959,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(true); // Lectura de FSRs
+        ReadADC(false); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
         
         // !FSR2 && Heel < TH_heel*0.4
@@ -1924,6 +1969,7 @@ void loop() {
 
         if(!toe_button && !heel_button){ // Condición para cambio de fase
           gait_phase = 1;
+          NotifyMaster();
           count = 0;
           // Serial.println("Transición de Pre Balanceo a Balanceo");
           return;
@@ -1941,8 +1987,12 @@ void loop() {
     else if (process_variable == "vel"){read_velocities();} 
     else if (process_variable == "cur"){read_currents(false);}
   } 
-  else if (gait_phase == 0){
-    //reset_all_motors(); // stop 
+  else if (gait_phase == 0 && !notified){
+    // Notificación desde el main loop
+    if (!notified){
+      NotifyMaster();
+      notified = true;
+    }
   }
 }
 

@@ -14,7 +14,8 @@
 #define LED_PIN 2
 
 // Entrada digital de interrupción
-const int interruptPin = 23; // Pin de interrupción
+const int interruptPin = 25; // Pin de interrupción
+bool lastState = LOW; // Estado anterior del pin
 
 // ----------------------------------- Declaración de funciones prototipo ------------------------------------------
 void sendI2CMessage(uint8_t slaveAddress, const char* message);
@@ -31,17 +32,17 @@ String readI2CMessage(uint8_t slaveAddress);
 #define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI
 #define CHARACTERISTIC_UUID_SP "0000000f-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de SP
 #define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // Característica para el nivel de asistencia del motor
-#define CHARACTERISTIC_UUID_USER "000000a1-0000-1000-8000-00805f9b34fa" // Característica para la altura y el peso de la persona
+#define CHARACTERISTIC_UUID_USER "000000a1-0000-1000-8000-00805f9b34fa"  // Característica para la altura y el peso de la persona
 
 // Servicio para las variables de proceso
 #define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_UUID_PV "0000000b-0000-1000-8000-00805f9b34fa"      // Característica para recibir el valor de la variable de proceso
-#define CHARACTERISTIC_UUID_ALL_PV "0000000e-0000-1000-8000-00805f9b34fa"  // Característica para leer todas las variables de proceso en modo de monitoreo
+#define CHARACTERISTIC_UUID_PHASE "0000000e-0000-1000-8000-00805f9b34fa"   // Característica para leer la fase de la marcha
 
 // Servicio para el modo de comando 
 #define SERVICE_UUID_COMMAND "00000003-0000-1000-8000-00805f9b34fb"
 #define CHARACTERISTIC_UUID_MODE "0000000c-0000-1000-8000-00805f9b34fa" // Característica para definir qué variable de proceso analizar
-#define CHARACTERISTIC_UUID_TAB "000000aa-0000-1000-8000-00805f9b34fa" // Característica para indicar en qué ventana se encuentra el usuario
+#define CHARACTERISTIC_UUID_TAB "000000aa-0000-1000-8000-00805f9b34fa"  // Característica para indicar en qué ventana se encuentra el usuario
 
 // Declara variables de las características
 BLECharacteristic *pCharacteristic_PI;
@@ -49,13 +50,13 @@ BLECharacteristic *pCharacteristic_SP;
 BLECharacteristic *pCharacteristic_LEVEL;
 BLECharacteristic *pCharacteristic_USER;
 BLECharacteristic *pCharacteristic_PV;
+BLECharacteristic *pCharacteristic_Phase;
 BLECharacteristic *pCharacteristic_MODE;
 BLECharacteristic *pCharacteristic_TAB;
 
 // ------- Constantes para I2C -------
 #define SLAVE_ADDRESS 0x55     // Dirección del esclavo I2C para Right Leg
-#define BUFFER_SIZE 300        // Tamaño del buffer para recibir datos ELIMINAR
-#define I2C_BUFFER_LENGTH 128  // Tamaño máximo del buffer modificado en la ESP32
+#define BUFFER_SIZE 300        // Tamaño del buffer para recibir datos 
 
 // ------------------------------------------ Set up para BLE ------------------------------------------
 // ------- Variables para BLE -------
@@ -102,7 +103,7 @@ String selected_limb; // Articulación seleccionada actual
 class ServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) { // Cuando se conecta
     digitalWrite(LED_PIN, HIGH); 
-    Serial.println("Cliente conectado");
+    Serial.println("Cliente CONECTADO");
     client_connected = true;
   }
 
@@ -410,6 +411,21 @@ class BLECallback_PV : public BLECharacteristicCallbacks {
   }
 };
 
+// Clase de Callback para manejar la información de la característica de la variable de proceso 
+class BLECallback_PHASE : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    // Método que notifica cuando el cliente lee la característica
+    Serial.println("Característica Phase leída");
+  } 
+
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    // Método que recibe un nuevo valor de la característica
+    std::string value = std::string(pCharacteristic->getValue().c_str());
+    Serial.println("Característica Phase escrita: " + String(value.c_str()));
+    pCharacteristic->notify();
+  }
+};
+
 // Clase de Callback para manejar la información de la característica de la variable del estado 
 class BLECallback_MODE : public BLECharacteristicCallbacks {
   void onRead(BLECharacteristic *pCharacteristic) {
@@ -537,7 +553,6 @@ class BLECallback_TAB : public BLECharacteristicCallbacks {
 
 // ------------------------------------- Set up para I2C -------------------------------------
 // ------- Variables para I2C -------
-
 char receivedData[BUFFER_SIZE]; // Buffer para almacenar los datos recibidos
 uint8_t dataLength = 0; // Longitud de los datos recibidos
 
@@ -620,6 +635,45 @@ String readI2CMessage(uint8_t slaveAddress) {
   return message; // Se devuelve el mensaje
 }
 
+void read_phase(){
+  /* Función que hace el request de la fase de caminata desde la Tiva
+  1 - Al recibir este dato, la información ya debería estar formateada
+  2 - Mandr un request de lectura en bufferes de 32 bytes por I2C
+  3 - Terminar la lectura de información cuando se recibe un caracter terminador \n
+  4 - Recibir el JSON stirng, lo convierte a JSON file y se asegura de haya llegado correctamente 
+  5 - Si hay conexión por BLE, serializar el JSON, se asigna el valor a la característica y se notifica al cliente 
+  */
+  // Hace el request al esclavo
+  String stringread = readI2CMessage(SLAVE_ADDRESS);
+
+  // Se deserializa el JSON
+  StaticJsonDocument<40> jsonrec; 
+  DeserializationError error = deserializeJson(jsonrec, stringread);
+
+  // Se revisan errores
+  if (error) {
+    Serial.print("Error al analizar JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+  else if (!jsonrec.containsKey("T") || !jsonrec.containsKey("phase") || !jsonrec.containsKey("limb")){
+      Serial.print("Información no encontrada");
+      return;
+  }
+
+  Serial.println(stringread);
+
+  if (client_connected){ // Se mandan los datos a la app si está conectada
+    Serial.println("Notificación Phase");
+    String stringsend = "";
+    serializeJson(jsonrec, stringsend);
+    pCharacteristic_Phase->setValue(stringsend.c_str()); // Se mandan los valores por BLE
+
+    // Se notifica sobre la característica al cliente
+    pCharacteristic_Phase->notify();
+  }
+}
+
 void read_PV(){
   /* Función que lee la variable de proceso de la Tiva y la manda por BLE
   1 - Manda un indicador en formato JSON de qué información se quiere leer {"T":"F"} 
@@ -659,7 +713,7 @@ void read_PV(){
   }
 
   if (client_connected){ // Se mandan los datos a la app si está conectada
-    Serial.println("Notificación");
+    Serial.println("Notificación PV");
     String stringsend = "";
     serializeJson(jsonrec, stringsend);
     pCharacteristic_PV->setValue(stringsend.c_str()); // Se mandan los valores por BLE
@@ -669,19 +723,10 @@ void read_PV(){
   }
 }
 
-void handle_tiva_interrupt() {
-  Serial.println("Cambio detectado");
-
-  // Realizar lectura por I2C
-
-  // Procesa la información
-
-  // Guardarla en una característica por BLE
-
-  // Mandar la info por BLE a la app
-}
-
 void setup() {
+  // disableCore1WDT();  // Desactiva el WDT en Core 1
+  // disableLoopWDT();   // Desactiva el WDT del loop principal
+
   // Inicializa el puerto serie para la depuración
   Serial.begin(115200);
   Serial.println("Iniciando BLE");
@@ -695,7 +740,6 @@ void setup() {
 
   // Configuración del pin de entrada
   pinMode(interruptPin, INPUT); // Configura el pin como entrada
-  attachInterrupt(digitalPinToInterrupt(interruptPin), handle_tiva_interrupt, RISING);
 
   // Inicializa el dispositivo BLE y el servidor
   BLEDevice::init(DEVICE_NAME);
@@ -754,6 +798,16 @@ void setup() {
                                        );
   pCharacteristic_PV->setCallbacks(new BLECallback_PV());
   pCharacteristic_PV->addDescriptor(new BLE2902()); // Se añade un descriptor
+  // Crea la característica BLE para recibir datos de la fase
+  pCharacteristic_Phase = pService_PV->createCharacteristic(
+                                         CHARACTERISTIC_UUID_PHASE,
+                                         BLECharacteristic::PROPERTY_READ |
+                                         BLECharacteristic::PROPERTY_WRITE |
+                                         BLECharacteristic::PROPERTY_NOTIFY |
+                                         BLECharacteristic::PROPERTY_INDICATE
+                                       );
+  pCharacteristic_Phase->setCallbacks(new BLECallback_PHASE());
+  pCharacteristic_Phase->addDescriptor(new BLE2902()); // Se añade un descriptor
 
   // Crea el servicio de envío de valor del estado
   BLEService *pService_MODE = pServer->createService(SERVICE_UUID_COMMAND);
@@ -812,8 +866,21 @@ void setup() {
 }
 
 void loop() {
+  // ------------- Lectura de la variable de proceso ---------------
   if (tab_num == 4){ // Se realiza la lectura si está en tab de monitoring
     delay(250); // Lectuda de PV cada 100 ms
     read_PV();
   }
+
+  // ------------- Lectura de la fase de la caminata ---------------
+  // Detección de ON-SET del bit de interrupción
+  bool currentState = digitalRead(interruptPin);
+  if (lastState == LOW && currentState == HIGH) {
+    Serial.println("INICIO");
+    read_phase(); // Lectura de la información
+    Serial.println("FIN");
+  }
+  lastState = currentState; // Actualizar estado anterior
+
+  delay(1);
 }
