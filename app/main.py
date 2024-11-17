@@ -437,10 +437,18 @@ class ExoBoostApp(MDApp):
 
             # Si se conectó, se habilitan notificaciones para la característica PV
             if self.connection_successful:
+                # Notificaciones para PV
                 service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
                 char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
-                notifications_enabled = self.ble.set_notifications(service_uuid, char_uuid, True)
-                self.ble.connected = notifications_enabled # Comprueba el estado de la conexión dependiente del estado de la notificación
+                notifications_enabled_1: bool = self.ble.set_notifications(service_uuid, char_uuid, True)
+
+                # Notificaciones para Phase
+                service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+                char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PHASE"]) 
+                notifications_enabled_2: bool = self.ble.set_notifications(service_uuid, char_uuid, True)
+
+                # Comprueba el estado de la conexión dependiente del estado de la notificación
+                self.ble.connected = notifications_enabled_1 and notifications_enabled_2
                 Clock.schedule_once(update_label)
 
         def update_label(*args): self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
