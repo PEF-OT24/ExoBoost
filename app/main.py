@@ -108,6 +108,14 @@ class ExoBoostApp(MDApp):
             "weight": "-1",
             "height": "-1"
         }
+        self.gait_phase: int = 0 # Fase de la gait caminata
+        '''
+        0 - Standing
+        1 - Contacto Inicial
+        2 - Apoyo
+        3 - Pre Balanceo
+        4 - Balanceo
+        '''
         
         # Límites de los parámetros PI de los motores
         self.motor_params_lims =  {
@@ -777,7 +785,6 @@ class ExoBoostApp(MDApp):
         """
 
         def send_user():
-            print(self.user_info)
             # Función embebida para mandar la información por BLE de la altura o peso
             if not self.ble_found: return
 
@@ -828,8 +835,6 @@ class ExoBoostApp(MDApp):
             # Se lee el archivo JSON
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-            print(json_dict)
-
             # '''
             # Nota: De momento solamente se desea leer el parámetro PV.
 
@@ -842,25 +847,36 @@ class ExoBoostApp(MDApp):
             #     "motor3": "100"
             # }
             # '''
+            
+            # Procesamiento de la información dependiendo del indicador
+            indicator: str = json_dict["T"]
+            match indicator:   
+                case "F":
+                    # Se obtienen los valores del diccionario
+                    limb_read = json_dict["limb"]      
+                    monitoring_read = json_dict["monitoring"]      
+                    motor1pv_read = json_dict["motor1"]            
+                    motor2pv_read = json_dict["motor2"]            
+                    motor3pv_read = json_dict["motor3"]    
 
-            # # Se obtienen los valores del diccionario
-            # limb_read = json_dict["limb"]      
-            # monitoring_read = json_dict["monitoring"]      
-            # motor1pv_read = json_dict["motor1"]            
-            # motor2pv_read = json_dict["motor2"]            
-            # motor3pv_read = json_dict["motor3"]    
+                    # Si es la variable de proceso de interés, se despliega la información 
+                    if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
+                        
+                    # Se guardan los valores en el diccionario
+                    self.motor_parameters_pv["motor1"] = motor1pv_read
+                    self.motor_parameters_pv["motor2"] = motor2pv_read
+                    self.motor_parameters_pv["motor3"] = motor3pv_read
 
-            # # Si es la variable de proceso de interés, se despliega la información 
-            # if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
-                
-            # # Se guardan los valores en el diccionario
-            # self.motor_parameters_pv["motor1"] = motor1pv_read
-            # self.motor_parameters_pv["motor2"] = motor2pv_read
-            # self.motor_parameters_pv["motor3"] = motor3pv_read
+                    # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+                    if self.selected_limb == limb_read: 
+                        Clock.schedule_once(self.update_process_variable)
+                    
+                case "J":
+                    # Se obtienen los valores del diccionario
+                    limb_read = json_dict["limb"]      
+                    self.gait_phase = json_dict["phase"]     
 
-            # # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-            # if self.selected_limb == limb_read: 
-            #     Clock.schedule_once(self.update_process_variable)
+                    print(self.gait_phase) 
 
         except Exception as e:
             print(f"Error la lectura: {e}")
@@ -871,6 +887,9 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
         self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
         self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
+
+    def update_phase_indicator(self, *args):
+        pass
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):

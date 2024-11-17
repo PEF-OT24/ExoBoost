@@ -32,7 +32,7 @@ String readI2CMessage(uint8_t slaveAddress);
 #define CHARACTERISTIC_UUID_PI "0000000a-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de PI
 #define CHARACTERISTIC_UUID_SP "0000000f-0000-1000-8000-00805f9b34fa"    // Característica de parámetros de SP
 #define CHARACTERISTIC_UUID_LEVEL "0000000d-0000-1000-8000-00805f9b34fa" // Característica para el nivel de asistencia del motor
-#define CHARACTERISTIC_UUID_USER "000000a1-0000-1000-8000-00805f9b34fa"  // Característica para la altura y el peso de la persona
+#define CHARACTERISTIC_UUID_USER "000000ab-0000-1000-8000-00805f9b34fa"  // Característica para la altura y el peso de la persona
 
 // Servicio para las variables de proceso
 #define SERVICE_UUID_PROCESS "00000002-0000-1000-8000-00805f9b34fb"
