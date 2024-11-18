@@ -670,7 +670,6 @@ void read_phase(){
     pCharacteristic_Phase->setValue(stringsend.c_str()); // Se mandan los valores por BLE
 
     // Se notifica sobre la característica al cliente
-    delay(10); // Pequeño delay para la propagación de la información
     pCharacteristic_Phase->notify();
 
     Serial.print("Valor notificado: "); Serial.println(stringsend);
