@@ -964,7 +964,7 @@ class ExoBoostApp(MDApp):
                 case "J":
                     # Se obtienen los valores del diccionario
                     limb_read = json_dict["limb"]      
-                    self.gait_phase = json_dict["phase"]  
+                    self.gait_phase = int(json_dict["phase"])
 
                     Clock.schedule_once(self.update_phase_indicator)
                     
