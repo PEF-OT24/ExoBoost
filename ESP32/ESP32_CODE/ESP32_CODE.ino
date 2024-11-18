@@ -670,6 +670,7 @@ void read_phase(){
     pCharacteristic_Phase->setValue(stringsend.c_str()); // Se mandan los valores por BLE
 
     // Se notifica sobre la característica al cliente
+    delay(10); // Pequeño delay para la propagación de la información
     pCharacteristic_Phase->notify();
 
     Serial.print("Valor notificado: "); Serial.println(stringsend);
@@ -841,7 +842,7 @@ void setup() {
   pCharacteristic_MODE->setValue(buffer);
   pCharacteristic_TAB->setValue(buffer);
   
-  // Inicialización de la característica PI
+  // Inicialización de la característica PV
   StaticJsonDocument<200> values_doc;
   char values_buffer[200];
   values_doc["limb"] = "Right leg";
@@ -851,6 +852,17 @@ void setup() {
   values_doc["motor3"] = "100";
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
+  pCharacteristic_PV->notify();
+
+  // Inicialización de la característica Phase
+  StaticJsonDocument<40> values_doc2;
+  char values_buffer2[40];
+  values_doc2["limb"] = "Right leg";
+  values_doc2["T"] = "J";
+  values_doc2["phase"] = "0";
+  serializeJson(values_doc2, values_buffer2);
+  pCharacteristic_Phase->setValue(values_buffer2);
+  pCharacteristic_Phase->notify();
 
   // Inicia los servicios BLE
   pService_PARAMS->start();

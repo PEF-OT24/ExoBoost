@@ -68,7 +68,7 @@ class CirculoFases(Widget):
             self.colors["Verde deshabilitado"],
             self.colors["Morado deshabilitado"],
             self.colors["Amarillo deshabilitado"],
-            self.colors["Blanco deshabilitado"]
+            self.colors["Light Gray"]
         ]
         
         # Colores en modo habilitado
@@ -86,7 +86,7 @@ class CirculoFases(Widget):
             SeccionColor(self.colors["Verde deshabilitado"]),     # Verde (Sección 2)
             SeccionColor(self.colors["Morado deshabilitado"]),    # Morado claro (Sección 3)
             SeccionColor(self.colors["Amarillo deshabilitado"]),  # Amarillo (Sección 4)
-            SeccionColor(self.colors["Blanco deshabilitado"])     # Blanco (Círculo interno)
+            SeccionColor(self.colors["Light Gray"])     # Blanco (Círculo interno)
         ]
 
     def update_color(self, index, color, **kwargs):
@@ -115,7 +115,7 @@ class CirculoFases(Widget):
             
             # Dibujar el círculo interno
             Color(*self.secciones[4].rgba)
-            Ellipse(pos=(self.center_x - 50, self.center_y - 50), size=(dp(100), dp(100)))
+            Ellipse(pos=(self.center_x - dp(50), self.center_y - dp(50)), size=(dp(100), dp(100)))
 
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
