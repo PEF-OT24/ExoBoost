@@ -97,7 +97,7 @@ class CirculoFases(Widget):
     
     def apagar_colores(self):
         '''Método para apagar los colores de las secciones'''
-        for i in range(4):
+        for i in range(5):
             self.update_color(i, self.colores_apagados[i])
     
     def encender_color(self, index):
