@@ -86,7 +86,7 @@ class CirculoFases(Widget):
             SeccionColor(self.colors["Verde deshabilitado"]),     # Verde (Sección 2)
             SeccionColor(self.colors["Morado deshabilitado"]),    # Morado claro (Sección 3)
             SeccionColor(self.colors["Amarillo deshabilitado"]),  # Amarillo (Sección 4)
-            SeccionColor(self.colors["Light Gray"])     # Blanco (Círculo interno)
+            SeccionColor(self.colors["Blanco deshabilitado"])     # Blanco (Círculo interno)
         ]
 
     def update_color(self, index, color, **kwargs):
