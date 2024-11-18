@@ -110,7 +110,7 @@ class CirculoFases(Widget):
             # Dibujar las 4 secciones con los colores actualizados
             for i in range(4):
                 Color(*self.secciones[i].rgba)
-                Ellipse(pos=(self.center_x - 100, self.center_y - 100), size=(200, 200),
+                Ellipse(pos=(self.center_x - dp(100), self.center_y - dp(100)), size=(dp(200), dp(200)),
                         angle_start=i * 90, angle_end=(i + 1) * 90)
             
             # Dibujar el círculo interno
