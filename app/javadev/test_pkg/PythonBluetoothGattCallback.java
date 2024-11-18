@@ -81,6 +81,11 @@ public final class PythonBluetoothGattCallback extends BluetoothGattCallback {
             }
         }
 
+        // Se guarda el valor leído
+        String read_value = bytesToString(characteristic.getValue());
+        this.putValue(this.serviceNotified, this.characteristicNotified, read_value);
+
+        this.ready_to_read = true; // Actualiza el estado de listo para lectura
         this.ReadIndicated = true; // Se indica que se debe leer una característica
 
         // Se notifica al objeto de Python

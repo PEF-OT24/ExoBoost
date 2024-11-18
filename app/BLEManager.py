@@ -152,8 +152,8 @@ class BluetoothManager_App:
         # Se crean los objetos BLE desde la API de Android SDK
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback()          # Instancia de Callback para escaneo
-        self.python_interface = NotificationInterfaceCallback(notification_callback)                 # Instancia de PythonInterface con su callback
-        self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface) # Instancia de Callback para el estado del GATT
+        self.python_interface = NotificationInterfaceCallback(notification_callback)    # Instancia de PythonInterface con su callback
+        self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface)  # Instancia de Callback para el estado del GATT
 
         # ----------- Atributos lógicos -----------
         self._GATT_MAX_MTU_SIZE = 517               # Tamaño máximo de transmisión
@@ -454,11 +454,6 @@ class BluetoothManager_App:
             # Se configura la lectura del mensaje
             self.python_gatt_callback.CharToRead(service_uuid, characteristic_uuid)
             self.connected_gatt.readCharacteristic(characteristic) # Se lee la característica
-
-            # # Espera hasta que la característica se pueda leer
-            # self.python_gatt_callback.show_info = False # Mensaje no mostrado 
-            # while not(self.python_gatt_callback.isReady_to_read()): sleep(0.01) # Espera 10 ms hasta que la lectura esté disponible
-            # self.python_gatt_callback.reset_reading()  # Reinicia la bandera
 
             # Se devuelve el valor de la característica
             return self.python_gatt_callback.getValue(service_uuid, characteristic_uuid) # Se obtiene el valor de la característica convertido a string

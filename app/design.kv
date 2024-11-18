@@ -7,6 +7,53 @@
     color: app.colors['White']
     background_color: app.colors['Dark Blue']
 
+# Clase para el circulo seccionado de indicador de la fase
+<CirculoFases>:
+
+    canvas:
+        # Sección 1 (cuarto del círculo) - Color dinámico
+        Color:
+            rgba: root.secciones[0].rgba  # Acceso directo al color de la sección
+        Ellipse:
+            pos: self.center_x - dp(100), self.center_y  - dp(100)
+            size: dp(200), dp(200) # 200, 200
+            angle_start: 0
+            angle_end: 90
+
+        # Sección 2 (cuarto del círculo) - Color dinámico
+        Color:
+            rgba: root.secciones[1].rgba
+        Ellipse:
+            pos: self.center_x - dp(100), self.center_y  - dp(100)
+            size: dp(200), dp(200) # 200, 200
+            angle_start: 90
+            angle_end: 180
+
+        # Sección 3 (cuarto del círculo) - Color dinámico
+        Color:
+            rgba: root.secciones[2].rgba
+        Ellipse:
+            pos: self.center_x - dp(100), self.center_y - dp(100)
+            size: dp(200), dp(200) # 200, 200
+            angle_start: 180
+            angle_end: 270
+
+        # Sección 4 (cuarto del círculo) - Color dinámico
+        Color:
+            rgba: root.secciones[3].rgba
+        Ellipse:
+            pos: self.center_x - dp(100), self.center_y - dp(100)
+            size: dp(200), dp(200) # 200, 200
+            angle_start: 270
+            angle_end: 360
+
+        # Círculo interno
+        Color:
+            rgba: root.secciones[4].rgba
+        Ellipse:
+            pos: self.center_x - dp(50), self.center_y - dp(50)
+            size: dp(100), dp(100) # 100, 100
+
 # Clase predefinida para los subtítulos con formato
 <CustomLabelRoboto>: 
     font_name: "Roboto" # Roboto para texto y subtítulos
@@ -587,7 +634,7 @@ WindowManager:
                     BoxLayout: #1
                         orientation: 'vertical'
                         # Tamaño
-                        size_hint_y: 0.15
+                        size_hint_y: 0.1
 
                         # Espaciados
                         padding: dp(5)
@@ -598,24 +645,54 @@ WindowManager:
             # -------------------------- Datos del usuario -------------------------- 
                     BoxLayout: #2
                         orientation: 'vertical'
-                        size_hint_y: 0.3
+                        size_hint_y: 0.2
                         padding: dp(5)
                         spacing: dp(5)
                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
 
-                        BoxLayout:
-                            orientation: 'horizontal'
-                            size_hint_y: None
-                            height: self.minimum_height
-                            padding: dp(20)
-                            spacing: dp(5)
-                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    # # ------------------------ Altura -----------------------
+                    #     BoxLayout:
+                    #         orientation: 'horizontal'
+                    #         size_hint_y: None
+                    #         height: self.minimum_height
+                    #         padding: dp(20)
+                    #         spacing: dp(5)
+                    #         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                    #         canvas.before:
+                    #             Color:
+                    #                 rgba: app.colors["White"]
+                    #             Rectangle:
+                    #                 pos: self.pos
+                    #                 size: self.size
+                            
+                    #         MDLabel:
+                    #             text: "Height (m)"
+                    #             halign: "left"
+                    #             theme_text_color: "Custom"
+                    #             text_color: app.colors["White"]
+
+                    #         MDTextField:
+                    #             id: height_input
+                    #             multiline: False
+                    #             size_hint_x: None
+                    #             width: dp(100)
+                    #             halign: "center"
+                    #             hint_text: " "
+                    #             mode: "fill"
+                    #             fill_color: app.colors["White"]
+                    #             hint_text_color_normal: app.colors["Black"]
+                    #             hint_text_color_focus: app.colors["Light Orange"]
+
+                    #             on_text_validate:  
+                    #                 app.on_entry_text("height", "user", height_input.text)
 
                     # ------------------------ Peso ----------------------------
                         BoxLayout:
                             orientation: 'horizontal'
-                            size_hint_y: None
-                            height: self.minimum_height
+                            size_hint_y: 0.5
+                            # size_hint_y: None
+                            # height: self.minimum_height
                             padding: dp(20)
                             spacing: dp(5)
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
@@ -666,16 +743,60 @@ WindowManager:
                     # ------------------------ Fase de la marcha -----------------------
                     
 
+                    # ------------------------ Fase de la marcha -----------------------
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            size_hint_y: 0.5
+                            # size_hint_y: None
+                            # height: self.minimum_height
+                            padding: dp(20)
+                            spacing: dp(5)
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
+                            # canvas.before:
+                            #     Color:
+                            #         rgba: app.colors["White"]
+                            #     Rectangle:
+                            #         pos: self.pos
+                            #         size: self.size
+                            
+                            MDLabel:
+                                id: phase_label
+                                text: "Fase: Standing"
+                                halign: "center"
+                                theme_text_color: "Custom"
+                                text_color: app.colors["White"]
+
+                            # MDTextField:
+                            #     id: height_input
+                            #     multiline: False
+                            #     size_hint_x: None
+                            #     width: dp(100)
+                            #     halign: "center"
+                            #     hint_text: " "
+                            #     mode: "fill"
+                            #     fill_color: app.colors["White"]
+                            #     hint_text_color_normal: app.colors["Black"]
+                            #     hint_text_color_focus: app.colors["Light Orange"]
+
+                            #     on_text_validate:  
+                            #         app.on_entry_text("height", "user", height_input.text)
+
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: 0.4
+
+                        CirculoFases:
+                            id: circulo_fases
+
             #-------------------------- Botón de Calibración ---------------------------------
                     BoxLayout: #3
                         orientation: 'vertical'
-                        # size_hint_y: None
-                        # height: self.minimum_height
-                        size_hint_y: 0.15
+                        size_hint_y: 0.1
                         padding: dp(10)
                         spacing: dp(10)
                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                        
+
                         MDFillRoundFlatButton:
                             id: calibrate_button
                             text: 'Calibrar'
@@ -700,56 +821,89 @@ WindowManager:
                         spacing: dp(10)
                         # size_hint_y: None
                         # height: self.minimum_height
-                        size_hint_y: 0.4
+                        size_hint_y: 0.2
                         pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                        
+                        BoxLayout: # Botones para stand up/sit down y walk
+                            orientation: 'horizontal'
+                            padding: dp(20)
+                            spacing: dp(10)
+                            # size_hint_y: None
+                            # height: self.minimum_height
+                            size_hint_y: 0.5
+                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+
                 # ------------------ Botón para pararse y sentarse ------------------
-                        MDFillRoundFlatButton:
-                            id: standup_sitdown_mode
-                            text: 'STAND UP'
-                            text_color: app.colors['White']
-                            size_hint: None, None
-                            ripple_effect: False
-                            ripple_color: app.colors['Cyan']
-                            on_press: 
-                                self.md_bg_color = app.colors["Light Orange"]
-                                app.sit_down_stand_up()
-                            on_release: self.md_bg_color = app.colors["Cyan"]
-                            md_bg_color: app.colors["Cyan"]
-                            width: root.width*0.4
-                            height: root.height*0.05
-                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                # -------------------- Botón para caminar ----------------------------
-                        MDFillRoundFlatButton:
-                            id: walk_mode
-                            text: 'WALK'
-                            text_color: app.colors['White']
-                            size_hint: None, None
-                            ripple_effect: False
-                            ripple_color: app.colors['Cyan']
-                            on_press: 
-                                self.md_bg_color = app.colors["Light Orange"]
-                                app.walk()
-                            on_release: self.md_bg_color = app.colors["Cyan"]
-                            md_bg_color: app.colors["Cyan"]
-                            width: root.width*0.4
-                            height: root.height*0.05
-                            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                            MDFillRoundFlatButton:
+                                id: standup_sitdown_mode
+                                text: 'STAND UP'
+                                text_color: app.colors['White']
+                                size_hint_x: 0.5
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: dp(60)
+                                halign: "center"
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                on_press: 
+                                    self.md_bg_color = app.colors["Light Orange"]
+                                    app.sit_down_stand_up()
+                                    
+                    # -------------------- Botón para caminar ----------------------------
+                            MDFillRoundFlatButton:
+                                id: walk_mode
+                                text: 'WALK'
+                                text_color: app.colors['White']
+                                size_hint_x: 0.5
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                on_release: self.md_bg_color = app.colors["Cyan"]
+                                md_bg_color: app.colors["Cyan"]
+                                width: dp(60)
+                                halign: "center"
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                on_press: 
+                                    self.md_bg_color = app.colors["Light Orange"]
+                                    app.walk()
+
                 # -------------------- Botón para detenerse ---------------------        
-                        MDFillRoundFlatButton:
-                            id: stop_mode
-                            text: 'STOP'
-                            text_color: app.colors['White']
-                            size_hint: None, None
-                            ripple_effect: False
-                            ripple_color: app.colors['Cyan']
-                            md_bg_color: app.colors["Cyan"]
-                            width: root.width*0.4
-                            height: root.height*0.05
+                        BoxLayout: # Botones para stand up/sit down y walk
+                            orientation: 'horizontal'
+                            padding: dp(20)
+                            spacing: dp(10)
+                            # size_hint_y: None
+                            # height: self.minimum_height
+                            size_hint_y: 0.5
                             pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-                            on_press: 
-                                self.md_bg_color = app.colors["Light Orange"]
-                                app.stop()
-                            on_release: self.md_bg_color = app.colors["Cyan"]
+                            
+                            Widget:
+                                size_hint_x: 0.1
+
+                            MDFillRoundFlatButton:
+                                id: stop_mode
+                                text: 'Stop'
+                                size_hint_x: 0.8
+                                text_color: app.colors['White']
+
+                                ripple_effect: False
+                                ripple_color: app.colors['Cyan']
+                                md_bg_color: app.colors["Cyan"]
+
+                                # size_hint_y: 0.5
+                                width: dp(200)
+                                # height: dp(10)
+                                halign: 'center'
+                                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                                on_press: 
+                                    self.md_bg_color = app.colors["Light Orange"]
+                                    app.stop()
+                                on_release: 
+                                    self.md_bg_color = app.colors["Cyan"]
+                            
+                            Widget:
+                                size_hint_x: 0.1
+
     # -------------------------------------------- Menú de Sintonización --------------------------------------------
             MDBottomNavigationItem:
                 id: tuning_tab
