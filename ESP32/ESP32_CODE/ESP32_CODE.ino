@@ -852,7 +852,7 @@ void setup() {
   values_doc["motor3"] = "100";
   serializeJson(values_doc, values_buffer);
   pCharacteristic_PV->setValue(values_buffer);
-  pCharacteristic_PV->notify();
+  // pCharacteristic_PV->notify();
 
   // Inicialización de la característica Phase
   StaticJsonDocument<40> values_doc2;
@@ -862,7 +862,7 @@ void setup() {
   values_doc2["phase"] = "0";
   serializeJson(values_doc2, values_buffer2);
   pCharacteristic_Phase->setValue(values_buffer2);
-  pCharacteristic_Phase->notify();
+  // pCharacteristic_Phase->notify();
 
   // Inicia los servicios BLE
   pService_PARAMS->start();

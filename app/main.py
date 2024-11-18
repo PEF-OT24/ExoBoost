@@ -68,7 +68,7 @@ class CirculoFases(Widget):
             self.colors["Verde deshabilitado"],
             self.colors["Morado deshabilitado"],
             self.colors["Amarillo deshabilitado"],
-            self.colors["Light Gray"]
+            self.colors["Blanco deshabilitado"]
         ]
         
         # Colores en modo habilitado
@@ -923,6 +923,7 @@ class ExoBoostApp(MDApp):
             if not self.reading: return
             
             # Se lee el archivo JSON
+            sleep(0.05) # ligero delay
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
             # '''

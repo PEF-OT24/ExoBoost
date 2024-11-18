@@ -52,7 +52,7 @@ class ColorManager():
                 "transparency": "255"
             },
             "Blanco deshabilitado": {
-                "color": "A9A9A9",
+                "color": "1C1C1C",
                 "transparency": "255"
             },
             "Verde habilitado": {
