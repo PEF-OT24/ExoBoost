@@ -47,6 +47,46 @@ class ColorManager():
                 "color": "50C878",
                 "transparency": "255"
             },
+            "Blanco habilitado": {
+                "color": "FFFFFF",
+                "transparency": "255"
+            },
+            "Blanco deshabilitado": {
+                "color": "A9A9A9",
+                "transparency": "255"
+            },
+            "Verde habilitado": {
+                "color": "00FF7F",
+                "transparency": "255"
+            },
+            "Verde deshabilitado": {
+                "color": "006400",
+                "transparency": "255"
+            },
+            "Azul habilitado": {
+                "color": "3399FF",
+                "transparency": "255"
+            },
+            "Azul deshabilitado": {
+                "color": "003366",
+                "transparency": "255"
+            },
+            "Morado habilitado": {
+                "color": "9B33FF",
+                "transparency": "255"
+            },
+            "Morado deshabilitado": {
+                "color": "4B0082",
+                "transparency": "255"
+            },
+            "Amarillo habilitado": {
+                "color": "FFFF66",
+                "transparency": "255"
+            },
+            "Amarillo deshabilitado": {
+                "color": "B5B500",
+                "transparency": "255"
+            }
         }
 
         # Creates a list of available colors names

@@ -20,6 +20,8 @@ from kivy.uix.gridlayout import GridLayout as Grid
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget 
+from kivy.graphics import Color, Ellipse
+from kivy.metrics import dp
 
 # Importar librerías de kivymd
 from kivymd.app import MDApp
@@ -46,6 +48,74 @@ from kivy.core.window import Window
 from kivy.metrics import dp
 Window.keyboard_anim_args = {'d': .2, 't': 'in_out_expo'}
 Window.softinput_mode = 'pan'
+
+class SeccionColor:
+    '''Clase que maneja colores de secciones circulares'''
+    def __init__(self, color: tuple):
+        self.rgba = color
+
+    def actualizar_color(self, color: tuple):
+        self.rgba = color
+
+class CirculoFases(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.colors: dict = ColorManager()._get_colors() # Ver ColorManager.py
+        
+        # Colores en modo opaco
+        self.colores_apagados = [
+            self.colors["Azul deshabilitado"],
+            self.colors["Verde deshabilitado"],
+            self.colors["Morado deshabilitado"],
+            self.colors["Amarillo deshabilitado"],
+            self.colors["Blanco deshabilitado"]
+        ]
+        
+        # Colores en modo habilitado
+        self.colores_encendidos = [
+            self.colors["Azul habilitado"],
+            self.colors["Verde habilitado"],
+            self.colors["Morado habilitado"],
+            self.colors["Amarillo habilitado"],
+            self.colors["Blanco habilitado"]
+        ]
+
+        # Inicializar los colores en modo opaco
+        self.secciones = [
+            SeccionColor(self.colors["Azul deshabilitado"]),      # Azul (Sección 1)
+            SeccionColor(self.colors["Verde deshabilitado"]),     # Verde (Sección 2)
+            SeccionColor(self.colors["Morado deshabilitado"]),    # Morado claro (Sección 3)
+            SeccionColor(self.colors["Amarillo deshabilitado"]),  # Amarillo (Sección 4)
+            SeccionColor(self.colors["Blanco deshabilitado"])     # Blanco (Círculo interno)
+        ]
+
+    def update_color(self, index, color, **kwargs):
+        '''Método para cambiar el color de la sección indicada al color indicado'''
+        self.secciones[index].actualizar_color(color)  # Rojo (Sección 1)
+        self.canvas.clear()  # Limpiar el lienzo antes de redibujar
+        self.dibujar_círculo()
+    
+    def apagar_colores(self):
+        '''Método para apagar los colores de las secciones'''
+        for i in range(5):
+            self.update_color(i, self.colores_apagados[i])
+    
+    def encender_color(self, index):
+        '''Método para encender el color de la sección indicada'''
+        self.update_color(index, self.colores_encendidos[index])
+
+    def dibujar_círculo(self):
+        '''Método para dibujar el círculo con los colores actualizados'''
+        with self.canvas:
+            # Dibujar las 4 secciones con los colores actualizados
+            for i in range(4):
+                Color(*self.secciones[i].rgba)
+                Ellipse(pos=(self.center_x - dp(100), self.center_y - dp(100)), size=(dp(200), dp(200)),
+                        angle_start=i * 90, angle_end=(i + 1) * 90)
+            
+            # Dibujar el círculo interno
+            Color(*self.secciones[4].rgba)
+            Ellipse(pos=(self.center_x - dp(50), self.center_y - dp(50)), size=(dp(100), dp(100)))
 
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
@@ -108,6 +178,21 @@ class ExoBoostApp(MDApp):
             "weight": "-1",
             "height": "-1"
         }
+        self.gait_phase: int = 0 # Fase de la gait caminata
+        '''
+        0 - Standing
+        1 - Contacto Inicial
+        2 - Apoyo
+        3 - Pre Balanceo
+        4 - Balanceo
+        '''
+        self.label_phases = {
+            "0": "Standing",
+            "1": "Contacto Inicial",
+            "2": "Apoyo",
+            "3": "Pre Balanceo",
+            "4": "Balanceo",
+        }
         
         # Límites de los parámetros PI de los motores
         self.motor_params_lims =  {
@@ -160,7 +245,7 @@ class ExoBoostApp(MDApp):
         # --- Servicio de Parameters ---
         self.uuid_manager.generate_uuids_chars(names[0], ["PI", "SP","LEVEL", "USER"], [0x000a, 0x000f, 0x000d, 0x00ab])
         # --- Servicio de Process ---
-        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "ALL_PV"], [0x000b, 0x000e])
+        self.uuid_manager.generate_uuids_chars(names[1], ["PV", "PHASE"], [0x000b, 0x000e])
         # --- Servicio de Commands ---
         self.uuid_manager.generate_uuids_chars(names[2], ["MODE", "TAB"], [0x000c, 0x00aa])
 
@@ -211,6 +296,15 @@ class ExoBoostApp(MDApp):
         # Diccionario de colores
         self.colors: dict = ColorManager()._get_colors() # Ver ColorManager.py
 
+        # Colores iniciales del círculo de la caminata
+        self.gait_colors = [
+            self.colors["Light Orange"],
+            self.colors["Cyan"],
+            self.colors["Red"], 
+            self.colors["White"],
+            self.colors["Black"]
+        ]
+
     def build(self):
         """Carga kivy design file"""
         if not(self.kv_loaded):
@@ -248,6 +342,9 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.standup_sitdown_mode.disabled = True
         self.root.get_screen('Main Window').ids.walk_mode.disabled = True
         self.root.get_screen('Main Window').ids.stop_mode.disabled = True
+
+        # Circulo indicador de fases
+        self.circulo_fases: CirculoFases = self.root.get_screen('Main Window').ids.circulo_fases
 
         # Se retorna la pantalla de inicio
         return self.root
@@ -312,7 +409,7 @@ class ExoBoostApp(MDApp):
             self.reading = False
         elif tab == "Assistance mode": 
             self.send_tab("assistance")
-            self.reading = False
+            self.reading = True
         elif tab == "Tuning mode": 
             self.send_tab("tuning")
             self.reading = False
@@ -437,10 +534,18 @@ class ExoBoostApp(MDApp):
 
             # Si se conectó, se habilitan notificaciones para la característica PV
             if self.connection_successful:
+                # Notificaciones para PV
                 service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
                 char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PV"]) 
-                notifications_enabled = self.ble.set_notifications(service_uuid, char_uuid, True)
-                self.ble.connected = notifications_enabled # Comprueba el estado de la conexión dependiente del estado de la notificación
+                notifications_enabled_1: bool = self.ble.set_notifications(service_uuid, char_uuid, True)
+
+                # Notificaciones para Phase
+                service_uuid = str(self.uuid_manager.uuids_services["Process"]) 
+                char_uuid = str(self.uuid_manager.uuids_chars["Process"]["PHASE"]) 
+                notifications_enabled_2: bool = self.ble.set_notifications(service_uuid, char_uuid, True)
+
+                # Comprueba el estado de la conexión dependiente del estado de la notificación
+                self.ble.connected = notifications_enabled_1 and notifications_enabled_2
                 Clock.schedule_once(update_label)
 
         def update_label(*args): self.root.get_screen('Main Window').ids.bt_state.text_color = self.colors["Green"]
@@ -476,6 +581,7 @@ class ExoBoostApp(MDApp):
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
     # ---------------- Proceso de calibración ----------------
     def calibrate(self):
+
         '''Método para iniciar calibración del movimiento en otra ventana'''
         # Si no está conectado cancela la operaión
         if not self.ble_found: return
@@ -550,7 +656,7 @@ class ExoBoostApp(MDApp):
     # ------- Botones de asistencia -------
     def sit_down_stand_up(self):
         '''Método para enviar el estado de sentarse/pararse'''
-        
+
         # Validación de BLE
         if not self.ble_found: return
         
@@ -769,7 +875,6 @@ class ExoBoostApp(MDApp):
         """
 
         def send_user():
-            print(self.user_info)
             # Función embebida para mandar la información por BLE de la altura o peso
             if not self.ble_found: return
 
@@ -820,37 +925,51 @@ class ExoBoostApp(MDApp):
             # Se lee el archivo JSON
             json_dict = self.ble.read_json(service_uuid, char_uuid) 
 
-            '''
-            Nota: De momento solamente se desea leer el parámetro PV.
+            # '''
+            # Nota: De momento solamente se desea leer el parámetro PV.
 
-            Ejemplo de estructura deseada del json para PV
-            json_dict = {
-                "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
-                "monitoring": "pos", # {"pos", "vel", "cur"}
-                "motor1": "100",
-                "motor2": "100",
-                "motor3": "100"
-            }
-            '''
+            # Ejemplo de estructura deseada del json para PV
+            # json_dict = {
+            #     "limb": "Rigth leg", # {"Rigth leg", "Left leg", "Right arm", "Left arm"}
+            #     "monitoring": "pos", # {"pos", "vel", "cur"}
+            #     "motor1": "100",
+            #     "motor2": "100",
+            #     "motor3": "100"
+            # }
+            # '''
+            
+            # Procesamiento de la información dependiendo del indicador
+            indicator: str = json_dict["T"]
+            match indicator:   
+                case "F":
+                    # Se obtienen los valores del diccionario
+                    limb_read = json_dict["limb"]      
+                    monitoring_read = json_dict["monitoring"]      
+                    motor1pv_read = json_dict["motor1"]            
+                    motor2pv_read = json_dict["motor2"]            
+                    motor3pv_read = json_dict["motor3"]    
 
-            # Se obtienen los valores del diccionario
-            limb_read = json_dict["limb"]      
-            monitoring_read = json_dict["monitoring"]      
-            motor1pv_read = json_dict["motor1"]            
-            motor2pv_read = json_dict["motor2"]            
-            motor3pv_read = json_dict["motor3"]    
+                    # Si es la variable de proceso de interés, se despliega la información 
+                    if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
+                        
+                    # Se guardan los valores en el diccionario
+                    self.motor_parameters_pv["motor1"] = motor1pv_read
+                    self.motor_parameters_pv["motor2"] = motor2pv_read
+                    self.motor_parameters_pv["motor3"] = motor3pv_read
 
-            # Si es la variable de proceso de interés, se despliega la información 
-            if not (monitoring_read == self.motor_parameters_pv["monitoring"]): return
-                
-            # Se guardan los valores en el diccionario
-            self.motor_parameters_pv["motor1"] = motor1pv_read
-            self.motor_parameters_pv["motor2"] = motor2pv_read
-            self.motor_parameters_pv["motor3"] = motor3pv_read
+                    # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
+                    if self.selected_limb == limb_read: 
+                        Clock.schedule_once(self.update_process_variable)
+                    
+                case "J":
+                    # Se obtienen los valores del diccionario
+                    limb_read = json_dict["limb"]      
+                    self.gait_phase = int(json_dict["phase"])
 
-            # Se muestran en pantalla los parámetros en la siguiente iteración de reloj
-            if self.selected_limb == limb_read: 
-                Clock.schedule_once(self.update_process_variable)
+                    Clock.schedule_once(self.update_phase_indicator)
+                    
+
+                    print(self.gait_phase) 
 
         except Exception as e:
             print(f"Error la lectura: {e}")
@@ -861,6 +980,14 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.pv_motor1.text = self.motor_parameters_pv["motor1"]
         self.root.get_screen('Main Window').ids.pv_motor2.text = self.motor_parameters_pv["motor2"]
         self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
+
+    def update_phase_indicator(self, *args):
+        '''Método que enciende la sección indicada del círculo de fases'''
+        self.circulo_fases.apagar_colores()
+        seccion = self.gait_phase - 1 if self.gait_phase > 0 else 4
+
+        self.circulo_fases.encender_color(seccion)
+        self.root.get_screen('Main Window').ids.phase_label.text = "Fase: " + str(self.label_phases[str(self.gait_phase)])
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):

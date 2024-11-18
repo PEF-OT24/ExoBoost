@@ -152,8 +152,8 @@ class BluetoothManager_App:
         # Se crean los objetos BLE desde la API de Android SDK
         self.ble_scanner = self.bluetooth_adapter.getBluetoothLeScanner()
         self.python_scan_callback = PythonScanCallback()          # Instancia de Callback para escaneo
-        self.python_interface = NotificationInterfaceCallback(notification_callback)                 # Instancia de PythonInterface con su callback
-        self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface) # Instancia de Callback para el estado del GATT
+        self.python_interface = NotificationInterfaceCallback(notification_callback)    # Instancia de PythonInterface con su callback
+        self.python_gatt_callback = PythonBluetoothGattCallback(self.python_interface)  # Instancia de Callback para el estado del GATT
 
         # ----------- Atributos lógicos -----------
         self._GATT_MAX_MTU_SIZE = 517               # Tamaño máximo de transmisión
