@@ -1804,6 +1804,8 @@ void NotifyMaster() {
   GPIOPinWrite(GPIO_PORTA_BASE, NOTIFY_PIN, NOTIFY_PIN);
   delayMS(5); // Mantén el pulso breve
   GPIOPinWrite(GPIO_PORTA_BASE, NOTIFY_PIN, 0); // Regresa a LOW
+
+  Serial.print(stringsend_ESP32);
 }
 
 void setup() {

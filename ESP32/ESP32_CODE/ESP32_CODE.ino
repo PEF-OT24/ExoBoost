@@ -671,6 +671,8 @@ void read_phase(){
 
     // Se notifica sobre la característica al cliente
     pCharacteristic_Phase->notify();
+
+    Serial.print("Valor notificado: "); Serial.println(stringsend);
   }
 }
 
@@ -876,9 +878,7 @@ void loop() {
   // Detección de ON-SET del bit de interrupción
   bool currentState = digitalRead(interruptPin);
   if (lastState == LOW && currentState == HIGH) {
-    Serial.println("INICIO");
     read_phase(); // Lectura de la información
-    Serial.println("FIN");
   }
   lastState = currentState; // Actualizar estado anterior
 

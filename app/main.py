@@ -20,6 +20,8 @@ from kivy.uix.gridlayout import GridLayout as Grid
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.widget import Widget 
+from kivy.graphics import Color, Ellipse
+from kivy.metrics import dp
 
 # Importar librerías de kivymd
 from kivymd.app import MDApp
@@ -46,6 +48,74 @@ from kivy.core.window import Window
 from kivy.metrics import dp
 Window.keyboard_anim_args = {'d': .2, 't': 'in_out_expo'}
 Window.softinput_mode = 'pan'
+
+class SeccionColor:
+    '''Clase que maneja colores de secciones circulares'''
+    def __init__(self, color: tuple):
+        self.rgba = color
+
+    def actualizar_color(self, color: tuple):
+        self.rgba = color
+
+class CirculoFases(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.colors: dict = ColorManager()._get_colors() # Ver ColorManager.py
+        
+        # Colores en modo opaco
+        self.colores_apagados = [
+            self.colors["Azul deshabilitado"],
+            self.colors["Verde deshabilitado"],
+            self.colors["Morado deshabilitado"],
+            self.colors["Amarillo deshabilitado"],
+            self.colors["Blanco deshabilitado"]
+        ]
+        
+        # Colores en modo habilitado
+        self.colores_encendidos = [
+            self.colors["Azul habilitado"],
+            self.colors["Verde habilitado"],
+            self.colors["Morado habilitado"],
+            self.colors["Amarillo habilitado"],
+            self.colors["Blanco habilitado"]
+        ]
+
+        # Inicializar los colores en modo opaco
+        self.secciones = [
+            SeccionColor(self.colors["Azul deshabilitado"]),      # Azul (Sección 1)
+            SeccionColor(self.colors["Verde deshabilitado"]),     # Verde (Sección 2)
+            SeccionColor(self.colors["Morado deshabilitado"]),    # Morado claro (Sección 3)
+            SeccionColor(self.colors["Amarillo deshabilitado"]),  # Amarillo (Sección 4)
+            SeccionColor(self.colors["Blanco deshabilitado"])     # Blanco (Círculo interno)
+        ]
+
+    def update_color(self, index, color, **kwargs):
+        '''Método para cambiar el color de la sección indicada al color indicado'''
+        self.secciones[index].actualizar_color(color)  # Rojo (Sección 1)
+        self.canvas.clear()  # Limpiar el lienzo antes de redibujar
+        self.dibujar_círculo()
+    
+    def apagar_colores(self):
+        '''Método para apagar los colores de las secciones'''
+        for i in range(4):
+            self.update_color(i, self.colores_apagados[i])
+    
+    def encender_color(self, index):
+        '''Método para encender el color de la sección indicada'''
+        self.update_color(index, self.colores_encendidos[index])
+
+    def dibujar_círculo(self):
+        '''Método para dibujar el círculo con los colores actualizados'''
+        with self.canvas:
+            # Dibujar las 4 secciones con los colores actualizados
+            for i in range(4):
+                Color(*self.secciones[i].rgba)
+                Ellipse(pos=(self.center_x - 100, self.center_y - 100), size=(200, 200),
+                        angle_start=i * 90, angle_end=(i + 1) * 90)
+            
+            # Dibujar el círculo interno
+            Color(*self.secciones[4].rgba)
+            Ellipse(pos=(self.center_x - 50, self.center_y - 50), size=(dp(100), dp(100)))
 
 class SplashScreen(Screen):
     '''Clase para mostrar la pantalla de inicio'''
@@ -116,6 +186,13 @@ class ExoBoostApp(MDApp):
         3 - Pre Balanceo
         4 - Balanceo
         '''
+        self.label_phases = {
+            "0": "Standing",
+            "1": "Contacto Inicial",
+            "2": "Apoyo",
+            "3": "Pre Balanceo",
+            "4": "Balanceo",
+        }
         
         # Límites de los parámetros PI de los motores
         self.motor_params_lims =  {
@@ -219,6 +296,15 @@ class ExoBoostApp(MDApp):
         # Diccionario de colores
         self.colors: dict = ColorManager()._get_colors() # Ver ColorManager.py
 
+        # Colores iniciales del círculo de la caminata
+        self.gait_colors = [
+            self.colors["Light Orange"],
+            self.colors["Cyan"],
+            self.colors["Red"], 
+            self.colors["White"],
+            self.colors["Black"]
+        ]
+
     def build(self):
         """Carga kivy design file"""
         if not(self.kv_loaded):
@@ -256,6 +342,9 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.standup_sitdown_mode.disabled = True
         self.root.get_screen('Main Window').ids.walk_mode.disabled = True
         self.root.get_screen('Main Window').ids.stop_mode.disabled = True
+
+        # Circulo indicador de fases
+        self.circulo_fases: CirculoFases = self.root.get_screen('Main Window').ids.circulo_fases
 
         # Se retorna la pantalla de inicio
         return self.root
@@ -492,6 +581,7 @@ class ExoBoostApp(MDApp):
     #----------------------------------------------------- Métodos del menú de asistencia -----------------------------------------------------
     # ---------------- Proceso de calibración ----------------
     def calibrate(self):
+
         '''Método para iniciar calibración del movimiento en otra ventana'''
         # Si no está conectado cancela la operaión
         if not self.ble_found: return
@@ -566,7 +656,7 @@ class ExoBoostApp(MDApp):
     # ------- Botones de asistencia -------
     def sit_down_stand_up(self):
         '''Método para enviar el estado de sentarse/pararse'''
-        
+
         # Validación de BLE
         if not self.ble_found: return
         
@@ -874,7 +964,10 @@ class ExoBoostApp(MDApp):
                 case "J":
                     # Se obtienen los valores del diccionario
                     limb_read = json_dict["limb"]      
-                    self.gait_phase = json_dict["phase"]     
+                    self.gait_phase = json_dict["phase"]  
+
+                    Clock.schedule_once(self.update_phase_indicator)
+                    
 
                     print(self.gait_phase) 
 
@@ -889,7 +982,12 @@ class ExoBoostApp(MDApp):
         self.root.get_screen('Main Window').ids.pv_motor3.text = self.motor_parameters_pv["motor3"]
 
     def update_phase_indicator(self, *args):
-        pass
+        '''Método que enciende la sección indicada del círculo de fases'''
+        self.circulo_fases.apagar_colores()
+        seccion = self.gait_phase - 1 if self.gait_phase > 0 else 4
+
+        self.circulo_fases.encender_color(seccion)
+        self.root.get_screen('Main Window').ids.phase_label.text = "Fase: " + str(self.label_phases[str(self.gait_phase)])
 
     # --------------------------- Métodos del menú Pop Up -------------------------
     def show_popup(self):
