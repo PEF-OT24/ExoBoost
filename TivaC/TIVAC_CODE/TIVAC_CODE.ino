@@ -270,25 +270,6 @@ void delayMS(uint32_t milliseconds) {
   SysCtlDelay(delay_cycles);
 }
 
-void print_data(uint8_t arr[8]) {
-  // Inicia la comunicación serial
-  Serial.begin(9600);
-
-  // Recorre el array e imprime cada valor en formato hexadecimal
-  for (int i = 0; i < 8; i++) {
-    if (arr[i] < 0x10) {
-      // Si el valor es menor que 0x10, imprime un 0 para mantener formato de 2 dígitos
-      //Serial.print("0");
-    }
-    //Serial.print(arr[i], HEX);
-
-    // Imprime un espacio entre los valores, pero no después del último
-    if (i < 7) {
-      //Serial.print(" ");
-    }
-  }
-}
-
 // ----------------------------------- Funciones de interrupción -----------------------------------
 void ISRSysTick(void) { // Función de interrupción para tiempo real
   doControlFlag = true;
@@ -312,7 +293,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
 
     // No realiza lectura si no es necesario
     if (commandCAN != 0x92 && commandCAN != 0x9C) {
-      Serial.println("NO MSG");
+      // Serial.println("NO MSG");
       return; // Solo lectura de posición, velocidad o corriente
     }
 
@@ -833,7 +814,7 @@ void write_zero(int8_t ID) {
 }
 
 void write_zeros() {
-  Serial.println("Reset zeros");
+  // Serial.println("Reset zeros");
 
   write_zero(1);
   delayMS(CAN_DELAY);
@@ -866,7 +847,7 @@ void stop_motor(int8_t ID) {
 
 void stop_all_motors() {
   // Función para detener el motor
-  Serial.println("Stop all motors");
+  // Serial.println("Stop all motors");
 
   stop_motor(1);
   delayMS(CAN_DELAY);
@@ -919,7 +900,7 @@ void reset_motor(int8_t ID) {
 }
 
 void reset_all_motors() {
-  Serial.println("Reset all motors");
+  // Serial.println("Reset all motors");
   // Función para mandar un stop y shutdown a los motores en la red
   stop_all_motors();
 
@@ -1012,12 +993,12 @@ void read_currents(bool show) {
     return;
   }
 
-  Serial.print("Cur 1: "); Serial.print(PV1_cur);
-  Serial.print("Cur 2: "); Serial.print(PV2_cur);
-  Serial.print("Cur 3: "); Serial.print(PV3_cur);
+  // Serial.print("Cur 1: "); Serial.print(PV1_cur);
+  // Serial.print("Cur 2: "); Serial.print(PV2_cur);
+  // Serial.print("Cur 3: "); Serial.print(PV3_cur);
 }
 
-void read_positions() {
+void read_positions(bool show) {
   // Función para leer posiciones de los tres motores
   process_variable = "pos";
   delayMS(CAN_DELAY);
@@ -1026,6 +1007,14 @@ void read_positions() {
   read_angle(2);
   delayMS(CAN_DELAY);
   read_angle(3);
+
+  if (!show) {
+    return;
+  }
+
+  // Serial.print("Cur 1: "); Serial.print(PV1);
+  // Serial.print("Cur 2: "); Serial.print(PV2);
+  // Serial.print("Cur 3: "); Serial.print(PV3);
 }
 
 void read_velocities() {
@@ -1077,11 +1066,11 @@ void walk_mode_sequence(float kp, float kd) {
       stop_all_motors();
       return;
     }
-    Serial.print(i); Serial.print(" ");
+    // Serial.print(i); Serial.print(" ");
     //send_HMI();
     delayMS(500);
   }
-  Serial.println();
+  // Serial.println();
 
   // De regreso
   for (int i = 4; i >= 0; i--) {
@@ -1095,11 +1084,11 @@ void walk_mode_sequence(float kp, float kd) {
       stop_all_motors();
       return;
     }
-    Serial.print(i); Serial.print(" ");
+    // Serial.print(i); Serial.print(" ");
     //send_HMI();
     delayMS(500);
   }
-  Serial.println();
+  // Serial.println();
 }
 
 void Fase_Balanceo() {
@@ -1223,7 +1212,7 @@ void gait_simulation() {
 
 void scale_TH() {
   // Proceso para escalar los TH con base en el peso de la persona
-  Serial.println("Scaling...");
+  // Serial.println("Scaling...");
 }
 
 // ----------------------------------- Funciones de lectura ADC ------------------------------------------------
@@ -1264,15 +1253,6 @@ void ReadADC(bool show) {
   Serial.print("Back :"); Serial.print(Heel > TH_heel);
   Serial.print(" Front: "); Serial.print(FSR2);
   Serial.print(" Phase: "); Serial.println(gait_phase);
-  /*
-    // Mandar datos a labview
-    if (Serial.available() > 0) {
-    inByte = Serial.read();
-    if( inByte == '#'){
-      Serial.write(ADC_Buffer, 4);
-    }
-    }
-  */
 }
 
 // ----------------------------------- Funciones de callback de manejo de I2C -----------------------------------
@@ -1530,7 +1510,7 @@ void onReceive(int len) {
       const char* state_command = jsonrec["state"];
       if (strcmp(state_command, "calibrate") == 0) {
         // Proceso de calibración con duración de 3 segundos
-        Serial.println("Calibración");
+        // Serial.println("Calibración");
 
         LED("BLUE");
         uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;          // Variables para calibración
@@ -1589,7 +1569,7 @@ void onReceive(int len) {
         }
 
         // Se guardan los zeros
-        read_positions();
+        read_positions(false);
 
         // Se le agrega un offset y se guarda
         /*
@@ -1603,10 +1583,10 @@ void onReceive(int len) {
         TH_toe = toe_save / 300;
         TH_heel = (heel_save / 300) * 0.8;
 
-        Serial.print("TH Right: "); Serial.print(TH_right);
-        Serial.print(" TH Left: "); Serial.print(TH_left);
-        Serial.print(" TH Toe: "); Serial.print(TH_toe);
-        Serial.print(" TH Heel: "); Serial.println(TH_heel);
+        // Serial.print("TH Right: "); Serial.print(TH_right);
+        // Serial.print(" TH Left: "); Serial.print(TH_left);
+        // Serial.print(" TH Toe: "); Serial.print(TH_toe);
+        // Serial.print(" TH Heel: "); Serial.println(TH_heel);
 
         // Se escala con el peso de ser necesario
         if (weight > 60) {
@@ -1616,7 +1596,7 @@ void onReceive(int len) {
         LED("OFF");
       }
       else if (strcmp(state_command, "stop") == 0) { // Comando de detenerse
-        Serial.println("Stop");
+        // Serial.println("Stop");
         // Reiniciar variables lógicas
         walk_flag = 0;
         gait_phase = 0;
@@ -1635,7 +1615,7 @@ void onReceive(int len) {
         reset_all_motors();
       }
       else if (strcmp(state_command, "walk") == 0) { // Comando de caminar
-        Serial.println("Walk");
+        // Serial.println("Walk");
         walk_flag = 1;
         gait_phase = 0;
         notified = false;
@@ -1805,12 +1785,12 @@ void NotifyMaster() {
   delayMS(5); // Mantén el pulso breve
   GPIOPinWrite(GPIO_PORTA_BASE, NOTIFY_PIN, 0); // Regresa a LOW
 
-  Serial.print(stringsend_ESP32);
+  // Serial.print(stringsend_ESP32);
 }
 
 void setup() {
   // Habilitar interfaz serial
-  Serial.begin(9600);
+  Serial.begin(76800); // Cambio de baud rate
 
   // ----------- Habilitar periféricos -----------
   // Habilitar puerto F
@@ -1857,7 +1837,7 @@ void setup() {
   // Set up de lectura de corriente
   process_variable = "cur";
 
-  Serial.println("Listo!");
+  // Serial.println("Listo!");
 }
 
 // ----- Main Loop -----
@@ -1871,7 +1851,7 @@ void loop() {
       read_currents(false); // Lectura de corrientes
       ReadADC(false); // Lectura de FSRs
 
-      // (Heel > TH_heel && FSR2)
+      // (Heel < TH_heel && FSR2)
       // !heel_button && toe_button
 
       heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
@@ -1881,8 +1861,8 @@ void loop() {
       if (PV2_cur > 90 || PV2_cur < -90) { // Intención para iniciar con el pie izquierdo, inicia en pre balanceo a balanceo
         gait_phase = 1;
         NotifyMaster();
-      } else if (!heel_button && toe_button) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
-        gait_phase = 2;
+      } else if ((Heel < TH_heel && FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
+        gait_phase = 4;
         NotifyMaster();
       }
 
@@ -1907,7 +1887,7 @@ void loop() {
       } else { // Reinicio
 
         ReadADC(false); // Lectura de FSRs
-        //read_positions(); // Lectura de posiciones (PENDIENTE)
+        //read_positions(false); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel > TH_heel
         // !toe_button && heel_button
@@ -1915,7 +1895,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!toe_button && heel_button) { // Condición para cambio de fase
+        if (!FSR2 && Heel > TH_heel) { // Condición para cambio de fase
           gait_phase = 2;
           NotifyMaster();
           count = 0;
@@ -1939,14 +1919,14 @@ void loop() {
         return;
       } else { // Cambio de fase
         ReadADC(false); // Lectura de FSRs
-        // read_positions(); // Lectura de posiciones (PENDIENTE)
+        // read_positions(false); // Lectura de posiciones (PENDIENTE)
 
         // FSR2 && (Heel > TH_heel)*0.8
         // toe_button && heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (toe_button && heel_button) { // Condición para cambio de fase
+        if (FSR2 && (Heel > TH_heel)*0.8) { // Condición para cambio de fase
           gait_phase = 3;
           NotifyMaster();
           count = 0;
@@ -1973,14 +1953,14 @@ void loop() {
         return;
       } else { // Cambio de fase
         ReadADC(false); // Lectura de FSRs
-        // read_positions(); // Lectura de posiciones (PENDIENTE)
+        // read_positions(false); // Lectura de posiciones (PENDIENTE)
 
         //FSR2 && Heel < TH_heel // FSR2
         //toe_button && !heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (toe_button && !heel_button) { // Condición para cambio de fase
+        if (FSR2 && Heel < TH_heel) { // Condición para cambio de fase
           gait_phase = 4;
           NotifyMaster();
           count = 0;
@@ -2006,14 +1986,14 @@ void loop() {
         return;
       } else { // Cambio de fase
         ReadADC(false); // Lectura de FSRs
-        // read_positions(); // Lectura de posiciones (PENDIENTE)
+        // read_positions(false); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel < TH_heel*0.4
         // !toe_button && !heel_button
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!toe_button && !heel_button) { // Condición para cambio de fase
+        if (!FSR2 && Heel < TH_heel*0.4) { // Condición para cambio de fase
           gait_phase = 1;
           NotifyMaster();
           count = 0;
@@ -2027,7 +2007,7 @@ void loop() {
 
     // Lectura de variables según indicado
     if (process_variable == "pos") {
-      read_positions();
+      read_positions(false);
     }
     else if (process_variable == "vel") {
       read_velocities();
@@ -2043,30 +2023,78 @@ void loop() {
       notified = true;
     }
   }
+  else if (walk_flag == 0) {
+
+  }
+  // Monitoreo de datos si no esté activa la caminata
+  ReadADC(false);
+  
+  // Máquina de estados sin activación
+  if(gait_phase == 0){ // stance
+    if((Heel < TH_heel && FSR2)){
+      gait_phase = 4;
+    }
+  } else if(gait_phase == 1){ // heel strike
+    if(!FSR2 && Heel > TH_heel){
+      gait_phase = 2;
+    }
+  } else if(gait_phase == 2){ // foot landing
+    if(FSR2 && (Heel > TH_heel)*0.8){
+      gait_phase = 3;
+    }
+  } else if(gait_phase == 3){ // toe off 
+    if(FSR2 && Heel < TH_heel){
+      gait_phase = 4;
+    }
+  } else if(gait_phase == 4){ // swing
+    if(!FSR2 && Heel < TH_heel*0.4){
+      gait_phase = 1;
+    }
+  }
+  send_HMI();
 }
 
 void send_HMI() {
-  // Función para mandar información de corrientes y FSRs al HMI en LabView
-  ReadADC(false);
+  // Función para mandar información de FSRS, corrientes y posiciones al HMI en LabView
+
+  // Se guardan en un arreglo
+  //ReadADC(false);
+
+  // Se guardan corrientes en un byte
   read_currents(false);
-  delayMS(10);
-  split16bits(PV1_cur, current1_Array);
+  int8_t cur1 = PV1_cur;
+  int8_t cur2 = PV1_cur;
+  int8_t cur3 = PV1_cur;
 
-  int16_t PV2plus = 110;
+  // Se guardan posiciones como un byte
+  read_positions(false);
+  int8_t pos1 = PV1;
+  int8_t pos2 = PV2;
+  int8_t pos3 = PV3;
 
-  split16bits(PV2plus, current2_Array);
-  split16bits(PV3_cur, current3_Array);
-
+  // Comprueba si hay bytes disponibles
   if (Serial.available() > 0) {
-    inByte = Serial.read();
-    if (inByte == '#') {
+
+    // Manda info si se recibe la bandera adecuada
+    if (Serial.read() == '#') {
+      LED("PURPLE");
+    
       // Manda valores de ADC
       Serial.write(ADC_Buffer, 4);
-
-      // Manda valores de corriente
-      Serial.write(current1_Array, 2);
-      Serial.write(current2_Array, 2);
-      Serial.write(current3_Array, 2);
+    
+      // Manda valores de corrientes
+      Serial.write(cur1);
+      Serial.write(cur2);
+      Serial.write(cur3);
+    
+      // Manda valores de posiciones
+      Serial.write(pos1);
+      Serial.write(pos2);
+      Serial.write(pos3);
+    
+      // Manda la fase de la caminata
+      Serial.write(gait_phase);
+      LED("OFF");
     }
   }
 }
