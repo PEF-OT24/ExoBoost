@@ -293,7 +293,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
 
     // No realiza lectura si no es necesario
     if (commandCAN != 0x92 && commandCAN != 0x9C) {
-      // Serial.println("NO MSG");
+      //Serial.println("NO MSG");
       return; // Solo lectura de posición, velocidad o corriente
     }
 
@@ -304,9 +304,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
       CANMessageGet(CAN0_BASE, 1, &Message_Rx_1, false);
 
       // Validación del mensaje
-      if (commandCAN != CANBUSReceive[0]) {
-        return;
-      }
+      if (commandCAN != CANBUSReceive[0]) {return;}
 
       // Formato de recepción
       if (process_variable == "pos") {       // Formateo para posición
@@ -1008,13 +1006,12 @@ void read_positions(bool show) {
   delayMS(CAN_DELAY);
   read_angle(3);
 
-  if (!show) {
-    return;
-  }
+  if (!show) {return;}
 
-  // Serial.print("Cur 1: "); Serial.print(PV1);
-  // Serial.print("Cur 2: "); Serial.print(PV2);
-  // Serial.print("Cur 3: "); Serial.print(PV3);
+  // Impresión de posiciones
+  Serial.print("Pos 1: "); Serial.print(PV1);
+  Serial.print("Pos 2: "); Serial.print(PV2);
+  Serial.print("Pos 3: "); Serial.println(PV3);
 }
 
 void read_velocities() {
@@ -1246,9 +1243,7 @@ void ReadADC(bool show) {
 
   FSR2 = (Toe > TH_toe) && (Left > TH_left) || (Left > TH_left && Right > TH_right) || (Right > TH_right && Toe > TH_toe);
 
-  if (!show) {
-    return;
-  }
+  if (!show) {return;}
 
   Serial.print("Back :"); Serial.print(Heel > TH_heel);
   Serial.print(" Front: "); Serial.print(FSR2);
@@ -1790,7 +1785,7 @@ void NotifyMaster() {
 
 void setup() {
   // Habilitar interfaz serial
-  Serial.begin(76800); // Cambio de baud rate
+  Serial.begin(115200); // Cambio de baud rate
 
   // ----------- Habilitar periféricos -----------
   // Habilitar puerto F
@@ -1812,10 +1807,12 @@ void setup() {
   ConfigADC();
 
   // ------ Configuración de UART ------
+  /*
   SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
   while (!SysCtlPeripheralReady(SYSCTL_PERIPH_UART0)) {}
   GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
   UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), 9600, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE | UART_CONFIG_PAR_NONE));
+  */
 
   // ------ Configuración de CAN ------
   ConfigCAN();
@@ -1837,11 +1834,12 @@ void setup() {
   // Set up de lectura de corriente
   process_variable = "cur";
 
-  // Serial.println("Listo!");
+  //Serial.println("Listo!");
 }
 
 // ----- Main Loop -----
 void loop() {
+  
   if (walk_flag == 1 && current_tab == 2) { // Rutina de caminata en la tab de assistance
 
     // -------- Máquina de estados --------
@@ -2023,10 +2021,8 @@ void loop() {
       notified = true;
     }
   }
-  else if (walk_flag == 0) {
-
-  }
-  // Monitoreo de datos si no esté activa la caminata
+  
+  // Monitoreo de datos 
   ReadADC(false);
   
   // Máquina de estados sin activación
@@ -2061,13 +2057,13 @@ void send_HMI() {
   //ReadADC(false);
 
   // Se guardan corrientes en un byte
-  read_currents(false);
+  //read_currents(false);
   int8_t cur1 = PV1_cur;
   int8_t cur2 = PV1_cur;
   int8_t cur3 = PV1_cur;
 
   // Se guardan posiciones como un byte
-  read_positions(false);
+  //read_positions(false);
   int8_t pos1 = PV1;
   int8_t pos2 = PV2;
   int8_t pos3 = PV3;
@@ -2081,7 +2077,11 @@ void send_HMI() {
     
       // Manda valores de ADC
       Serial.write(ADC_Buffer, 4);
-    
+      
+      // Manda la fase de la caminata
+      Serial.write(gait_phase);
+
+      /*
       // Manda valores de corrientes
       Serial.write(cur1);
       Serial.write(cur2);
@@ -2091,9 +2091,8 @@ void send_HMI() {
       Serial.write(pos1);
       Serial.write(pos2);
       Serial.write(pos3);
+      */
     
-      // Manda la fase de la caminata
-      Serial.write(gait_phase);
       LED("OFF");
     }
   }
