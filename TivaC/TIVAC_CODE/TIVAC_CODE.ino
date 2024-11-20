@@ -1881,7 +1881,7 @@ void loop() {
       if (PV2_cur > 90 || PV2_cur < -90) { // Intención para iniciar con el pie izquierdo, inicia en pre balanceo a balanceo
         gait_phase = 1;
         NotifyMaster();
-      } else if (!heel_button && toe_button) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
+      } else if ((Heel > TH_heel && FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
         gait_phase = 2;
         NotifyMaster();
       }
@@ -1915,7 +1915,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!toe_button && heel_button) { // Condición para cambio de fase
+        if (!FSR2 && Heel > TH_heel) { // Condición para cambio de fase
           gait_phase = 2;
           NotifyMaster();
           count = 0;
@@ -1946,7 +1946,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (toe_button && heel_button) { // Condición para cambio de fase
+        if (FSR2 && (Heel > TH_heel)*0.8) { // Condición para cambio de fase
           gait_phase = 3;
           NotifyMaster();
           count = 0;
@@ -1958,7 +1958,7 @@ void loop() {
       LED("PURPLE");
       if (count < (sizeof(hip_apoyo) / sizeof(hip_apoyo[0]))) {   // Set points en apoyo
 
-
+        // Set Points
         motion_mode_command(1, hip_apoyo[count], 0, kp_hip, kd_hip, tff_hip);
         delayMS(CAN_DELAY);
         motion_mode_command(2, knee_apoyo[count], 0, kp_knee, kd_knee, tff_knee);
@@ -1980,7 +1980,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (toe_button && !heel_button) { // Condición para cambio de fase
+        if (FSR2) { // Condición para cambio de fase
           gait_phase = 4;
           NotifyMaster();
           count = 0;
@@ -2013,7 +2013,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!toe_button && !heel_button) { // Condición para cambio de fase
+        if (!FSR2 && Heel < TH_heel*0.4) { // Condición para cambio de fase
           gait_phase = 1;
           NotifyMaster();
           count = 0;
