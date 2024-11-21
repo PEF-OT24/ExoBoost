@@ -116,7 +116,6 @@ void ReadADC(void){
     }
   }
 
-  
   // Mandar los datos al HMI
   if (Serial.available() > 0) {
     inByte = Serial.read();
@@ -126,8 +125,6 @@ void ReadADC(void){
     }
   }
   
-  
-
   /*
   // Impresión de calibración
   Serial.print("Toe: "); Serial.print(thresholds[0]);

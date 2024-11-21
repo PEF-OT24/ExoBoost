@@ -833,7 +833,7 @@ void write_zero(int8_t ID) {
 }
 
 void write_zeros() {
-  Serial.println("Reset zeros");
+  Serial.println("RZ");
 
   write_zero(1);
   delayMS(CAN_DELAY);
@@ -1261,7 +1261,7 @@ void ReadADC(bool show) {
     return;
   }
 
-  Serial.print("Back :"); Serial.print(Heel > TH_heel);
+  Serial.print("Back :"); Serial.print(ADC_Buffer[1]);
   Serial.print(" Front: "); Serial.print(FSR2);
   Serial.print(" Phase: "); Serial.println(gait_phase);
   /*
@@ -1530,7 +1530,7 @@ void onReceive(int len) {
       const char* state_command = jsonrec["state"];
       if (strcmp(state_command, "calibrate") == 0) {
         // Proceso de calibración con duración de 3 segundos
-        Serial.println("Calibración");
+        Serial.println("A");
 
         LED("BLUE");
         uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;          // Variables para calibración
@@ -1540,12 +1540,14 @@ void onReceive(int len) {
         write_zeros();
 
         // Reiniciar motores
+        
         reset_motor(1);
         delayMS(CAN_DELAY);
         reset_motor(2);
         delayMS(CAN_DELAY);
         reset_motor(3);
         delayMS(CAN_DELAY);
+        
 
         //reset_all_motors();
 
@@ -1602,7 +1604,7 @@ void onReceive(int len) {
         TH_left = left_save / 300;
         TH_toe = toe_save / 300;
         TH_heel = (heel_save / 300) * 0.8;
-
+    
         Serial.print("TH Right: "); Serial.print(TH_right);
         Serial.print(" TH Left: "); Serial.print(TH_left);
         Serial.print(" TH Toe: "); Serial.print(TH_toe);
@@ -1869,7 +1871,7 @@ void loop() {
       LED("WHITE");
 
       read_currents(false); // Lectura de corrientes
-      ReadADC(false); // Lectura de FSRs
+      ReadADC(true); // Lectura de FSRs
 
       // (Heel > TH_heel && FSR2)
       // !heel_button && toe_button
@@ -1906,7 +1908,7 @@ void loop() {
 
       } else { // Reinicio
 
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         //read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel > TH_heel
@@ -1938,7 +1940,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // FSR2 && (Heel > TH_heel)*0.8
@@ -1972,7 +1974,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         //FSR2 && Heel < TH_heel // FSR2
@@ -2005,7 +2007,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel < TH_heel*0.4
@@ -2013,7 +2015,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!FSR2 && Heel < TH_heel*0.4) { // Condición para cambio de fase
+        if (!FSR2 && Heel < TH_heel*1.2) { // Condición para cambio de fase
           gait_phase = 1;
           NotifyMaster();
           count = 0;
