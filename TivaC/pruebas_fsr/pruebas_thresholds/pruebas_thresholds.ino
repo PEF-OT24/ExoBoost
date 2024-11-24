@@ -58,8 +58,8 @@ void ConfigADC(){
   ADCSequenceConfigure(ADC0_BASE, 1, ADC_TRIGGER_PROCESSOR, 0);
 
   // Configura la secuencia de lectura de 4 canales
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH1); // Right
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH0); // Heel 
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH1); // Right
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH0); // Heel 
   ADCSequenceStepConfigure(ADC0_BASE, 1, 2, ADC_CTL_CH2); // Toe
   ADCSequenceStepConfigure(ADC0_BASE, 1, 3, ADC_CTL_CH3 | ADC_CTL_IE | ADC_CTL_END);  // Left
   

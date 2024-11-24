@@ -1,8 +1,8 @@
 # ExoBoost 🦿
 
-#### Este proyecto se llevó a cabo desde Junio hasta Diciembre de 2024 como parte del Proyecto de Evaluación Final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz, bajo la supervisión del Dr. Mario Jorge Claros Salgado en la Universidad de Monterrey.
-#### Tiene el propósito de generar un prototipo exoesqueleto de asistencia motriz con articulación en cadera, rodilla y tobillo para usuarios con movilidad limitada.
-#### Este repositortio describe las instrucciones para entender no profundamente el funcionamiento general del sistema, desde requerimentos necesarios (tanto de hardware como software) hasta el cómo colaborar. Se explica de manera general la lógica de la interfaz de comunicación, esquema de control y el funcionamiento del software del prototipo. Detalles específicos se cubrirían en cada sección respectiva. 
+#### Este proyecto se llevó a cabo desde Junio hasta Diciembre del 2024 como parte del Proyecto de Evaluación Final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz, bajo la supervisión del Dr. Mario Jorge Claros Salgado en la Universidad de Monterrey.
+#### Tiene el objetivo de generar el diseño y desarrollo de un prototipo exoesqueleto de asistencia a la marcha en cadera, rodilla y tobillo; idealmente enfocado en usuarios con movilidad limitada. 
+#### Este repositortio describe las instrucciones para entender el funcionamiento general del sistema, desde requerimentos necesarios (tanto de hardware como software) hasta el cómo colaborar. Se explica de manera general la lógica de la interfaz de comunicación, esquema de control y el funcionamiento del software del prototipo. Detalles específicos se cubrirían en cada sección respectiva. 
 
 ## Funcionamiento general
 ![alt text](diagrama.png)
