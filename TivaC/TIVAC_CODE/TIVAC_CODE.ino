@@ -833,7 +833,7 @@ void write_zero(int8_t ID) {
 }
 
 void write_zeros() {
-  Serial.println("Reset zeros");
+  Serial.println("RZ");
 
   write_zero(1);
   delayMS(CAN_DELAY);
@@ -1254,16 +1254,20 @@ void ReadADC(bool show) {
   Heel = ADC_Buffer[1];
   Toe = ADC_Buffer[2];
   Left = ADC_Buffer[3];
-
+  
   FSR2 = (Toe > TH_toe) && (Left > TH_left) || (Left > TH_left && Right > TH_right) || (Right > TH_right && Toe > TH_toe);
-
+  if(gait_phase == 2){
+    FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
+  }
+  
   if (!show) {
     return;
   }
 
-  Serial.print("Back :"); Serial.print(Heel > TH_heel);
-  Serial.print(" Front: "); Serial.print(FSR2);
-  Serial.print(" Phase: "); Serial.println(gait_phase);
+  Serial.print("Right :"); Serial.print(ADC_Buffer[0]);
+  Serial.print(" Heel :"); Serial.print(ADC_Buffer[1]);
+  Serial.print(" Toe :"); Serial.print(ADC_Buffer[2]);
+  Serial.print(" Left: "); Serial.println(ADC_Buffer[3]);
   /*
     // Mandar datos a labview
     if (Serial.available() > 0) {
@@ -1530,7 +1534,7 @@ void onReceive(int len) {
       const char* state_command = jsonrec["state"];
       if (strcmp(state_command, "calibrate") == 0) {
         // Proceso de calibración con duración de 3 segundos
-        Serial.println("Calibración");
+        Serial.println("A");
 
         LED("BLUE");
         uint8_t toe_max = 0, left_max = 0, right_max = 0, heel_max = 0;          // Variables para calibración
@@ -1540,12 +1544,14 @@ void onReceive(int len) {
         write_zeros();
 
         // Reiniciar motores
+
         reset_motor(1);
         delayMS(CAN_DELAY);
         reset_motor(2);
         delayMS(CAN_DELAY);
         reset_motor(3);
         delayMS(CAN_DELAY);
+
 
         //reset_all_motors();
 
@@ -1738,10 +1744,10 @@ void ConfigADC() {
   ADCSequenceConfigure(ADC0_BASE, 1, ADC_TRIGGER_PROCESSOR, 0);
 
   // Configura la secuencia de lectura de 4 canales
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH0); // toe
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH1); // left
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 2, ADC_CTL_CH2); // right
-  ADCSequenceStepConfigure(ADC0_BASE, 1, 3, ADC_CTL_CH3 | ADC_CTL_IE | ADC_CTL_END);  // heel, interrupción
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 1, ADC_CTL_CH1); // right
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 0, ADC_CTL_CH0); // heel
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 2, ADC_CTL_CH2); // toe
+  ADCSequenceStepConfigure(ADC0_BASE, 1, 3, ADC_CTL_CH3 | ADC_CTL_IE | ADC_CTL_END);  // left, interrupción
 
   // Enable sequence 1
   ADCSequenceEnable(ADC0_BASE, 1);
@@ -1869,7 +1875,7 @@ void loop() {
       LED("WHITE");
 
       read_currents(false); // Lectura de corrientes
-      ReadADC(false); // Lectura de FSRs
+      ReadADC(true); // Lectura de FSRs
 
       // (Heel > TH_heel && FSR2)
       // !heel_button && toe_button
@@ -1881,7 +1887,7 @@ void loop() {
       if (PV2_cur > 90 || PV2_cur < -90) { // Intención para iniciar con el pie izquierdo, inicia en pre balanceo a balanceo
         gait_phase = 1;
         NotifyMaster();
-      } else if (!heel_button && toe_button) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
+      } else if ((Heel > TH_heel && FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
         gait_phase = 2;
         NotifyMaster();
       }
@@ -1906,7 +1912,7 @@ void loop() {
 
       } else { // Reinicio
 
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         //read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel > TH_heel
@@ -1915,7 +1921,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!toe_button && heel_button) { // Condición para cambio de fase
+        if (!FSR2 && Heel > TH_heel) { // Condición para cambio de fase
           gait_phase = 2;
           NotifyMaster();
           count = 0;
@@ -1938,7 +1944,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // FSR2 && (Heel > TH_heel)*0.8
@@ -1946,7 +1952,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (toe_button && heel_button) { // Condición para cambio de fase
+        if (FSR2 && (Heel > TH_heel) * 0.8) { // Condición para cambio de fase
           gait_phase = 3;
           NotifyMaster();
           count = 0;
@@ -1958,7 +1964,7 @@ void loop() {
       LED("PURPLE");
       if (count < (sizeof(hip_apoyo) / sizeof(hip_apoyo[0]))) {   // Set points en apoyo
 
-
+        // Set Points
         motion_mode_command(1, hip_apoyo[count], 0, kp_hip, kd_hip, tff_hip);
         delayMS(CAN_DELAY);
         motion_mode_command(2, knee_apoyo[count], 0, kp_knee, kd_knee, tff_knee);
@@ -1972,7 +1978,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         //FSR2 && Heel < TH_heel // FSR2
@@ -1980,7 +1986,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (toe_button && !heel_button) { // Condición para cambio de fase
+        if (FSR2) { // Condición para cambio de fase
           gait_phase = 4;
           NotifyMaster();
           count = 0;
@@ -2005,7 +2011,7 @@ void loop() {
         count++;
         return;
       } else { // Cambio de fase
-        ReadADC(false); // Lectura de FSRs
+        ReadADC(true); // Lectura de FSRs
         // read_positions(); // Lectura de posiciones (PENDIENTE)
 
         // !FSR2 && Heel < TH_heel*0.4
@@ -2013,7 +2019,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!toe_button && !heel_button) { // Condición para cambio de fase
+        if (!FSR2 && Heel < TH_heel * 1.2) { // Condición para cambio de fase
           gait_phase = 1;
           NotifyMaster();
           count = 0;
