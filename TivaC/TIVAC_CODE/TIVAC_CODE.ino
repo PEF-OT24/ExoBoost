@@ -1259,24 +1259,24 @@ void ReadADC(bool show) {
   if(gait_phase == 2){
     FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
   }
-  
+  if (gait_phase == 4){
+    uint8_t temp_toe = TH_toe*1.2;
+    uint8_t temp_right = TH_right*1.2;
+    uint8_t temp_left = TH_left *1.2;
+    FSR2 = (Toe > temp_toe) && (Left > temp_left) || (Left > temp_left && Right > temp_right) || (Right > temp_right && Toe > temp_toe);
+  }
+
+  /*
   if (!show) {
     return;
   }
+  */
 
   Serial.print("Right :"); Serial.print(ADC_Buffer[0]);
   Serial.print(" Heel :"); Serial.print(ADC_Buffer[1]);
   Serial.print(" Toe :"); Serial.print(ADC_Buffer[2]);
   Serial.print(" Left: "); Serial.println(ADC_Buffer[3]);
-  /*
-    // Mandar datos a labview
-    if (Serial.available() > 0) {
-    inByte = Serial.read();
-    if( inByte == '#'){
-      Serial.write(ADC_Buffer, 4);
-    }
-    }
-  */
+  
 }
 
 // ----------------------------------- Funciones de callback de manejo de I2C -----------------------------------
@@ -1887,7 +1887,7 @@ void loop() {
       if (PV2_cur > 90 || PV2_cur < -90) { // Intención para iniciar con el pie izquierdo, inicia en pre balanceo a balanceo
         gait_phase = 1;
         NotifyMaster();
-      } else if ((Heel > TH_heel && FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
+      } else if ((Heel > TH_heel && !FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
         gait_phase = 2;
         NotifyMaster();
       }
@@ -1921,7 +1921,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!FSR2 && Heel > TH_heel) { // Condición para cambio de fase
+        if (!FSR2 && Heel > TH_heel*0.8) { // Condición para cambio de fase
           gait_phase = 2;
           NotifyMaster();
           count = 0;
