@@ -726,9 +726,6 @@ void read_PV(){
 }
 
 void setup() {
-  // disableCore1WDT();  // Desactiva el WDT en Core 1
-  // disableLoopWDT();   // Desactiva el WDT del loop principal
-
   // Inicializa el puerto serie para la depuración
   Serial.begin(115200);
   Serial.println("Iniciando BLE");

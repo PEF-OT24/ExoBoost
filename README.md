@@ -1,8 +1,8 @@
 # ExoBoost 🦿
 
-#### Este proyecto se llevó a cabo desde Junio hasta Diciembre de 2024 como parte del Proyecto de Evaluación Final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz, bajo la supervisión del Dr. Mario Jorge Claros Salgado en la Universidad de Monterrey.
-#### Tiene el propósito de generar un prototipo exoesqueleto de asistencia motriz con articulación en cadera, rodilla y tobillo para usuarios con movilidad limitada.
-#### Este repositortio describe las instrucciones para entender no profundamente el funcionamiento general del sistema, desde requerimentos necesarios (tanto de hardware como software) hasta el cómo colaborar. Se explica de manera general la lógica de la interfaz de comunicación, esquema de control y el funcionamiento del software del prototipo. Detalles específicos se cubrirían en cada sección respectiva. 
+#### Este proyecto se llevó a cabo desde Junio hasta Diciembre del 2024 como parte del Proyecto de Evaluación Final para las carreras de Ingeniería en Mecatrónica, Biomédica y Diseño Automotriz, bajo la supervisión del Dr. Mario Jorge Claros Salgado en la Universidad de Monterrey.
+#### Tiene el objetivo de generar el diseño y desarrollo de un prototipo exoesqueleto de asistencia a la marcha en cadera, rodilla y tobillo, y que sirva como plataforma para la investigación y la mejora continua a través de Proyectos de Prácticas Profesionales y Proyectos de Evaluación Final.
+#### Este repositortio describe las instrucciones para entender el funcionamiento general del sistema, desde requerimentos necesarios (tanto de hardware como software) hasta el cómo colaborar. Se explica de manera general la lógica de la interfaz de comunicación, esquema de control y el funcionamiento del software del prototipo. Detalles específicos se cubrirían en cada sección respectiva. 
 
 ## Funcionamiento general
 ![alt text](diagrama.png)
@@ -35,7 +35,7 @@
 
 #### Seguir las instrucciones dentro del directorio _server_. Este microcontrolador funge el rol de antena BLE para el resto del sistema de control y comunicación. Procesa y transmite los datos recibidos como un máster de I2C a una TivaC por extremidad. 
 
-## Sistema de control en tiempo real en TivaC 
+## Sistema de control en TivaC 
 
 #### Seguir las instrucciones dentro del directorio _control_. Este microcontrolador es reponsable de controlar cada motor dentro de una extremidad. Recibe comandos específicos y set points a través de un BUS I2C configurado como esclavo y ejecuta los comandos específicos de control a través de un BUS de CAN en el cual están conectados los motores.
 

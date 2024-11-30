@@ -1,6 +1,10 @@
-// Código general para la TIVAC que maneja protocolo CAN e I2C.
-// Se incluye la lógica para el algoritmo de control
+# Código en la TivaC
+#### Es necesario instalar Energia IDE e instalar el driver para soportar TivaC-TM4C123G. 
 
+# Configuración Inicial
+
+#### En la parte inicial se configuran todas las librerías que se utilizarán a lo largo del código, junto con las variables globales que instituyen setpoints iniciales de referencias de control y parámetros de configuración del I2C y CAN:
+``` C
 // Importación de librerías
 #define PART_TM4C123GH6PM
 #include <stdint.h>
@@ -212,8 +216,13 @@ int16_t testing_sp_knee[30] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 
 int16_t testing_sp_ankle[30] = { -20, -17, -14, -11,  -8,  -5,  -2,   1,   4,   7,  10,  13,  16,  19,  20,
                                  20,  17,  14,  11,   8,   5,   2,  -1,  -4,  -7, -10, -13, -16, -19, -20
                                };
+```
 
-// ----------------------------------- Funciones de uso general -----------------------------------
+# Funciones de Uso General
+
+#### En este apartado se muestran las funciones generales utilizadas para manipulación de datos, tales como imprimir datos en el Serial Monitor de la IDE, partición de variables en 2 o más bytes y configuración del delay en la TivaC.
+
+``` C
 void LED(const char* color) { // Enciende el LED RGB integrado según el comando indicado
   if (strcmp(color, "GREEN") == 0) {
     GPIOPinWrite(GPIO_PORTF_BASE, RED_LED | BLUE_LED | GREEN_LED, GREEN_LED); // Verde
@@ -288,8 +297,14 @@ void print_data(uint8_t arr[8]) {
     }
   }
 }
+``` 
 
-// ----------------------------------- Funciones de interrupción -----------------------------------
+# Funciones de Interrupción
+
+#### En este apartado se muestran las funciones de interrupción, principalmente para el Timer0, Interrupción de Tiempo Real y manejo del CAN Handler para lectura y escritura.
+
+``` C
+
 void ISRSysTick(void) { // Función de interrupción para tiempo real
   doControlFlag = true;
 }
@@ -382,7 +397,7 @@ void CAN0IntHandler(void) { // Función de interrupción para recepción de mens
         PV3 = PV3_read;
       } else if (process_variable == "cur") { // Formateo para corriente
         int16_t PV3_read = ((CANBUSReceive[3] << 8) | CANBUSReceive[2]);
-        PV3_cur = PV3_read; // Lectura en A * 100
+        PV3_cur = PV3_read; // Lectura en A / 100
       }
     }
 
@@ -429,8 +444,13 @@ void ConfigureTimer0(float period_in_seconds) {
   // Activa el timer
   TimerEnable(TIMER0_BASE, TIMER_A);
 }
+``` 
 
-// ----------------------------------- Funciones de manejo de CAN -----------------------------------
+# Funciones de Manejo y Comandos CAN
+
+#### En este apartado se muestran las funciones de configuración CAN, tanto como para Servo Mode y Motion Mode. Además, se incluyen los comandos CAN utilizados para realizar diferentes operaciones con los servoactuadores por medio de CAN.
+
+``` C
 void send_cmd(uint8_t ID, uint8_t *messageArray) {
   // Función para enviar un mensaje por CAN
 
@@ -1038,8 +1058,12 @@ void read_velocities() {
   delayMS(CAN_DELAY);
   read_velocity(3);
 }
+```
+# Rutinas de Caminata 
 
-// ------------------------------------ Rutinas de caminata ----------------------------------
+#### En este apartado se muestran las configuraciones del Motion Mode, junto con su sintonización por fase de marcha y conjunto de referencias para cada una de las articulaciones.
+
+``` C
 void walk_mode_sequence(float kp, float kd) {
   LED("GREEN");
   /*Rangos de movimiento
@@ -1225,8 +1249,14 @@ void scale_TH() {
   // Proceso para escalar los TH con base en el peso de la persona
   Serial.println("Scaling...");
 }
+```
 
-// ----------------------------------- Funciones de lectura ADC ------------------------------------------------
+# Funciones de lectura ADC
+
+#### En este apartado se muestran las comandos de configuración para la lectura de los sensores FSR, así junto con su identificación en la suela.
+
+``` C
+
 void ReadADC(bool show) {
   // Lectura de las FSRs de la plantilla
   // Se obtiene el valor en Heel y en FSR2 (front)
@@ -1259,27 +1289,31 @@ void ReadADC(bool show) {
   if(gait_phase == 2){
     FSR2 = Toe > TH_toe || Left > TH_left || Right > TH_right;
   }
-  if (gait_phase == 4){
-    uint8_t temp_toe = TH_toe*1.2;
-    uint8_t temp_right = TH_right*1.2;
-    uint8_t temp_left = TH_left *1.2;
-    FSR2 = (Toe > temp_toe) && (Left > temp_left) || (Left > temp_left && Right > temp_right) || (Right > temp_right && Toe > temp_toe);
-  }
-
-  /*
+  
   if (!show) {
     return;
   }
-  */
 
   Serial.print("Right :"); Serial.print(ADC_Buffer[0]);
   Serial.print(" Heel :"); Serial.print(ADC_Buffer[1]);
   Serial.print(" Toe :"); Serial.print(ADC_Buffer[2]);
   Serial.print(" Left: "); Serial.println(ADC_Buffer[3]);
-  
+  /*
+    // Mandar datos a labview
+    if (Serial.available() > 0) {
+    inByte = Serial.read();
+    if( inByte == '#'){
+      Serial.write(ADC_Buffer, 4);
+    }
+    }
+  */
 }
+``` 
+# Funciones de manejo I2C
 
-// ----------------------------------- Funciones de callback de manejo de I2C -----------------------------------
+#### En este apartado se muestran las funciones necesarias para la comunicación I2C con la ESP32, la cual consiste en la manipulación y cálculo de datos provenientes de los sensores FSR, tales como la calibración del exoesqueleto, envío de lecturas de motores al teléfono móvil y monitoreo de fases de la marcha en tiempo real.
+
+``` C
 // Función para reiniciar el bus I2C ante algún error
 void clearI2C() {
   while (Wire.available()) {
@@ -1729,7 +1763,12 @@ void onRequest() {
   }
 }
 
-// ----------------------------------------------------- Configuración ----------------------------------------------------
+``` 
+# Configuración de Módulos TivaC
+
+#### En este apartado se muestran el setup con las configuraciones necesarias para habilitar los módulos I2C, CAN, ADC y Entradas/Salidas en la TivaC. Además, se encuentran algunas funciones generales de configuración de I2C.
+
+``` C
 void ConfigADC() {
   // Enable ADC0 peripheral
   SysCtlPeripheralEnable(SYSCTL_PERIPH_ADC0);
@@ -1865,8 +1904,12 @@ void setup() {
 
   Serial.println("Listo!");
 }
+``` 
+# Máquina de Estados y Comunicación con LabVIEW
 
-// ----- Main Loop -----
+#### En este apartado se muestra la estructura de la máquina de estados, junto con las condiciones necesarias para ejecutar las fases de la marcha. Además, se integran lecturas constantes de posición, velocidad y corriente de los motores a la aplicación. Otro punto importante en este apartado es un bloque de código adicional que se utilizó para el envío de las corrientes y lecturas de los sensores FSR a una interfaz en LabVIEW con el fin de hacer debugging.
+
+``` C
 void loop() {
   if (walk_flag == 1 && current_tab == 2) { // Rutina de caminata en la tab de assistance
 
@@ -1887,7 +1930,7 @@ void loop() {
       if (PV2_cur > 90 || PV2_cur < -90) { // Intención para iniciar con el pie izquierdo, inicia en pre balanceo a balanceo
         gait_phase = 1;
         NotifyMaster();
-      } else if ((Heel > TH_heel && !FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
+      } else if ((Heel > TH_heel && FSR2)) { // Intención para iniciar con el pie derecho, incia en contacto inicial a apoyo
         gait_phase = 2;
         NotifyMaster();
       }
@@ -1921,7 +1964,7 @@ void loop() {
         heel_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_1);
         toe_button = GPIOPinRead(GPIO_PORTD_BASE, GPIO_PIN_0);
 
-        if (!FSR2 && Heel > TH_heel*0.8) { // Condición para cambio de fase
+        if (!FSR2 && Heel > TH_heel) { // Condición para cambio de fase
           gait_phase = 2;
           NotifyMaster();
           count = 0;
@@ -2076,3 +2119,4 @@ void send_HMI() {
     }
   }
 }
+```
