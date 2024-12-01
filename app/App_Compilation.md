@@ -143,7 +143,25 @@ adb logcat | grep python
 buildozer android debug deploy run
 ```
 
-#### Si está corriente Ubuntu 22.04 en Virtual Box: 
+#### Debugging Ubuntu 22.04 en Virtual Box: 
 
-INSTRUCCIONES TERE
+Es común tener problemas al usar ADB debugger en VirtualBox mediante conexión USB, el error más común al momento de conectar un dispositivo Android de esta forma es ```Can't attach USB device``` y se puede resolver facilmente usando un filtro USB dentro de VirtualBox.
+
+El origen del problema surge de un conflicto entre el uso del puerto USB entre la máquina host (Windows) y la máquina virtual (Ubuntu), ambas máquinas solicitan su uso al mismo tiempo y no se pueden intercambiar datos entre la PC y el dispositivo Android conectado.
+
+Usualmente al momento de desplegar el error se desplegará el nombre, vendor ID y product ID, estos datos son los únicos importantes para crear un filtro que reconozca al dispositivo android solamente en la máquina virtual siempre que se conecte a la PC mediante USB.
+
+Pasos para crear filtro:
+
+1. Abrir VirtualBox Manager y seleccionar la máquina virtual (Ubuntu)
+2. Ir al menú de configuración de la Virtual Machine (VM)
+3. Abrir submenú USB
+4. Seleccionar opción "Enable USB Controller"
+5. Seleccionar la opción USB 3.0 (xHCI) Controller
+6. Dentro del apartado "USB Device Filters" seleccionar el ícono con un signo de +
+7. Llenar datos de Nombre, Vendor ID y Product ID (Ej: motorola moto g(9) plus, 22b8, 2e81)
+
+Cabe mencionar que también es común que los campos Vendor ID y Product ID se llenen automáticamente al seleccionar el nombre del dispositivo en caso de estar conectado. Finalmente, se debe desconectar, iniciar la máquina virtual y volver a conectar el dispositivo después de iniciar completamente la máquina virtual.
+
+Para más problemas de debugging se puede consultar la información dentro del siguiente [foro de VirtualBox](https://forums.virtualbox.org/viewtopic.php?f=35&t=82639)
 ***

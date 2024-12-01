@@ -1,29 +1,29 @@
 {
     "hip_motor": {
-      "modelo": "Modelo X",
-      "gear_ratio": "5:1",
-      "voltage_range": "12-24 V",
-      "max_toqrue": "40 Nm",
-      "max_current": "15 A",
-      "max_velocity": "5000 RPM",
-      "ideal_temp": "25°C"
+      "modelo": "RMD X8-60",
+      "gear_ratio": "36:1",
+      "input_voltage": "24-48 V",
+      "peak_toqrue": "60 Nm",
+      "peak_current": "8 A",
+      "rated_speed": "40 RPM",
+      "temperature": "20-55 °C"
     },
     "knee_motor": {
-      "modelo": "Modelo Y",
-      "gear_ratio": "10:1",
-      "voltage_range": "12-36 V",
-      "max_toqrue": "50 Nm",
-      "max_current": "20 A",
-      "max_velocity": "6000 RPM",
-      "ideal_temp": "30°C"
+      "modelo": "RMD X8 Pro",
+      "gear_ratio": "9:1",
+      "input_voltage": "24-48 V",
+      "peak_torque": "25 Nm",
+      "peak_current": "8 A",
+      "rated_speed": "110 RPM",
+      "ideal_temp": "20-55 °C"
     },
     "ankle_motor": {
-      "modelo": "Modelo Z",
-      "gear_ratio": "8:1",
-      "voltage_range": "12-24 V",
-      "max_toqrue": "45 Nm",
-      "max_current": "18 A",
-      "max_velocity": "5500 RPM",
-      "ideal_temp": "28°C"
+      "modelo": "RMD X4",
+      "gear_ratio": "6:1",
+      "input_voltage": "12-24 V",
+      "peak_toqrue": "3 Nm",
+      "peak_current": "4 A",
+      "rated_speed": "200 RPM",
+      "temperature": "20-30 °C"
     }
   }
