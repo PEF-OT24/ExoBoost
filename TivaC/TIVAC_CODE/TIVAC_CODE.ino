@@ -155,63 +155,26 @@ uint8_t height = 0;
 // -- Vectores de caminata --
 // Para cada fase, el tamaño de los vectores por articulación debe ser el mismo
 int count = 0; // Conteo de setpoints
-/*
-  // Fase 1 - Balanceo (30 valores)
-  int16_t hip_balanceo[30] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
-  int16_t knee_balanceo[30] = {30, 33, 36, 39, 42, 45, 48, 51, 54, 60,
-                            60, 57, 54, 51, 48, 45, 42, 39, 36, 30,
-                            30, 27, 24, 21, 18, 15, 12, 9, 6, 0};
-  int16_t ankle_balanceo[30] = {-20, -18, -16, -14, -12, -10, -8, -6, -4, 0,
-                              1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                              10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
-*/
+
+// Fase 1 - Balanceo (30 valores)
 int16_t hip_balanceo[5] = {10, 30, 30, 30, 30};
 int16_t knee_balanceo[5] = {45, 60, 40, 20, 0};
 int16_t ankle_balanceo[5] = { -20, 10, 0, 0, 0};
-
 
 // Fase 2 - Contacto Inicial (1 valores)
 int16_t hip_contacto_inicial[5] = {30, 27, 25, 22, 20};
 int16_t knee_contacto_inicial[5] = {4, 7, 10, 12, 15};
 int16_t ankle_contacto_inicial[5] = {0, -2, -5, -7, -10};
-/*
-  int16_t hip_contacto_inicial[1] = {20};
-  int16_t knee_contacto_inicial[1] = {20};
-  int16_t ankle_contacto_inicial[1] = {20};
-*/
 
 // Fase 3 - Apoyo (1 valores)
-
 int8_t hip_apoyo[4] = {20, 10, 0, -10};
 int16_t knee_apoyo[4] = {15, 10, 5, 0};
 int16_t ankle_apoyo[4] = { -10, 0, 10, 15};
-
-/*
-  int16_t hip_apoyo[1] = {-10};
-  int16_t knee_apoyo[1] = {0};
-  int16_t ankle_apoyo[1] = {15};
-*/
 
 // Fase 4 - Pre balanceo (2 valores)
 int16_t hip_pre_balanceo[3] = { -10, 0, 10}; // -10 a 0
 int16_t knee_pre_balanceo[3] = {5, 15, 30}; // 0 a 30
 int16_t ankle_pre_balanceo[3] = {15, 0, -20}; // 15 a -20
-/*
-  int16_t hip_pre_balanceo[1] = {20};
-  int16_t knee_pre_balanceo[1] = {20};
-  int16_t ankle_pre_balanceo[1] = {20};
-*/
-
-// Set Points de sintonización
-int16_t testing_sp_hip[30] = { -30, -26, -22, -18, -14, -10, -6, -2, 2, 6, 10, 14, 18, 22, 26, 30,
-                               26, 22, 18, 14, 10, 6, 2, -2, -8, -12, -14, -18, -22, -26
-                             };
-int16_t testing_sp_knee[30] = {0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56,
-                               60, 56, 52, 48, 44, 40, 36, 32, 28, 24, 20, 16, 12, 8, 4
-                              };
-int16_t testing_sp_ankle[30] = { -20, -17, -14, -11,  -8,  -5,  -2,   1,   4,   7,  10,  13,  16,  19,  20,
-                                 20,  17,  14,  11,   8,   5,   2,  -1,  -4,  -7, -10, -13, -16, -19, -20
-                               };
 
 // ----------------------------------- Funciones de uso general -----------------------------------
 void LED(const char* color) { // Enciende el LED RGB integrado según el comando indicado
