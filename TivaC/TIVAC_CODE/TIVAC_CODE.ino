@@ -53,21 +53,16 @@ int8_t assistance_level = 0; // Nivel de asistencia
 float kp_hip = 1.8;
 float kd_hip = 0;
 float tff_hip = 0;
-//float kd_hip = 0.8;
-//float tff_hip = 1.5;
+
 // Rodilla
 float kp_knee = 2.1;
 float kd_knee = 0.1;
 float tff_knee = 0;
-//float kd_knee = 0.55;
-//float tff_knee = 0.8;
 
 // Tobillo
 float kp_ankle = 6;
 float kd_ankle = 0.5;
 float tff_ankle = 0;
-//float kd_ankle = 0.1;
-//float tff_ankle = 0.35;
 
 // Parámetros de PI para un determinado motor
 uint8_t posKP;
